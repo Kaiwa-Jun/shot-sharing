@@ -41,7 +41,7 @@ jobs:
 
             簡潔にレビューしてください。
 
-          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           allowed_tools: "Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*),Read,View,GlobTool,GrepTool"
           model: "claude-3-5-sonnet-20241022"
 
@@ -69,7 +69,7 @@ jobs:
 
             gh pr comment ${{ github.event.issue.number }} --body "応答内容"
 
-          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           allowed_tools: "Bash(gh issue comment:*),Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*),Read,View,GlobTool,GrepTool"
           model: "claude-3-5-sonnet-20241022"
 
