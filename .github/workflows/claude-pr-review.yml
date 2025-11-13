@@ -36,14 +36,11 @@ jobs:
           CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
         with:
           prompt: |
-            PR #${{ github.event.pull_request.number }}をレビューして、結果を以下のコマンドでコメントしてください：
+            gh pr comment ${{ github.event.pull_request.number }} --body "✅ Claude Code PR review - Test successful!"
 
-            gh pr comment ${{ github.event.pull_request.number }} --body "レビュー内容"
-
-            簡潔にレビューしてください。
-
-          allowed_tools: "Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*),Read,View,GlobTool,GrepTool"
+          allowed_tools: "Bash(gh pr comment:*)"
           model: "claude-3-5-sonnet-20241022"
+          timeout_minutes: 2
 
   # @claudeメンションへの応答
   mention-response:
