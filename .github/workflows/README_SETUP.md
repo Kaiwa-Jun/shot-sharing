@@ -50,6 +50,7 @@
 #### PR自動レビューのテスト
 
 1. 新しいブランチを作成してPRを作成
+
    ```bash
    git checkout -b test/claude-review
    echo "test" > test.txt
@@ -66,6 +67,7 @@
 #### @claudeメンション応答のテスト
 
 1. PRまたはIssueのコメント欄に以下のようにコメント:
+
    ```
    @claude このコードについてレビューしてください
    ```
@@ -102,23 +104,29 @@ Claude Codeは以下の形式でレビュー結果をPRにコメントします�
 # 🤖 Claude Code 自動レビュー結果
 
 ## 総合評価
+
 承認可能 / 修正必要 / 要議論
 
 ## レビューサマリー
+
 [全体的な所感]
 
 ## 重要度別の指摘事項
 
 ### 🚨 Critical（必ず修正が必要）
+
 - [具体的な問題点と修正方法]
 
 ### ⚠️ Warning（修正を強く推奨）
+
 - [具体的な問題点と修正提案]
 
 ### 💡 Suggestion（改善提案）
+
 - [改善できる点と具体例]
 
 ### ✅ Good（良い実装）
+
 - [評価できる点]
 ```
 
@@ -142,7 +150,7 @@ Claude Codeは以下の形式でレビュー結果をPRにコメントします�
 `model`パラメータを変更することで、使用するAIモデルを変更できます:
 
 ```yaml
-model: "claude-3-5-sonnet-20241022"  # 現在の設定（バランス型）
+model: "claude-3-5-sonnet-20241022" # 現在の設定（バランス型）
 # model: "claude-opus-4-1-20250805"  # より高性能（コストも高い）
 ```
 
@@ -159,9 +167,11 @@ allowed_tools: "Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*),Read
 ### レビューが実行されない場合
 
 1. **Secretsの確認**
+
    ```bash
    gh secret list
    ```
+
    `ANTHROPIC_API_KEY`が表示されることを確認
 
 2. **ワークフローの権限確認**
