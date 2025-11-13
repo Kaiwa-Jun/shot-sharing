@@ -18,7 +18,7 @@
 
 - **採用技術**: Gemini File Search（自前の埋め込み/ベクトルDBは行わない）
 
-- **使用モデル候補**: 
+- **使用モデル候補**:
   - Gemini 1.5 Flash（コスト重視）
   - Gemini 1.5 Pro（精度重視）
   - Gemini 2.0 Flash（最新・バランス型）

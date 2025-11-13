@@ -1,4 +1,5 @@
 # shot-sharing
+
 test
 
 ## Claude Code自動レビュー

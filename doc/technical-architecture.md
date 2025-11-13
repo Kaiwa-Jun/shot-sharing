@@ -155,7 +155,7 @@ saves {
   user_id: uuid (FK → profiles.id, not null)
   post_id: uuid (FK → posts.id, not null)
   created_at: timestamp
-  
+
   UNIQUE(user_id, post_id)
 }
 ```
@@ -196,38 +196,38 @@ search_histories {
 
 ```typescript
 // Supabase Auth SDK使用
-supabase.auth.signInWithOAuth({ provider: 'google' })
-supabase.auth.signOut()
+supabase.auth.signInWithOAuth({ provider: "google" });
+supabase.auth.signOut();
 ```
 
 **投稿関連（Server Actions）**
 
 ```typescript
-POST   /api/posts/create        // 投稿作成
-GET    /api/posts               // 投稿一覧（ギャラリー）
-GET    /api/posts/[id]          // 投稿詳細
+POST / api / posts / create; // 投稿作成
+GET / api / posts; // 投稿一覧（ギャラリー）
+GET / api / posts / [id]; // 投稿詳細
 ```
 
 **検索関連（Server Actions）**
 
 ```typescript
-POST   /api/search              // RAG検索（テキスト/画像）
-POST   /api/search/chat         // チャット継続
+POST / api / search; // RAG検索（テキスト/画像）
+POST / api / search / chat; // チャット継続
 ```
 
 **保存関連（Server Actions）**
 
 ```typescript
-POST   /api/saves/toggle        // 保存/解除の切り替え
-GET    /api/saves               // 保存一覧
+POST / api / saves / toggle; // 保存/解除の切り替え
+GET / api / saves; // 保存一覧
 ```
 
 **プロフィール関連**
 
 ```typescript
-GET    /api/users/me            // 自分のプロフィール
-GET    /api/users/me/posts      // 自分の投稿
-GET    /api/users/me/saves      // 自分の保存
+GET / api / users / me; // 自分のプロフィール
+GET / api / users / me / posts; // 自分の投稿
+GET / api / users / me / saves; // 自分の保存
 ```
 
 ### 主要APIの詳細
