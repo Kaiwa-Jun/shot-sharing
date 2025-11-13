@@ -1,0 +1,200 @@
+name: Claude PR Review
+
+on:
+  # PR作成時・更新時に自動レビューを実行
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
+
+  # PRやIssueへのコメントで@claudeメンションがあった場合に実行
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+  id-token: write  # OIDC認証に必要
+  actions: read    # CI結果の分析に必要
+
+jobs:
+  # PR自動レビュー（PR作成・更新時）
+  auto-review:
+    if: |
+      github.event_name == 'pull_request' &&
+      !github.event.pull_request.draft
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # 全履歴を取得してdiffを正確に分析
+
+      - name: Run Claude Code Review
+        uses: anthropics/claude-code-base-action@beta
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          prompt: |
+            リポジトリ: ${{ github.repository }}
+            PR番号: #${{ github.event.pull_request.number }}
+            PRタイトル: ${{ github.event.pull_request.title }}
+            PRの説明: ${{ github.event.pull_request.body }}
+            ベースブランチ: ${{ github.event.pull_request.base.ref }}
+            ヘッドブランチ: ${{ github.event.pull_request.head.ref }}
+
+            ## 重要な指示
+            このPRを詳細にレビューし、レビュー結果をGitHubのPRコメントとして投稿してください。
+            必ず`gh pr comment ${{ github.event.pull_request.number }} --body "レビュー内容"`の形式でコマンドを使用してトップレベルのフィードバックをPRに投稿してください。
+            特定のコード行に関する指摘がある場合は、`mcp__github_inline_comment__create_inline_comment`を使用してインラインコメントを追加してください。
+
+            注意: GitHubコメントのみを投稿し、レビューテキストをメッセージとして送信しないでください。
+
+            ## レビュー方針
+            以下の観点から、このPRを詳細にレビューしてください:
+
+            ### 1. セキュリティレビュー
+            - SQLインジェクション、XSS、CSRF等の脆弱性
+            - 認証・認可の問題
+            - 機密情報の漏洩（APIキー、パスワード等）
+            - 依存関係のセキュリティリスク
+
+            ### 2. コード品質レビュー
+            - コードの可読性と保守性
+            - 設計パターンの適切な使用
+            - 重複コードの有無
+            - 命名規則の一貫性
+            - 適切なエラーハンドリング
+
+            ### 3. パフォーマンスレビュー
+            - N+1問題等のデータベースクエリの最適化
+            - 不必要なループや計算の有無
+            - メモリリークの可能性
+            - キャッシュの適切な使用
+
+            ### 4. ベストプラクティス
+            - プロジェクトのコーディング規約への準拠
+            - テストカバレッジの確認
+            - ドキュメントの更新必要性
+            - 型安全性の確保（TypeScript/型ヒント等）
+
+            ### 5. ビジネスロジック
+            - 要件との整合性
+            - エッジケースの考慮
+            - データの整合性
+
+            ## 出力形式（gh pr commentで投稿する内容）
+            以下の形式でPRコメントを作成してください：
+
+            # 🤖 Claude Code 自動レビュー結果
+
+            ## 総合評価
+            承認可能 / 修正必要 / 要議論
+
+            ## レビューサマリー
+            [全体的な所感を2-3行で記載]
+
+            ## 重要度別の指摘事項
+
+            ### 🚨 Critical（必ず修正が必要）
+            - [具体的な問題点と修正方法]
+
+            ### ⚠️ Warning（修正を強く推奨）
+            - [具体的な問題点と修正提案]
+
+            ### 💡 Suggestion（改善提案）
+            - [改善できる点と具体例]
+
+            ### ✅ Good（良い実装）
+            - [評価できる点]
+
+            ## 詳細なフィードバック
+            必要に応じて、具体的なコード例やベストプラクティスを含める
+
+            ---
+            > 💡 **ヒント**: より詳細なレビューが必要な場合は、コメントで `@claude` をメンションしてください。
+
+            ultrathink
+
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          allowed_tools: "Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*),Read,View,GlobTool,GrepTool"
+          model: "claude-3-5-sonnet-20241022"
+
+  # @claudeメンションへの応答
+  mention-response:
+    if: |
+      github.event_name == 'issue_comment' &&
+      (contains(github.event.comment.body, '@claude') ||
+       contains(github.event.comment.body, '@Claude'))
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Respond to Claude mention
+        uses: anthropics/claude-code-base-action@beta
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          prompt: |
+            リポジトリ: ${{ github.repository }}
+            コメント作成者: @${{ github.event.comment.user.login }}
+            コメント内容: ${{ github.event.comment.body }}
+
+            ## コンテキスト
+            ${{ github.event.issue.pull_request && 'これはPRへのコメントです。' || 'これはIssueへのコメントです。' }}
+            ${{ github.event.issue.pull_request && format('PR番号: #{0}', github.event.issue.number) || format('Issue番号: #{0}', github.event.issue.number) }}
+            タイトル: ${{ github.event.issue.title }}
+
+            ## 重要な指示
+            ユーザーのコメントに対して適切に応答し、その応答を`gh issue comment ${{ github.event.issue.number }} --body "コメント内容"`または`gh pr comment ${{ github.event.issue.number }} --body "コメント内容"`を使用してGitHubに投稿してください。
+            GitHubコメントのみを投稿し、レビューテキストをメッセージとして送信しないでください。
+
+            ## 応答方針
+            1. ユーザーのコメントを理解し、適切に応答してください
+            2. コードレビューが求められている場合は、詳細な分析を提供してください
+            3. 質問には具体的かつ建設的に回答してください
+            4. 必要に応じてコード例を提供してください
+            5. プロフェッショナルかつフレンドリーなトーンを保ってください
+
+            ## 出力形式
+            以下の形式でコメントを作成してください：
+
+            ## 🤖 Claude からの応答
+
+            @${{ github.event.comment.user.login }} さん、コメントありがとうございます。
+
+            [ユーザーのコメントに対する具体的な応答内容]
+
+            ---
+            > 💡 追加の質問がある場合は、お気軽に `@claude` をメンションしてください。
+
+            ultrathink
+
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          allowed_tools: "Bash(gh issue comment:*),Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*),Read,View,GlobTool,GrepTool"
+          model: "claude-3-5-sonnet-20241022"
+
+  # レビュー失敗時の通知（オプション）
+  notify-failure:
+    if: failure()
+    needs: [auto-review, mention-response]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Post failure comment
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            // contextはgithub-scriptが自動的に提供するため、宣言不要
+            const issue_number = context.payload.pull_request?.number || context.payload.issue?.number;
+
+            if (issue_number) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue_number,
+                body: '⚠️ Claude Codeによるレビューの実行に失敗しました。ワークフローのログを確認してください。'
+              });
+            }
