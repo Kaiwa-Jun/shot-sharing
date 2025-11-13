@@ -40,7 +40,7 @@ jobs:
 
           allowed_tools: "Bash(gh pr comment:*)"
           model: "claude-3-5-sonnet-20241022"
-          timeout_minutes: 2
+          timeout_minutes: 5
 
   # @claudeメンションへの応答
   mention-response:
