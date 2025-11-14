@@ -14,6 +14,7 @@ export function MasonryGrid({ initialPhotos }: MasonryGridProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isMounted, setIsMounted] = useState(false);
 
   const breakpointColumns = {
     default: 4, // デフォルト（大画面）: 4列
@@ -90,6 +91,11 @@ export function MasonryGrid({ initialPhotos }: MasonryGridProps) {
     }
   }, [loadMore]);
 
+  // クライアントサイドマウント検出（ちらつき防止）
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
   // スクロールイベントリスナー（デバウンス処理）
   useEffect(() => {
     let timeoutId: NodeJS.Timeout;
@@ -105,6 +111,20 @@ export function MasonryGrid({ initialPhotos }: MasonryGridProps) {
       window.removeEventListener("scroll", debouncedScroll);
     };
   }, [handleScroll]);
+
+  // SSRハイドレーションミスマッチを防ぐため、マウント後に表示
+  if (!isMounted) {
+    return (
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+        {photos.map((photo) => (
+          <div
+            key={photo.id}
+            className="aspect-auto animate-pulse bg-gray-200"
+          />
+        ))}
+      </div>
+    );
+  }
 
   return (
     <div>
