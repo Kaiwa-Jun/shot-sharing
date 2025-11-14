@@ -11,6 +11,11 @@ import {
 } from "@/components/ui/card";
 import { motion } from "framer-motion";
 import { useState } from "react";
+import ProfileTest from "@/app/components/profile-test";
+import GeminiTest from "@/app/components/gemini-test";
+
+// 動的レンダリングを強制（ビルド時のプリレンダリングをスキップ）
+export const dynamic = 'force-dynamic'
 
 export default function Home() {
   const [count, setCount] = useState(0);
@@ -31,7 +36,18 @@ export default function Home() {
           <p className="mt-4 text-lg text-muted-foreground">
             AI-powered photo sharing platform
           </p>
+          <div className="mt-6 flex justify-center gap-4">
+            <Button asChild size="lg">
+              <a href="/login">認証テスト</a>
+            </Button>
+          </div>
         </motion.div>
+
+        {/* データベース接続テスト */}
+        <ProfileTest />
+
+        {/* Gemini API 接続テスト */}
+        <GeminiTest />
 
         {/* Framer Motion デモセクション */}
         <motion.div
