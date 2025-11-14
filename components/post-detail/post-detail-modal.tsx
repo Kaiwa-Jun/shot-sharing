@@ -3,7 +3,7 @@
 import { Post } from "@/app/actions/posts";
 import { motion, useMotionValue, useTransform } from "framer-motion";
 import Image from "next/image";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
 import { ExifInfo } from "./exif-info";
 import { SaveButton } from "./save-button";
@@ -20,8 +20,21 @@ export function PostDetailModal({
   onClose,
 }: PostDetailModalProps) {
   const [isSaved, setIsSaved] = useState(initialIsSaved);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // モバイル判定
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768); // md breakpoint
+    };
+
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
 
   // スワイプクローズ用のモーション値
+  const x = useMotionValue(0);
   const y = useMotionValue(0);
   const opacity = useTransform(y, [0, 300], [1, 0]);
 
@@ -32,8 +45,11 @@ export function PostDetailModal({
 
   // ドラッグ終了時の処理
   const handleDragEnd = (_: any, info: any) => {
-    if (info.offset.y > 150) {
-      // 下方向に150px以上ドラッグした場合は閉じる
+    if (!isMobile) return; // デスクトップでは処理しない
+
+    // 任意の方向に150px以上ドラッグした場合は閉じる
+    const distance = Math.sqrt(info.offset.x ** 2 + info.offset.y ** 2);
+    if (distance > 150) {
       handleClose();
     }
   };
@@ -72,57 +88,54 @@ export function PostDetailModal({
       {/* モーダルコンテナ */}
       <motion.div
         className="relative h-full w-full max-w-4xl overflow-hidden bg-background"
-        style={{ y, opacity }}
-        drag="y"
-        dragConstraints={{ top: 0, bottom: 0 }}
-        dragElastic={{ top: 0, bottom: 0.7 }}
-        onDragEnd={handleDragEnd}
+        style={isMobile ? { x, y } : {}}
+        drag={isMobile ? true : false}
+        dragConstraints={
+          isMobile ? { top: 0, bottom: 0, left: 0, right: 0 } : undefined
+        }
+        dragElastic={isMobile ? 0.2 : undefined}
+        onDragEnd={isMobile ? handleDragEnd : undefined}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* ヘッダー */}
-        <motion.div
-          className="absolute left-0 right-0 top-0 z-10 flex items-center justify-end bg-gradient-to-b from-black/80 to-transparent p-4"
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -20 }}
-          transition={{ delay: 0.3, duration: 0.3 }}
-        >
-          <button
-            onClick={handleClose}
-            className="rounded-full bg-black/50 p-2 text-white transition-colors hover:bg-black/70"
-            aria-label="閉じる"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <line x1="18" y1="6" x2="6" y2="18"></line>
-              <line x1="6" y1="6" x2="18" y2="18"></line>
-            </svg>
-          </button>
-        </motion.div>
-
         {/* スクロール可能なコンテンツエリア */}
         <div className="h-full overflow-y-auto">
-          {/* 画像エリア（ピンチズーム対応） */}
+          {/* 画像エリア */}
           <div className="relative h-[60vh] min-h-[400px] bg-black">
-            <TransformWrapper
-              initialScale={1}
-              minScale={1}
-              maxScale={4}
-              centerOnInit
-            >
-              <TransformComponent
-                wrapperClass="!w-full !h-full"
-                contentClass="!w-full !h-full flex items-center justify-center"
+            {!isMobile ? (
+              // デスクトップ: ピンチズーム有効
+              <TransformWrapper
+                initialScale={1}
+                minScale={1}
+                maxScale={4}
+                centerOnInit
               >
+                <TransformComponent
+                  wrapperClass="!w-full !h-full"
+                  contentClass="!w-full !h-full flex items-center justify-center"
+                >
+                  <motion.div
+                    layoutId={`photo-${post.id}`}
+                    className="relative flex h-full w-full items-center justify-center"
+                    transition={{
+                      duration: 0.55,
+                      ease: [0.25, 0.1, 0.25, 1],
+                    }}
+                  >
+                    <Image
+                      src={post.imageUrl}
+                      alt={post.description || "Photo"}
+                      width={post.width || 800}
+                      height={post.height || 1200}
+                      className="max-h-full max-w-full object-contain"
+                      priority
+                      unoptimized
+                    />
+                  </motion.div>
+                </TransformComponent>
+              </TransformWrapper>
+            ) : (
+              // モバイル: 画像固定（ピンチズーム無効）
+              <div className="flex h-full w-full items-center justify-center">
                 <motion.div
                   layoutId={`photo-${post.id}`}
                   className="relative flex h-full w-full items-center justify-center"
@@ -141,8 +154,8 @@ export function PostDetailModal({
                     unoptimized
                   />
                 </motion.div>
-              </TransformComponent>
-            </TransformWrapper>
+              </div>
+            )}
           </div>
 
           {/* コンテンツエリア */}
