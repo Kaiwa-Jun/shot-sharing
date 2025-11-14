@@ -31,6 +31,11 @@ export default function Home() {
           <p className="mt-4 text-lg text-muted-foreground">
             AI-powered photo sharing platform
           </p>
+          <div className="mt-6 flex justify-center gap-4">
+            <Button asChild size="lg">
+              <a href="/login">認証テスト</a>
+            </Button>
+          </div>
         </motion.div>
 
         {/* Framer Motion デモセクション */}
