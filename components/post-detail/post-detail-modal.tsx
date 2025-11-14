@@ -125,7 +125,7 @@ export function PostDetailModal({
               >
                 <motion.div
                   layoutId={`photo-${post.id}`}
-                  className="relative"
+                  className="relative flex h-full w-full items-center justify-center"
                   transition={{
                     duration: 0.55,
                     ease: [0.25, 0.1, 0.25, 1],
@@ -136,7 +136,7 @@ export function PostDetailModal({
                     alt={post.description || "Photo"}
                     width={post.width || 800}
                     height={post.height || 1200}
-                    className="h-auto max-h-full w-auto max-w-full object-contain"
+                    className="max-h-full max-w-full object-contain"
                     priority
                     unoptimized
                   />
