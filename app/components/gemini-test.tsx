@@ -1,55 +1,55 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import { testGeminiAPI, askPhotoQuestion } from '@/app/actions/gemini'
+import { useState } from "react";
+import { testGeminiAPI, askPhotoQuestion } from "@/app/actions/gemini";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { motion } from 'framer-motion'
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { motion } from "framer-motion";
 
 export default function GeminiTest() {
-  const [loading, setLoading] = useState(false)
-  const [result, setResult] = useState<string | null>(null)
-  const [error, setError] = useState<string | null>(null)
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const handleSimpleTest = async () => {
-    setLoading(true)
-    setResult(null)
-    setError(null)
+    setLoading(true);
+    setResult(null);
+    setError(null);
 
     const response = await testGeminiAPI(
-      'こんにちは！簡単な自己紹介をしてください。'
-    )
+      "こんにちは！簡単な自己紹介をしてください。"
+    );
 
     if (response.success) {
-      setResult(response.response)
+      setResult(response.response);
     } else {
-      setError(response.error)
+      setError(response.error);
     }
-    setLoading(false)
-  }
+    setLoading(false);
+  };
 
   const handlePhotoQuestion = async () => {
-    setLoading(true)
-    setResult(null)
-    setError(null)
+    setLoading(true);
+    setResult(null);
+    setError(null);
 
     const response = await askPhotoQuestion(
-      '夕焼けを綺麗に撮影するための設定を教えてください'
-    )
+      "夕焼けを綺麗に撮影するための設定を教えてください"
+    );
 
     if (response.success) {
-      setResult(response.response)
+      setResult(response.response);
     } else {
-      setError(response.error)
+      setError(response.error);
     }
-    setLoading(false)
-  }
+    setLoading(false);
+  };
 
   return (
     <motion.div
@@ -74,14 +74,14 @@ export default function GeminiTest() {
               disabled={loading}
               variant="default"
             >
-              {loading ? '生成中...' : 'シンプルテスト'}
+              {loading ? "生成中..." : "シンプルテスト"}
             </Button>
             <Button
               onClick={handlePhotoQuestion}
               disabled={loading}
               variant="secondary"
             >
-              {loading ? '生成中...' : '撮影設定の質問（デモ）'}
+              {loading ? "生成中..." : "撮影設定の質問（デモ）"}
             </Button>
           </div>
 
@@ -123,14 +123,11 @@ export default function GeminiTest() {
               <li>✓ Gemini API キーが正しく設定されている</li>
               <li>✓ @google/generative-ai SDK が正常に動作</li>
               <li>✓ Server Actions 経由で API リクエストが可能</li>
-              <li>
-                ✓ 将来的に File Search API
-                を使った画像検索機能に拡張予定
-              </li>
+              <li>✓ 将来的に File Search API を使った画像検索機能に拡張予定</li>
             </ul>
           </div>
         </CardContent>
       </Card>
     </motion.div>
-  )
+  );
 }

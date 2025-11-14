@@ -1,27 +1,27 @@
-'use client'
+"use client";
 
-import { createClient } from '@/lib/supabase/client'
-import { Button } from '@/components/ui/button'
+import { createClient } from "@/lib/supabase/client";
+import { Button } from "@/components/ui/button";
 
 // 動的レンダリングを強制（ビルド時のプリレンダリングをスキップ）
-export const dynamic = 'force-dynamic'
+export const dynamic = "force-dynamic";
 
 export default function LoginPage() {
-  const supabase = createClient()
+  const supabase = createClient();
 
   const handleGoogleLogin = async () => {
     const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
+      provider: "google",
       options: {
         redirectTo: `${window.location.origin}/auth/callback`,
       },
-    })
+    });
 
     if (error) {
-      console.error('Login error:', error)
-      alert('ログインに失敗しました: ' + error.message)
+      console.error("Login error:", error);
+      alert("ログインに失敗しました: " + error.message);
     }
-  }
+  };
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-50">
@@ -34,11 +34,7 @@ export default function LoginPage() {
         </div>
 
         <div className="mt-8">
-          <Button
-            onClick={handleGoogleLogin}
-            className="w-full"
-            size="lg"
-          >
+          <Button onClick={handleGoogleLogin} className="w-full" size="lg">
             <svg className="mr-2 h-5 w-5" viewBox="0 0 24 24">
               <path
                 fill="currentColor"
@@ -70,5 +66,5 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
-  )
+  );
 }
