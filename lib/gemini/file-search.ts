@@ -10,10 +10,8 @@
  * - 検索方式: マルチモーダル（テキスト/画像/併用）
  */
 
-import { GoogleGenerativeAI, FileState } from '@google/generative-ai'
-
-// このファイルの関数は将来実装予定のため、現在は環境変数チェックなし
-// 実装時にはランタイムでチェックを行う
+// このファイルは将来実装予定のため、現在は使用していません
+// File Search API実装時にGemini SDKのインポートを追加します
 
 /**
  * ファイルをアップロード（画像・JSON等）
