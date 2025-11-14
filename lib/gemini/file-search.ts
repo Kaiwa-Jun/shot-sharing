@@ -12,11 +12,8 @@
 
 import { GoogleGenerativeAI, FileState } from '@google/generative-ai'
 
-if (!process.env.GEMINI_API_KEY) {
-  throw new Error('GEMINI_API_KEY is not set in environment variables')
-}
-
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY)
+// このファイルの関数は将来実装予定のため、現在は環境変数チェックなし
+// 実装時にはランタイムでチェックを行う
 
 /**
  * ファイルをアップロード（画像・JSON等）

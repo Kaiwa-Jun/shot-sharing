@@ -1,11 +1,12 @@
 import { GoogleGenerativeAI } from '@google/generative-ai'
 
-if (!process.env.GEMINI_API_KEY) {
-  throw new Error('GEMINI_API_KEY is not set in environment variables')
+// Gemini AI クライアントの初期化（ランタイムでチェック）
+function getGenAI() {
+  if (!process.env.GEMINI_API_KEY) {
+    throw new Error('GEMINI_API_KEY is not set in environment variables')
+  }
+  return new GoogleGenerativeAI(process.env.GEMINI_API_KEY)
 }
-
-// Gemini AI クライアントの初期化
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY)
 
 /**
  * Gemini モデルを取得
@@ -17,6 +18,7 @@ export function getGeminiModel(
     | 'gemini-1.5-pro'
     | 'gemini-2.0-flash-exp' = 'gemini-2.0-flash-exp'
 ) {
+  const genAI = getGenAI()
   return genAI.getGenerativeModel({ model: modelName })
 }
 
@@ -42,5 +44,3 @@ export function startChat(history?: Array<{ role: string; parts: string }>) {
     })),
   })
 }
-
-export { genAI }
