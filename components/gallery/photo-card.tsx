@@ -15,14 +15,22 @@ export interface PhotoCardProps {
   imageUrl: string;
   exifData?: ExifData;
   onClick?: () => void;
+  isNew?: boolean;
 }
 
-export function PhotoCard({ imageUrl, exifData, onClick }: PhotoCardProps) {
+export function PhotoCard({
+  imageUrl,
+  exifData,
+  onClick,
+  isNew = false,
+}: PhotoCardProps) {
   return (
     <motion.div
       className="group relative cursor-pointer overflow-hidden shadow-md transition-shadow hover:shadow-xl"
+      initial={isNew ? { opacity: 0, y: 20 } : false}
+      animate={isNew ? { opacity: 1, y: 0 } : {}}
+      transition={{ duration: 0.5, ease: "easeOut" }}
       whileHover={{ scale: 1.02 }}
-      transition={{ duration: 0.2 }}
       onClick={onClick}
     >
       {/* 画像 */}
