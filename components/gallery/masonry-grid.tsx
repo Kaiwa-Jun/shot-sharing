@@ -10,10 +10,10 @@ interface MasonryGridProps {
 
 export function MasonryGrid({ photos }: MasonryGridProps) {
   const breakpointColumns = {
-    default: 2, // デフォルト（スマホ）: 2列
-    640: 2, // スマホ: 2列
-    1024: 3, // タブレット: 3列
-    1280: 4, // デスクトップ: 4列
+    default: 4, // デフォルト（大画面）: 4列
+    640: 2, // スマホ（640px以下）: 2列
+    1024: 3, // タブレット（1024px以下）: 3列
+    1280: 4, // デスクトップ（1280px以下）: 4列
   };
 
   return (
