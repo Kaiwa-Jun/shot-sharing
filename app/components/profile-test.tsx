@@ -1,62 +1,62 @@
-'use client'
+"use client";
 
-import { useEffect, useState } from 'react'
-import { getAllProfiles, getProfilesCount } from '@/app/actions/profiles'
+import { useEffect, useState } from "react";
+import { getAllProfiles, getProfilesCount } from "@/app/actions/profiles";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card'
-import { motion } from 'framer-motion'
+} from "@/components/ui/card";
+import { motion } from "framer-motion";
 
 type Profile = {
-  id: string
-  email: string
-  display_name: string | null
-  avatar_url: string | null
-  bio: string | null
-  created_at: string
-  updated_at: string
-}
+  id: string;
+  email: string;
+  display_name: string | null;
+  avatar_url: string | null;
+  bio: string | null;
+  created_at: string;
+  updated_at: string;
+};
 
 export default function ProfileTest() {
-  const [profiles, setProfiles] = useState<Profile[]>([])
-  const [count, setCount] = useState<number>(0)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const [profiles, setProfiles] = useState<Profile[]>([]);
+  const [count, setCount] = useState<number>(0);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchData() {
       try {
-        setLoading(true)
+        setLoading(true);
         const [profilesResult, countResult] = await Promise.all([
           getAllProfiles(),
           getProfilesCount(),
-        ])
+        ]);
 
         if (profilesResult.error) {
-          setError(profilesResult.error)
+          setError(profilesResult.error);
         } else {
-          setProfiles(profilesResult.profiles)
+          setProfiles(profilesResult.profiles);
         }
 
         if (countResult.error) {
-          setError(countResult.error)
+          setError(countResult.error);
         } else {
-          setCount(countResult.count || 0)
+          setCount(countResult.count || 0);
         }
       } catch (err) {
-        setError('データの取得に失敗しました')
-        console.error(err)
+        setError("データの取得に失敗しました");
+        console.error(err);
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
     }
 
-    fetchData()
-  }, [])
+    fetchData();
+  }, []);
 
   if (loading) {
     return (
@@ -69,7 +69,7 @@ export default function ProfileTest() {
           <p className="text-sm text-blue-700">データを読み込んでいます...</p>
         </CardContent>
       </Card>
-    )
+    );
   }
 
   if (error) {
@@ -83,7 +83,7 @@ export default function ProfileTest() {
           <p className="text-sm text-red-700">{error}</p>
         </CardContent>
       </Card>
-    )
+    );
   }
 
   return (
@@ -121,7 +121,7 @@ export default function ProfileTest() {
                     {profile.avatar_url ? (
                       <img
                         src={profile.avatar_url}
-                        alt={profile.display_name || 'User'}
+                        alt={profile.display_name || "User"}
                         className="h-16 w-16 rounded-full border-2 border-green-400"
                       />
                     ) : (
@@ -132,7 +132,7 @@ export default function ProfileTest() {
                     <div className="flex-1 space-y-2">
                       <div>
                         <p className="font-semibold text-green-900">
-                          {profile.display_name || '名前未設定'}
+                          {profile.display_name || "名前未設定"}
                         </p>
                         <p className="text-sm text-green-700">
                           {profile.email}
@@ -143,13 +143,13 @@ export default function ProfileTest() {
                       )}
                       <div className="grid grid-cols-2 gap-2 text-xs text-green-600">
                         <div>
-                          <span className="font-medium">ID:</span>{' '}
+                          <span className="font-medium">ID:</span>{" "}
                           {profile.id.slice(0, 8)}...
                         </div>
                         <div>
-                          <span className="font-medium">登録日:</span>{' '}
+                          <span className="font-medium">登録日:</span>{" "}
                           {new Date(profile.created_at).toLocaleDateString(
-                            'ja-JP'
+                            "ja-JP"
                           )}
                         </div>
                       </div>
@@ -174,5 +174,5 @@ export default function ProfileTest() {
         </CardContent>
       </Card>
     </motion.div>
-  )
+  );
 }

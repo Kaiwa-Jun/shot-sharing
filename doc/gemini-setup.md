@@ -39,22 +39,22 @@ npm install @google/generative-ai
 ### 基本的なテキスト生成
 
 ```typescript
-import { generateText } from '@/lib/gemini/client'
+import { generateText } from "@/lib/gemini/client";
 
-const response = await generateText('こんにちは！')
-console.log(response)
+const response = await generateText("こんにちは！");
+console.log(response);
 ```
 
 ### Server Actions経由での使用
 
 ```typescript
-import { testGeminiAPI, askPhotoQuestion } from '@/app/actions/gemini'
+import { testGeminiAPI, askPhotoQuestion } from "@/app/actions/gemini";
 
 // シンプルなテスト
-const result = await testGeminiAPI('質問内容')
+const result = await testGeminiAPI("質問内容");
 
 // 撮影設定に関する質問
-const answer = await askPhotoQuestion('夕焼けの撮影方法')
+const answer = await askPhotoQuestion("夕焼けの撮影方法");
 ```
 
 ## モデルの選択
@@ -62,6 +62,7 @@ const answer = await askPhotoQuestion('夕焼けの撮影方法')
 現在のデフォルト: **Gemini 2.0 Flash Exp**
 
 利用可能なモデル:
+
 - `gemini-2.0-flash-exp` - 最新・バランス型（デフォルト）
 - `gemini-1.5-flash` - コスト重視
 - `gemini-1.5-pro` - 精度重視
@@ -69,9 +70,9 @@ const answer = await askPhotoQuestion('夕焼けの撮影方法')
 モデルの変更:
 
 ```typescript
-import { getGeminiModel } from '@/lib/gemini/client'
+import { getGeminiModel } from "@/lib/gemini/client";
 
-const model = getGeminiModel('gemini-1.5-pro')
+const model = getGeminiModel("gemini-1.5-pro");
 ```
 
 ## ファイル構成
@@ -91,6 +92,7 @@ app/components/
 ## 動作確認
 
 1. **開発サーバーを起動**
+
    ```bash
    npm run dev
    ```
@@ -136,6 +138,7 @@ Error: GEMINI_API_KEY is not set in environment variables
 ### レート制限エラー
 
 Google AI Studioの無料プランには以下の制限があります:
+
 - 1分あたり15リクエスト
 - 1日あたり1,500リクエスト
 
@@ -144,6 +147,7 @@ Google AI Studioの無料プランには以下の制限があります:
 ### モデルが見つからないエラー
 
 使用可能なモデル名を確認してください:
+
 - `gemini-2.0-flash-exp`
 - `gemini-1.5-flash`
 - `gemini-1.5-pro`

@@ -1,25 +1,25 @@
-import { createClient } from '@/lib/supabase/server'
-import { redirect } from 'next/navigation'
-import { Button } from '@/components/ui/button'
-import LogoutButton from './logout-button'
+import { createClient } from "@/lib/supabase/server";
+import { redirect } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import LogoutButton from "./logout-button";
 
 export default async function TestPage() {
-  const supabase = await createClient()
+  const supabase = await createClient();
 
   const {
     data: { user },
-  } = await supabase.auth.getUser()
+  } = await supabase.auth.getUser();
 
   if (!user) {
-    redirect('/login')
+    redirect("/login");
   }
 
   // プロフィール情報を取得
   const { data: profile } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', user.id)
-    .single()
+    .from("profiles")
+    .select("*")
+    .eq("id", user.id)
+    .single();
 
   return (
     <div className="min-h-screen bg-gray-50 py-12">
@@ -44,9 +44,7 @@ export default async function TestPage() {
                   <span className="text-gray-900">{user.id}</span>
                 </div>
                 <div className="flex">
-                  <span className="w-32 font-medium text-gray-600">
-                    Email:
-                  </span>
+                  <span className="w-32 font-medium text-gray-600">Email:</span>
                   <span className="text-gray-900">{user.email}</span>
                 </div>
                 <div className="flex">
@@ -54,7 +52,7 @@ export default async function TestPage() {
                     作成日時:
                   </span>
                   <span className="text-gray-900">
-                    {new Date(user.created_at).toLocaleString('ja-JP')}
+                    {new Date(user.created_at).toLocaleString("ja-JP")}
                   </span>
                 </div>
               </div>
@@ -71,9 +69,7 @@ export default async function TestPage() {
                 </h2>
                 <div className="space-y-2 text-sm">
                   <div className="flex">
-                    <span className="w-32 font-medium text-green-700">
-                      ID:
-                    </span>
+                    <span className="w-32 font-medium text-green-700">ID:</span>
                     <span className="text-green-900">{profile.id}</span>
                   </div>
                   <div className="flex">
@@ -87,7 +83,7 @@ export default async function TestPage() {
                       表示名:
                     </span>
                     <span className="text-green-900">
-                      {profile.display_name || '(未設定)'}
+                      {profile.display_name || "(未設定)"}
                     </span>
                   </div>
                   <div className="flex items-start">
@@ -116,7 +112,7 @@ export default async function TestPage() {
                       作成日時:
                     </span>
                     <span className="text-green-900">
-                      {new Date(profile.created_at).toLocaleString('ja-JP')}
+                      {new Date(profile.created_at).toLocaleString("ja-JP")}
                     </span>
                   </div>
                 </div>
@@ -144,12 +140,10 @@ export default async function TestPage() {
                   <span>認証コールバックが正常に動作</span>
                 </li>
                 <li className="flex items-start">
-                  <span className="mr-2">
-                    {profile ? '✓' : '✗'}
-                  </span>
+                  <span className="mr-2">{profile ? "✓" : "✗"}</span>
                   <span>
                     profilesテーブルへの自動登録（トリガー）
-                    {profile ? 'が成功' : 'が失敗'}
+                    {profile ? "が成功" : "が失敗"}
                   </span>
                 </li>
                 <li className="flex items-start">
@@ -162,5 +156,5 @@ export default async function TestPage() {
         </div>
       </div>
     </div>
-  )
+  );
 }

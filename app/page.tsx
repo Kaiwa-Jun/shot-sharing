@@ -15,7 +15,7 @@ export default function Home() {
       <Header />
 
       {/* メインコンテンツ */}
-      <main className="container mx-auto px-4 pt-20 pb-24">
+      <main className="container mx-auto px-4 pb-24 pt-20">
         <MasonryGrid photos={mockPhotos} />
       </main>
 

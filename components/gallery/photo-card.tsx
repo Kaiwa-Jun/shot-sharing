@@ -40,15 +40,18 @@ export function PhotoCard({ imageUrl, exifData, onClick }: PhotoCardProps) {
         {exifData && (
           <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent px-3 py-4">
             <div className="flex items-center gap-2 font-mono text-xs text-white">
-              {exifData.iso && <span>ISO {exifData.iso}</span>}
-              {exifData.fValue && <span>• f/{exifData.fValue}</span>}
-              {exifData.shutterSpeed && <span>• {exifData.shutterSpeed}</span>}
-              {exifData.exposureCompensation && (
-                <span>
-                  • {exifData.exposureCompensation > 0 ? "+" : ""}
-                  {exifData.exposureCompensation}EV
-                </span>
-              )}
+              <span>
+                {[
+                  exifData.iso && `ISO ${exifData.iso}`,
+                  exifData.fValue && `f/${exifData.fValue}`,
+                  exifData.shutterSpeed && exifData.shutterSpeed,
+                  exifData.exposureCompensation !== undefined &&
+                    exifData.exposureCompensation !== 0 &&
+                    `${exifData.exposureCompensation > 0 ? "+" : ""}${exifData.exposureCompensation}EV`,
+                ]
+                  .filter(Boolean)
+                  .join(" • ")}
+              </span>
             </div>
           </div>
         )}

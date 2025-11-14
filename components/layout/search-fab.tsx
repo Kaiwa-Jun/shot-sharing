@@ -36,6 +36,7 @@ export function SearchFAB() {
     if (query.trim()) {
       // TODO: 検索処理を実装
       console.log("Search query:", query);
+      handleCollapse(); // 送信後に入力欄を閉じる
     }
   };
 
@@ -95,6 +96,7 @@ export function SearchFAB() {
                   animate={{ y: 0, opacity: 1 }}
                   transition={{ delay: 0.15 + index * 0.05 }}
                   onClick={() => handleExampleClick(example)}
+                  onMouseDown={(e) => e.preventDefault()}
                   className="whitespace-nowrap rounded-full bg-card px-4 py-2 text-sm shadow-md transition-colors hover:bg-accent"
                 >
                   {example}
@@ -128,6 +130,7 @@ export function SearchFAB() {
                 size="icon"
                 variant="ghost"
                 className="h-10 w-10 shrink-0"
+                onMouseDown={(e) => e.preventDefault()}
               >
                 <ImageIcon className="h-5 w-5" />
               </Button>
@@ -139,6 +142,7 @@ export function SearchFAB() {
                 variant="ghost"
                 disabled
                 className="h-10 w-10 shrink-0 opacity-40"
+                onMouseDown={(e) => e.preventDefault()}
               >
                 <Mic className="h-5 w-5" />
               </Button>
@@ -149,6 +153,7 @@ export function SearchFAB() {
                 size="icon"
                 className="h-10 w-10 shrink-0 bg-primary"
                 disabled={!query.trim()}
+                onMouseDown={(e) => e.preventDefault()}
               >
                 <Send className="h-5 w-5" />
               </Button>
