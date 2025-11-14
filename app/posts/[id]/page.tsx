@@ -1,6 +1,8 @@
 import { getPostById } from "@/app/actions/posts";
 import { checkIsSaved } from "@/app/actions/saves";
+import { getPosts } from "@/app/actions/posts";
 import { PostDetailPage } from "./page-client";
+import { PhotoCardProps } from "@/components/gallery/photo-card";
 import { notFound } from "next/navigation";
 
 interface PageProps {
@@ -20,5 +22,20 @@ export default async function Page({ params }: PageProps) {
   // 保存状態を確認
   const { data: isSaved } = await checkIsSaved(id);
 
-  return <PostDetailPage post={post} initialIsSaved={isSaved || false} />;
+  // 背景用にギャラリーの写真を取得（デスクトップサイズのみ表示）
+  const { data: posts } = await getPosts(20, 0);
+  const backgroundPhotos: PhotoCardProps[] =
+    posts?.map((p) => ({
+      id: p.id,
+      imageUrl: p.imageUrl,
+      exifData: p.exifData ?? undefined,
+    })) || [];
+
+  return (
+    <PostDetailPage
+      post={post}
+      initialIsSaved={isSaved || false}
+      backgroundPhotos={backgroundPhotos}
+    />
+  );
 }

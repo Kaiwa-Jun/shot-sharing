@@ -12,12 +12,14 @@ interface PostDetailModalProps {
   post: Post;
   initialIsSaved: boolean;
   onClose: () => void;
+  skipAnimation?: boolean;
 }
 
 export function PostDetailModal({
   post,
   initialIsSaved,
   onClose,
+  skipAnimation = false,
 }: PostDetailModalProps) {
   const [isSaved, setIsSaved] = useState(initialIsSaved);
   const [isMobile, setIsMobile] = useState(false);
@@ -86,10 +88,12 @@ export function PostDetailModal({
     <motion.div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/80"
       onClick={handleClose}
-      initial={{ opacity: 0 }}
+      initial={skipAnimation ? { opacity: 1 } : { opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      transition={{ duration: 0.4, ease: "easeOut" }}
+      transition={
+        skipAnimation ? { duration: 0 } : { duration: 0.4, ease: "easeOut" }
+      }
     >
       {/* モーダルコンテナ */}
       <motion.div
