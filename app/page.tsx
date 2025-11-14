@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/card";
 import { motion } from "framer-motion";
 import { useState } from "react";
+import ProfileTest from "@/app/components/profile-test";
 
 export default function Home() {
   const [count, setCount] = useState(0);
@@ -37,6 +38,9 @@ export default function Home() {
             </Button>
           </div>
         </motion.div>
+
+        {/* データベース接続テスト */}
+        <ProfileTest />
 
         {/* Framer Motion デモセクション */}
         <motion.div
