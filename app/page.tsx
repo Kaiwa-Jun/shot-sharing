@@ -12,6 +12,7 @@ import {
 import { motion } from "framer-motion";
 import { useState } from "react";
 import ProfileTest from "@/app/components/profile-test";
+import GeminiTest from "@/app/components/gemini-test";
 
 export default function Home() {
   const [count, setCount] = useState(0);
@@ -41,6 +42,9 @@ export default function Home() {
 
         {/* データベース接続テスト */}
         <ProfileTest />
+
+        {/* Gemini API 接続テスト */}
+        <GeminiTest />
 
         {/* Framer Motion デモセクション */}
         <motion.div
