@@ -104,6 +104,17 @@ export function MasonryGrid({ initialPhotos }: MasonryGridProps) {
   // クライアントサイドマウント検出（ちらつき防止）
   useEffect(() => {
     setIsMounted(true);
+
+    // 初期レンダリング時に全ての写真にフェードインアニメーションを適用
+    const initialIds = new Set(initialPhotos.map((p) => p.id));
+    setNewPhotoIds(initialIds);
+
+    // 2秒後にアニメーションフラグをクリア
+    const timeoutId = setTimeout(() => {
+      setNewPhotoIds(new Set());
+    }, 2000);
+
+    return () => clearTimeout(timeoutId);
   }, []);
 
   // スクロールイベントリスナー（デバウンス処理）
