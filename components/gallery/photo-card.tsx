@@ -25,6 +25,8 @@ export function PhotoCard({
   onClick,
   isNew = false,
 }: PhotoCardProps) {
+  console.log(`[PhotoCard ${id.slice(0, 8)}]`, { isNew });
+
   return (
     <motion.div
       className="group relative cursor-pointer overflow-hidden shadow-md transition-shadow hover:shadow-xl"

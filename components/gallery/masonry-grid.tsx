@@ -8,9 +8,14 @@ import "./masonry-grid.css";
 interface MasonryGridProps {
   initialPhotos: PhotoCardProps[];
   onPhotoClick?: (photoId: string, photoData: PhotoCardProps) => void;
+  skipInitialAnimation?: boolean;
 }
 
-export function MasonryGrid({ initialPhotos, onPhotoClick }: MasonryGridProps) {
+export function MasonryGrid({
+  initialPhotos,
+  onPhotoClick,
+  skipInitialAnimation = false,
+}: MasonryGridProps) {
   const [photos, setPhotos] = useState<PhotoCardProps[]>(initialPhotos);
   const [isLoading, setIsLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
@@ -104,19 +109,33 @@ export function MasonryGrid({ initialPhotos, onPhotoClick }: MasonryGridProps) {
 
   // クライアントサイドマウント検出（ちらつき防止）
   useEffect(() => {
+    console.log("[MasonryGrid] マウント開始", {
+      skipInitialAnimation,
+      photosCount: initialPhotos.length,
+    });
     setIsMounted(true);
+
+    // skipInitialAnimationが有効な場合はアニメーションをスキップ
+    if (skipInitialAnimation) {
+      console.log("[MasonryGrid] アニメーションスキップ");
+      return;
+    }
 
     // 初期レンダリング時に全ての写真にフェードインアニメーションを適用
     const initialIds = new Set(initialPhotos.map((p) => p.id));
+    console.log("[MasonryGrid] アニメーション開始", {
+      photoIds: Array.from(initialIds),
+    });
     setNewPhotoIds(initialIds);
 
     // 2秒後にアニメーションフラグをクリア
     const timeoutId = setTimeout(() => {
+      console.log("[MasonryGrid] アニメーションクリア");
       setNewPhotoIds(new Set());
     }, 2000);
 
     return () => clearTimeout(timeoutId);
-  }, []);
+  }, [skipInitialAnimation]);
 
   // スクロールイベントリスナー（デバウンス処理）
   useEffect(() => {
@@ -135,7 +154,8 @@ export function MasonryGrid({ initialPhotos, onPhotoClick }: MasonryGridProps) {
   }, [handleScroll]);
 
   // SSRハイドレーションミスマッチを防ぐため、マウント後に表示
-  if (!isMounted) {
+  // skipInitialAnimationが有効な場合はこのチェックをスキップ
+  if (!isMounted && !skipInitialAnimation) {
     return (
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
         {photos.map((photo) => (
