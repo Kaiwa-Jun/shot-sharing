@@ -15,6 +15,7 @@ export function MasonryGrid({ initialPhotos }: MasonryGridProps) {
   const [hasMore, setHasMore] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isMounted, setIsMounted] = useState(false);
+  const [newPhotoIds, setNewPhotoIds] = useState<Set<string>>(new Set());
 
   const breakpointColumns = {
     default: 4, // デフォルト（大画面）: 4列
@@ -56,7 +57,7 @@ export function MasonryGrid({ initialPhotos }: MasonryGridProps) {
         // 重複チェック: 既存のIDセットを作成
         setPhotos((prev) => {
           const existingIds = new Set(prev.map((p) => p.id));
-          const newPhotos = data.filter(
+          const newPhotos: PhotoCardProps[] = data.filter(
             (photo: PhotoCardProps) => !existingIds.has(photo.id)
           );
 
@@ -65,6 +66,15 @@ export function MasonryGrid({ initialPhotos }: MasonryGridProps) {
             setHasMore(false);
             return prev;
           }
+
+          // 新しい写真のIDを記録
+          const newIds = new Set(newPhotos.map((p: PhotoCardProps) => p.id));
+          setNewPhotoIds(newIds);
+
+          // 2秒後にアニメーションフラグをクリア（メモリリーク防止）
+          setTimeout(() => {
+            setNewPhotoIds(new Set());
+          }, 2000);
 
           return [...prev, ...newPhotos];
         });
@@ -134,7 +144,11 @@ export function MasonryGrid({ initialPhotos }: MasonryGridProps) {
         columnClassName="masonry-grid_column"
       >
         {photos.map((photo) => (
-          <PhotoCard key={photo.id} {...photo} />
+          <PhotoCard
+            key={photo.id}
+            {...photo}
+            isNew={newPhotoIds.has(photo.id)}
+          />
         ))}
       </Masonry>
 
