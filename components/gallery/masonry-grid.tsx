@@ -7,9 +7,10 @@ import "./masonry-grid.css";
 
 interface MasonryGridProps {
   initialPhotos: PhotoCardProps[];
+  onPhotoClick?: (photoId: string, photoData: PhotoCardProps) => void;
 }
 
-export function MasonryGrid({ initialPhotos }: MasonryGridProps) {
+export function MasonryGrid({ initialPhotos, onPhotoClick }: MasonryGridProps) {
   const [photos, setPhotos] = useState<PhotoCardProps[]>(initialPhotos);
   const [isLoading, setIsLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
@@ -159,6 +160,7 @@ export function MasonryGrid({ initialPhotos }: MasonryGridProps) {
             key={photo.id}
             {...photo}
             isNew={newPhotoIds.has(photo.id)}
+            onClick={() => onPhotoClick?.(photo.id, photo)}
           />
         ))}
       </Masonry>
