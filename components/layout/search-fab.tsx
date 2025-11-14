@@ -1,7 +1,7 @@
 "use client";
 
-import { AnimatePresence, motion } from "framer-motion";
-import { ImageIcon, Mic, Search, Send, X } from "lucide-react";
+import { motion } from "framer-motion";
+import { ImageIcon, Mic, Search, Send } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 
@@ -41,37 +41,21 @@ export function SearchFAB() {
 
   return (
     <>
-      {/* 背景オーバーレイ */}
-      <AnimatePresence>
-        {isExpanded && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
-            className="fixed inset-0 z-[55] bg-black/50 backdrop-blur-sm"
-            onClick={handleCollapse}
-          />
-        )}
-      </AnimatePresence>
-
       {/* FAB / 検索入力欄 */}
       <motion.div
-        className="fixed z-[60]"
+        className="fixed bottom-4 z-[60]"
         initial={false}
         animate={
           isExpanded
             ? {
-                bottom: "50%",
-                right: "5%",
-                width: "90%",
-                translateY: "50%",
+                left: 16,
+                right: 16,
+                width: "auto",
               }
             : {
-                bottom: 16,
+                left: "auto",
                 right: 16,
-                width: 64,
-                translateY: 0,
+                width: 56,
               }
         }
         transition={{
@@ -84,32 +68,32 @@ export function SearchFAB() {
           // FAB (初期状態)
           <motion.button
             onClick={handleExpand}
-            className="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-primary to-primary/80 shadow-2xl"
+            className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-primary to-primary/80 shadow-2xl"
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.95 }}
           >
-            <Search className="h-6 w-6 text-primary-foreground" />
+            <Search className="h-5 w-5 text-primary-foreground" />
           </motion.button>
         ) : (
           // 展開状態
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="w-full space-y-4"
+            className="w-full space-y-3"
           >
             {/* 質問例バッジ */}
             <motion.div
-              initial={{ y: -20, opacity: 0 }}
+              initial={{ y: 10, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.2 }}
+              transition={{ delay: 0.1 }}
               className="flex gap-2 overflow-x-auto pb-2"
             >
               {EXAMPLE_QUERIES.map((example, index) => (
                 <motion.button
                   key={index}
-                  initial={{ y: -10, opacity: 0 }}
+                  initial={{ y: 10, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
-                  transition={{ delay: 0.2 + index * 0.05 }}
+                  transition={{ delay: 0.15 + index * 0.05 }}
                   onClick={() => handleExampleClick(example)}
                   className="whitespace-nowrap rounded-full bg-card px-4 py-2 text-sm shadow-md transition-colors hover:bg-accent"
                 >
@@ -120,28 +104,19 @@ export function SearchFAB() {
 
             {/* 検索入力欄 */}
             <motion.form
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ delay: 0.1 }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.2 }}
               onSubmit={handleSubmit}
-              className="flex items-center gap-2 rounded-2xl bg-card p-3 shadow-2xl"
+              className="flex items-center gap-2 rounded-full bg-card p-3 shadow-2xl"
             >
-              {/* 閉じるボタン */}
-              <Button
-                type="button"
-                size="icon"
-                variant="ghost"
-                onClick={handleCollapse}
-                className="h-10 w-10 shrink-0"
-              >
-                <X className="h-5 w-5" />
-              </Button>
-
               {/* テキスト入力 */}
+              <Search className="h-5 w-5 shrink-0 text-muted-foreground" />
               <input
                 type="text"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
+                onBlur={handleCollapse}
                 placeholder="撮影シーンや設定について質問..."
                 className="flex-1 bg-transparent outline-none placeholder:text-muted-foreground"
                 autoFocus
