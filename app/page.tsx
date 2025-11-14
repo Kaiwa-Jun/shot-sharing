@@ -14,6 +14,9 @@ import { useState } from "react";
 import ProfileTest from "@/app/components/profile-test";
 import GeminiTest from "@/app/components/gemini-test";
 
+// 動的レンダリングを強制（ビルド時のプリレンダリングをスキップ）
+export const dynamic = 'force-dynamic'
+
 export default function Home() {
   const [count, setCount] = useState(0);
 

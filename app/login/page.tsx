@@ -3,6 +3,9 @@
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 
+// 動的レンダリングを強制（ビルド時のプリレンダリングをスキップ）
+export const dynamic = 'force-dynamic'
+
 export default function LoginPage() {
   const supabase = createClient()
 
