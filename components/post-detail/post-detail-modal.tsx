@@ -24,14 +24,8 @@ export function PostDetailModal({
   const [isSaved, setIsSaved] = useState(initialIsSaved);
   const [isMobile, setIsMobile] = useState(false);
 
-  console.log("[PostDetailModal] レンダリング", {
-    postId: post.id.slice(0, 8),
-  });
-
   // モバイル判定
   useEffect(() => {
-    console.log("[PostDetailModal] マウント");
-
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 768); // md breakpoint
     };

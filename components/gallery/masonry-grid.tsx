@@ -109,28 +109,19 @@ export function MasonryGrid({
 
   // クライアントサイドマウント検出（ちらつき防止）
   useEffect(() => {
-    console.log("[MasonryGrid] マウント開始", {
-      skipInitialAnimation,
-      photosCount: initialPhotos.length,
-    });
     setIsMounted(true);
 
     // skipInitialAnimationが有効な場合はアニメーションをスキップ
     if (skipInitialAnimation) {
-      console.log("[MasonryGrid] アニメーションスキップ");
       return;
     }
 
     // 初期レンダリング時に全ての写真にフェードインアニメーションを適用
     const initialIds = new Set(initialPhotos.map((p) => p.id));
-    console.log("[MasonryGrid] アニメーション開始", {
-      photoIds: Array.from(initialIds),
-    });
     setNewPhotoIds(initialIds);
 
     // 2秒後にアニメーションフラグをクリア
     const timeoutId = setTimeout(() => {
-      console.log("[MasonryGrid] アニメーションクリア");
       setNewPhotoIds(new Set());
     }, 2000);
 
