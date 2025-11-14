@@ -32,7 +32,6 @@ export async function uploadFile(
   // })
   // return uploadResult.file
 
-  console.log("File upload functionality will be implemented later");
   return null;
 }
 
@@ -46,7 +45,6 @@ export async function getFileStatus(fileName: string) {
   // const file = await fileManager.getFile(fileName)
   // return file.state === FileState.ACTIVE
 
-  console.log("File status check functionality will be implemented later");
   return false;
 }
 
@@ -59,7 +57,6 @@ export async function createFileSearchStore(displayName: string) {
   // TODO: 実装予定
   // MVP実装時に File Search Store の作成機能を追加
 
-  console.log("File Search Store creation will be implemented later");
   return null;
 }
 
@@ -73,7 +70,6 @@ export async function addFileToStore(storeId: string, fileUri: string) {
   // TODO: 実装予定
   // MVP実装時に File Search Store へのファイル追加機能を実装
 
-  console.log("Add file to store functionality will be implemented later");
   return null;
 }
 
@@ -92,6 +88,5 @@ export async function searchInStore(
   // TODO: 実装予定
   // MVP実装時に File Search API による検索機能を実装
 
-  console.log("File Search functionality will be implemented later");
   return [];
 }

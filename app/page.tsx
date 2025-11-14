@@ -1,8 +1,6 @@
-import { Header } from "@/components/layout/header";
-import { SearchFAB } from "@/components/layout/search-fab";
-import { MasonryGrid } from "@/components/gallery/masonry-grid";
 import { getPosts } from "@/app/actions/posts";
 import { PhotoCardProps } from "@/components/gallery/photo-card";
+import { PageClient } from "./page-client";
 
 // 動的レンダリングを強制（ビルド時のプリレンダリングをスキップ）
 export const dynamic = "force-dynamic";
@@ -24,26 +22,5 @@ export default async function Home() {
       exifData: post.exifData || undefined,
     })) || [];
 
-  return (
-    <div className="min-h-screen bg-background">
-      {/* ヘッダー */}
-      <Header />
-
-      {/* メインコンテンツ */}
-      <main className="container mx-auto px-4 pb-24 pt-20">
-        {posts && posts.length > 0 ? (
-          <MasonryGrid initialPhotos={photos} />
-        ) : (
-          <div className="flex min-h-[50vh] items-center justify-center">
-            <p className="text-muted-foreground">
-              投稿がありません。最初の投稿を作成してみましょう！
-            </p>
-          </div>
-        )}
-      </main>
-
-      {/* フローティングアクションボタン */}
-      <SearchFAB />
-    </div>
-  );
+  return <PageClient initialPhotos={photos} />;
 }

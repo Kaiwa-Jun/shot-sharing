@@ -35,7 +35,6 @@ export function SearchFAB() {
     e.preventDefault();
     if (query.trim()) {
       // TODO: 検索処理を実装
-      console.log("Search query:", query);
       handleCollapse(); // 送信後に入力欄を閉じる
     }
   };

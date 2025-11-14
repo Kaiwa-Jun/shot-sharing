@@ -19,6 +19,7 @@ export interface PhotoCardProps {
 }
 
 export function PhotoCard({
+  id,
   imageUrl,
   exifData,
   onClick,
@@ -34,7 +35,14 @@ export function PhotoCard({
       onClick={onClick}
     >
       {/* 画像 */}
-      <div className="relative aspect-auto">
+      <motion.div
+        className="relative aspect-auto"
+        layoutId={`photo-${id}`}
+        transition={{
+          duration: 0.55,
+          ease: [0.25, 0.1, 0.25, 1],
+        }}
+      >
         <Image
           src={imageUrl}
           alt="Photo"
@@ -42,6 +50,7 @@ export function PhotoCard({
           height={600}
           className="h-auto w-full object-cover"
           loading="lazy"
+          unoptimized
         />
 
         {/* Exif情報オーバーレイ */}
@@ -63,7 +72,7 @@ export function PhotoCard({
             </div>
           </div>
         )}
-      </div>
+      </motion.div>
     </motion.div>
   );
 }

@@ -147,9 +147,8 @@ describe("SearchFAB", () => {
   });
 
   describe("フォーム送信", () => {
-    it("フォーム送信時にconsole.logが呼ばれる", async () => {
+    it("フォーム送信後に入力欄が閉じられる", async () => {
       const user = userEvent.setup();
-      const consoleSpy = vi.spyOn(console, "log");
       render(<SearchFAB />);
 
       // FABを展開
@@ -171,9 +170,12 @@ describe("SearchFAB", () => {
       const submitButton = buttons[buttons.length - 1];
       await user.click(submitButton);
 
-      expect(consoleSpy).toHaveBeenCalledWith("Search query:", "夜景撮影");
-
-      consoleSpy.mockRestore();
+      // 送信後に入力欄が閉じることを確認
+      await waitFor(() => {
+        expect(
+          screen.queryByPlaceholderText(/撮影シーンや設定について質問/)
+        ).not.toBeInTheDocument();
+      });
     });
 
     it("空白のみの入力では送信されない", async () => {
