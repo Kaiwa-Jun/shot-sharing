@@ -1,11 +1,10 @@
 "use client";
 
 import { createClient } from "@/lib/supabase/client";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useEffect } from "react";
 
 export default function AuthCallbackPage() {
-  const router = useRouter();
   const searchParams = useSearchParams();
 
   useEffect(() => {
@@ -18,13 +17,14 @@ export default function AuthCallbackPage() {
         await supabase.auth.exchangeCodeForSession(code);
       }
 
-      // router.replace()を使用して履歴を置き換える
-      // これにより、OAuthフローの履歴が残らない
-      router.replace(next);
+      // window.location.replace()を使用してブラウザレベルで履歴を置き換える
+      // これにより、OAuthフローの履歴が完全に消え、ブラウザバックで
+      // Google認証画面に戻る問題が解消される
+      window.location.replace(next);
     };
 
     handleCallback();
-  }, [searchParams, router]);
+  }, [searchParams]);
 
   return (
     <div className="flex min-h-screen items-center justify-center">
