@@ -24,13 +24,13 @@ describe("MasonryGrid", () => {
 
   describe("基本レンダリング", () => {
     it("渡された写真がすべて表示される", () => {
-      render(<MasonryGrid photos={mockPhotos} />);
+      render(<MasonryGrid initialPhotos={mockPhotos} />);
       const images = screen.getAllByRole("img");
       expect(images).toHaveLength(3);
     });
 
     it("PhotoCardコンポーネントが正しい数だけレンダリングされる", () => {
-      render(<MasonryGrid photos={mockPhotos} />);
+      render(<MasonryGrid initialPhotos={mockPhotos} />);
       // 各写真のExif情報が表示されていることを確認
       expect(screen.getByText(/ISO 100/)).toBeInTheDocument();
       expect(screen.getByText(/ISO 400/)).toBeInTheDocument();
@@ -38,7 +38,7 @@ describe("MasonryGrid", () => {
     });
 
     it("各PhotoCardに正しいpropsが渡される", () => {
-      render(<MasonryGrid photos={mockPhotos} />);
+      render(<MasonryGrid initialPhotos={mockPhotos} />);
 
       // 各画像のExif情報が正しく表示されているか確認
       expect(screen.getByText(/ISO 100 • f\/8 • 1\/250s/)).toBeInTheDocument();
@@ -53,12 +53,12 @@ describe("MasonryGrid", () => {
 
   describe("空データ対応", () => {
     it("写真配列が空の場合、エラーにならない", () => {
-      const { container } = render(<MasonryGrid photos={[]} />);
+      const { container } = render(<MasonryGrid initialPhotos={[]} />);
       expect(container).toBeInTheDocument();
     });
 
     it("写真配列が空の場合、画像が表示されない", () => {
-      render(<MasonryGrid photos={[]} />);
+      render(<MasonryGrid initialPhotos={[]} />);
       const images = screen.queryAllByRole("img");
       expect(images).toHaveLength(0);
     });
@@ -74,7 +74,7 @@ describe("MasonryGrid", () => {
           exifData: { iso: 100 + i * 10 },
         })
       );
-      render(<MasonryGrid photos={manyPhotos} />);
+      render(<MasonryGrid initialPhotos={manyPhotos} />);
       const images = screen.getAllByRole("img");
       expect(images).toHaveLength(20);
     });

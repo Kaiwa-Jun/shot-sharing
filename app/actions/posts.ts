@@ -12,6 +12,8 @@ export interface Post {
   exifData: ExifData | null;
   fileSearchStoreId: string | null;
   visibility: string | null;
+  width: number | null;
+  height: number | null;
   createdAt: string | null;
   updatedAt: string | null;
 }
@@ -48,6 +50,8 @@ export async function getPosts(
       exifData: post.exif_data as ExifData | null,
       fileSearchStoreId: post.file_search_store_id,
       visibility: post.visibility,
+      width: post.width,
+      height: post.height,
       createdAt: post.created_at,
       updatedAt: post.updated_at,
     }));
@@ -119,6 +123,8 @@ export async function getPostById(
       exifData: data.exif_data as ExifData | null,
       fileSearchStoreId: data.file_search_store_id,
       visibility: data.visibility,
+      width: data.width,
+      height: data.height,
       createdAt: data.created_at,
       updatedAt: data.updated_at,
     };

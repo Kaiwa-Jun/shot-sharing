@@ -32,7 +32,7 @@ export default async function Home() {
       {/* メインコンテンツ */}
       <main className="container mx-auto px-4 pb-24 pt-20">
         {posts && posts.length > 0 ? (
-          <MasonryGrid photos={photos} />
+          <MasonryGrid initialPhotos={photos} />
         ) : (
           <div className="flex min-h-[50vh] items-center justify-center">
             <p className="text-muted-foreground">
