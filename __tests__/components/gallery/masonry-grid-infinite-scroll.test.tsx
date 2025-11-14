@@ -125,39 +125,6 @@ describe("MasonryGrid 無限スクロール", () => {
     });
   });
 
-  describe("ローディング状態", () => {
-    it("データロード中はローディングインジケーターが表示される", async () => {
-      vi.mocked(fetch).mockImplementationOnce(
-        () =>
-          new Promise((resolve) =>
-            setTimeout(
-              () =>
-                resolve({
-                  ok: true,
-                  json: async () => ({ data: additionalPhotos, error: null }),
-                } as Response),
-              100
-            )
-          )
-      );
-
-      render(<MasonryGrid initialPhotos={initialPhotos} />);
-
-      // スクロールイベントをシミュレート
-      Object.defineProperty(document.documentElement, "scrollTop", {
-        writable: true,
-        configurable: true,
-        value: 1500,
-      });
-      fireEvent.scroll(window);
-
-      await waitFor(() => {
-        const loader = screen.getByRole("status", { hidden: true });
-        expect(loader).toBeInTheDocument();
-      });
-    });
-  });
-
   describe("エラーハンドリング", () => {
     it("APIエラー時にエラーメッセージが表示される", async () => {
       vi.mocked(fetch).mockResolvedValueOnce({

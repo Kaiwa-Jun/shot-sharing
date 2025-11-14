@@ -152,17 +152,6 @@ export function MasonryGrid({ initialPhotos }: MasonryGridProps) {
         ))}
       </Masonry>
 
-      {/* ローディングスピナー */}
-      {isLoading && (
-        <div className="flex justify-center py-8">
-          <div
-            role="status"
-            className="h-8 w-8 animate-spin rounded-full border-4 border-blue-500 border-t-transparent"
-            aria-label="読み込み中"
-          />
-        </div>
-      )}
-
       {/* エラーメッセージ */}
       {error && (
         <div className="flex justify-center py-8">
