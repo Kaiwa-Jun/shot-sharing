@@ -81,13 +81,12 @@ export function PostDetailModal({
       >
         {/* ヘッダー */}
         <motion.div
-          className="absolute left-0 right-0 top-0 z-10 flex items-center justify-between bg-gradient-to-b from-black/80 to-transparent p-4"
+          className="absolute left-0 right-0 top-0 z-10 flex items-center justify-end bg-gradient-to-b from-black/80 to-transparent p-4"
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -20 }}
           transition={{ delay: 0.3, duration: 0.3 }}
         >
-          <SaveButton isSaved={isSaved} onClick={handleSaveClick} />
           <button
             onClick={handleClose}
             className="rounded-full bg-black/50 p-2 text-white transition-colors hover:bg-black/70"
@@ -154,8 +153,13 @@ export function PostDetailModal({
             exit={{ opacity: 0, y: 20 }}
             transition={{ delay: 0.35, duration: 0.4 }}
           >
-            {/* Exif情報 */}
-            {post.exifData && <ExifInfo exifData={post.exifData} />}
+            {/* Exif情報と保存ボタン */}
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex-1">
+                {post.exifData && <ExifInfo exifData={post.exifData} />}
+              </div>
+              <SaveButton isSaved={isSaved} onClick={handleSaveClick} />
+            </div>
 
             {/* 説明文 */}
             {post.description && (
