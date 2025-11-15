@@ -27,6 +27,11 @@ export function PostDetailModal({
   const [isMobile, setIsMobile] = useState(false);
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
 
+  // initialIsSavedの変更を監視
+  useEffect(() => {
+    setIsSaved(initialIsSaved);
+  }, [initialIsSaved]);
+
   // モバイル判定
   useEffect(() => {
     const checkMobile = () => {

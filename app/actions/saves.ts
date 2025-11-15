@@ -41,3 +41,53 @@ export async function checkIsSaved(
     return { data: false, error: "予期しないエラーが発生しました" };
   }
 }
+
+/**
+ * 複数の投稿の保存状態を一括取得
+ */
+export async function checkMultipleSaves(
+  postIds: string[]
+): Promise<{ data: Record<string, boolean>; error: string | null }> {
+  try {
+    const supabase = await createClient();
+
+    // 認証チェック
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      // 未認証の場合は全て false を返す
+      const result: Record<string, boolean> = {};
+      postIds.forEach((id) => {
+        result[id] = false;
+      });
+      return { data: result, error: null };
+    }
+
+    // 保存されている投稿を一括取得
+    const { data, error } = await supabase
+      .from("saves")
+      .select("post_id")
+      .eq("user_id", user.id)
+      .in("post_id", postIds);
+
+    if (error) {
+      console.error("Error checking saves:", error);
+      return { data: {}, error: error.message };
+    }
+
+    // 結果をマップに変換
+    const savedPostIds = new Set(data?.map((save) => save.post_id) || []);
+    const result: Record<string, boolean> = {};
+    postIds.forEach((id) => {
+      result[id] = savedPostIds.has(id);
+    });
+
+    return { data: result, error: null };
+  } catch (err) {
+    console.error("Unexpected error checking saves:", err);
+    return { data: {}, error: "予期しないエラーが発生しました" };
+  }
+}

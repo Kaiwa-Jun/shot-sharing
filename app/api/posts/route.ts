@@ -27,13 +27,20 @@ export async function POST(request: NextRequest) {
     }
 
     // Server Action を呼び出し
-    const { data, error } = await getPosts(limit, offset);
+    const { data: posts, error } = await getPosts(limit, offset);
 
     if (error) {
       return NextResponse.json({ data: null, error }, { status: 500 });
     }
 
-    return NextResponse.json({ data, error: null });
+    // PhotoCardProps形式のデータを作成
+    const photos = posts?.map((post) => ({
+      id: post.id,
+      imageUrl: post.imageUrl,
+      exifData: post.exifData || undefined,
+    }));
+
+    return NextResponse.json({ data: photos, error: null });
   } catch (err) {
     console.error("API Error:", err);
     return NextResponse.json(
