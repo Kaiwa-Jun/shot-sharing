@@ -8,6 +8,12 @@ import { createClient } from "@/lib/supabase/client";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 import { useRouter } from "next/navigation";
 import { LoginPromptModal } from "@/components/auth/login-prompt-modal";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export function Header() {
   const [isHidden, setIsHidden] = useState(false);
@@ -81,9 +87,9 @@ export function Header() {
         <div className="container mx-auto flex h-14 items-center justify-between px-4">
           {/* 左: ユーザー情報またはログインボタン */}
           {user ? (
-            <div className="flex items-center gap-3">
-              <Link href="/me">
-                <motion.div
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   className="flex h-10 w-10 items-center justify-center rounded-full bg-muted transition-colors hover:bg-muted/80"
@@ -97,19 +103,19 @@ export function Header() {
                   ) : (
                     <User className="h-5 w-5 text-muted-foreground" />
                   )}
-                </motion.div>
-              </Link>
-              <button
-                onClick={handleLogout}
-                disabled={isLoggingOut}
-                className="flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors hover:bg-muted disabled:opacity-50"
-              >
-                <LogOut className="h-4 w-4" />
-                <span className="hidden sm:inline-block">
-                  {isLoggingOut ? "ログアウト中..." : "ログアウト"}
-                </span>
-              </button>
-            </div>
+                </motion.button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start">
+                <DropdownMenuItem
+                  onClick={handleLogout}
+                  disabled={isLoggingOut}
+                  className="cursor-pointer"
+                >
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>{isLoggingOut ? "ログアウト中..." : "ログアウト"}</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           ) : (
             <motion.button
               onClick={() => setShowLoginModal(true)}
