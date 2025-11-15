@@ -10,17 +10,20 @@ export default function AuthCallbackPage() {
   useEffect(() => {
     const handleCallback = async () => {
       const code = searchParams.get("code");
-      const next = searchParams.get("next") || "/";
 
       if (code) {
         const supabase = createClient();
         await supabase.auth.exchangeCodeForSession(code);
       }
 
-      // window.location.replace()を使用してブラウザレベルで履歴を置き換える
-      // これにより、OAuthフローの履歴が完全に消え、ブラウザバックで
-      // Google認証画面に戻る問題が解消される
-      window.location.replace(next);
+      // 認証後は常にホーム画面（一覧画面）にリダイレクト
+      // 理由: モバイルブラウザでのOAuth認証フロー後、ブラウザバックで
+      //       Google認証画面に戻ってしまう問題を回避するため。
+      //       詳細画面から認証した場合でも、一覧画面に戻すことで
+      //       ユーザーは左スワイプで期待通りの遷移（一覧→詳細）を実現できる。
+      // セキュリティ: nextパラメータを無視することで、オープンリダイレクト
+      //               脆弱性も防止できる。
+      window.location.replace("/");
     };
 
     handleCallback();
