@@ -36,6 +36,8 @@ export function PageClient({ initialPhotos }: PageClientProps) {
   ) => {
     // 即座にモーダルを表示（楽観的UI更新）
     setSelectedPostId(photoId);
+    // 保存状態をリセット（前の投稿の状態が残らないように）
+    setInitialIsSaved(false);
 
     // 初期表示用に既存のPhotoCardデータから仮のPostデータを作成
     const tempPost: Post = {

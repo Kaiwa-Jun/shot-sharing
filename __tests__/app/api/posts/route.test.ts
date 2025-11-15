@@ -45,8 +45,16 @@ describe("POST /api/posts", () => {
       const response = await POST(request);
       const data = await response.json();
 
+      const expectedPhotos = [
+        {
+          id: "1",
+          imageUrl: "https://example.com/image1.jpg",
+          exifData: undefined,
+        },
+      ];
+
       expect(response.status).toBe(200);
-      expect(data).toEqual({ data: mockPosts, error: null });
+      expect(data).toEqual({ data: expectedPhotos, error: null });
       expect(getPosts).toHaveBeenCalledWith(20, 0);
     });
 
