@@ -7,6 +7,8 @@ import { useState, useEffect } from "react";
 import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
 import { ExifInfo } from "./exif-info";
 import { SaveButton } from "./save-button";
+import { LoginPromptModal } from "@/components/auth/login-prompt-modal";
+import { createClient } from "@/lib/supabase/client";
 
 interface PostDetailModalProps {
   post: Post;
@@ -23,6 +25,7 @@ export function PostDetailModal({
 }: PostDetailModalProps) {
   const [isSaved, setIsSaved] = useState(initialIsSaved);
   const [isMobile, setIsMobile] = useState(false);
+  const [showLoginPrompt, setShowLoginPrompt] = useState(false);
 
   // モバイル判定
   useEffect(() => {
@@ -59,6 +62,19 @@ export function PostDetailModal({
   // 保存ボタンのクリック処理
   const handleSaveClick = async () => {
     try {
+      // 認証状態をチェック
+      const supabase = createClient();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      // 未認証の場合はログイン促進モーダルを表示
+      if (!user) {
+        setShowLoginPrompt(true);
+        return;
+      }
+
+      // 認証済みの場合は保存処理を実行
       const response = await fetch("/api/saves/toggle", {
         method: "POST",
         headers: {
@@ -204,6 +220,12 @@ export function PostDetailModal({
           </motion.div>
         </div>
       </motion.div>
+
+      {/* ログイン促進モーダル */}
+      <LoginPromptModal
+        open={showLoginPrompt}
+        onOpenChange={setShowLoginPrompt}
+      />
     </motion.div>
   );
 }
