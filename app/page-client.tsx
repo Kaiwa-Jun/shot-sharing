@@ -6,6 +6,7 @@ import { Header } from "@/components/layout/header";
 import { SearchFAB } from "@/components/layout/search-fab";
 import { SearchChat } from "@/components/search/search-chat";
 import { MasonryGrid } from "@/components/gallery/masonry-grid";
+import { SearchLoadingSkeleton } from "@/components/gallery/search-loading-skeleton";
 import { PostDetailModal } from "@/components/post-detail/post-detail-modal";
 import { PhotoCardProps } from "@/components/gallery/photo-card";
 import { Post } from "@/app/actions/posts";
@@ -119,6 +120,7 @@ export function PageClient({ initialPhotos, initialUser }: PageClientProps) {
   const handleSearch = async (query: string) => {
     try {
       setIsSearching(true);
+      setIsSearchMode(true); // 検索モードを開始
       console.log("🔍 [DEBUG] 検索開始:", query);
 
       // ユーザーのメッセージを追加
@@ -251,7 +253,6 @@ export function PageClient({ initialPhotos, initialUser }: PageClientProps) {
           );
 
           setSearchResults(searchResultPhotos);
-          setIsSearchMode(true);
         }
       }
     } catch (error) {
@@ -288,13 +289,18 @@ export function PageClient({ initialPhotos, initialUser }: PageClientProps) {
 
       {/* メインコンテンツ */}
       <main className="container mx-auto px-4 pb-24 pt-20">
-        {displayPhotos.length > 0 ? (
+        {isSearching && isSearchMode ? (
+          // 検索中: ローディングスケルトンを表示
+          <SearchLoadingSkeleton />
+        ) : displayPhotos.length > 0 ? (
+          // 検索結果または通常の投稿を表示
           <MasonryGrid
             initialPhotos={displayPhotos}
             onPhotoClick={handlePhotoClick}
             isSearchMode={isSearchMode}
           />
         ) : (
+          // 投稿がない場合
           <div className="flex min-h-[50vh] items-center justify-center">
             <p className="text-muted-foreground">
               {isSearchMode
