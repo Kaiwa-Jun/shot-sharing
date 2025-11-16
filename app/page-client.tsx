@@ -120,7 +120,7 @@ export function PageClient({ initialPhotos }: PageClientProps) {
     window.history.back();
   };
 
-  // 検索処理
+  // 検索処理（ストリーミング対応）
   const handleSearch = async (query: string) => {
     try {
       setIsSearching(true);
@@ -134,37 +134,131 @@ export function PageClient({ initialPhotos }: PageClientProps) {
       };
       setChatMessages((prev) => [...prev, userMessage]);
 
-      // 検索実行
-      const response = await searchPosts(query, conversationHistory);
-
-      console.log("✅ [DEBUG] 検索完了:", response);
-
-      // AIの回答を追加
-      const aiMessage: ChatMessage = {
+      // 空のアシスタントメッセージを追加（ストリーミング用）
+      const initialAssistantMessage: ChatMessage = {
         role: "assistant",
-        content: response.aiResponse,
+        content: "",
         timestamp: new Date(),
       };
-      setChatMessages((prev) => [...prev, aiMessage]);
+      setChatMessages((prev) => [...prev, initialAssistantMessage]);
+
+      // ストリーミングリクエストを送信
+      const response = await fetch("/api/search/stream", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          query,
+          conversationHistory,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("検索APIへのリクエストに失敗しました");
+      }
+
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+
+      if (!reader) {
+        throw new Error("レスポンスの読み取りに失敗しました");
+      }
+
+      let accumulatedText = "";
+      let postIds: string[] = [];
+      let conversationId = "";
+
+      // ストリーミングレスポンスを処理
+      while (true) {
+        const { done, value } = await reader.read();
+
+        if (done) {
+          break;
+        }
+
+        const chunk = decoder.decode(value);
+        const lines = chunk.split("\n");
+
+        for (const line of lines) {
+          if (line.startsWith("data: ")) {
+            const data = JSON.parse(line.slice(6));
+
+            if (data.type === "text") {
+              // テキストチャンクを受信
+              accumulatedText += data.content;
+
+              // 最後のアシスタントメッセージを更新
+              setChatMessages((prev) => {
+                const newMessages = [...prev];
+                const lastIndex = newMessages.length - 1;
+                if (
+                  lastIndex >= 0 &&
+                  newMessages[lastIndex].role === "assistant"
+                ) {
+                  newMessages[lastIndex] = {
+                    ...newMessages[lastIndex],
+                    content: accumulatedText,
+                  };
+                }
+                return newMessages;
+              });
+            } else if (data.type === "done") {
+              // 完了メッセージを受信
+              postIds = data.postIds;
+              conversationId = data.conversationId;
+
+              console.log("✅ [DEBUG] ストリーミング完了:", {
+                postIds: postIds.length,
+                textLength: accumulatedText.length,
+              });
+            } else if (data.type === "error") {
+              throw new Error(data.message);
+            }
+          }
+        }
+      }
 
       // 会話履歴を更新
       setConversationHistory((prev) => [
         ...prev,
         { role: "user", parts: query },
-        { role: "model", parts: response.aiResponse },
+        { role: "model", parts: accumulatedText },
       ]);
 
-      // 検索結果を表示用に変換
-      const searchResultPhotos: PhotoCardProps[] = response.posts.map(
-        (post) => ({
-          id: post.id,
-          imageUrl: post.imageUrl,
-          exifData: post.exifData || undefined,
-        })
-      );
+      // 検索結果を取得して表示
+      if (postIds.length > 0) {
+        const postsResponse = await fetch("/api/posts", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            limit: 100,
+            offset: 0,
+          }),
+        });
 
-      setSearchResults(searchResultPhotos);
-      setIsSearchMode(true);
+        const { data: allPosts } = await postsResponse.json();
+
+        if (allPosts) {
+          // post_idでフィルタリング
+          const filteredPosts = allPosts.filter((post: Post) =>
+            postIds.includes(post.id)
+          );
+
+          const searchResultPhotos: PhotoCardProps[] = filteredPosts.map(
+            (post: Post) => ({
+              id: post.id,
+              imageUrl: post.imageUrl,
+              exifData: post.exifData || undefined,
+            })
+          );
+
+          setSearchResults(searchResultPhotos);
+          setIsSearchMode(true);
+        }
+      }
     } catch (error) {
       console.error("❌ 検索エラー:", error);
 
