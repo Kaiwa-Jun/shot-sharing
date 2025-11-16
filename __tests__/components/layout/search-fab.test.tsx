@@ -147,9 +147,10 @@ describe("SearchFAB", () => {
   });
 
   describe("フォーム送信", () => {
-    it("フォーム送信後に入力欄が閉じられる", async () => {
+    it("フォーム送信後に入力内容がクリアされるが展開状態は維持される", async () => {
       const user = userEvent.setup();
-      render(<SearchFAB />);
+      const onSearch = vi.fn();
+      render(<SearchFAB onSearch={onSearch} />);
 
       // FABを展開
       const fabButton = screen.getByRole("button");
@@ -161,8 +162,9 @@ describe("SearchFAB", () => {
         expect(searchInput).toBeInTheDocument();
       });
 
-      const searchInput =
-        screen.getByPlaceholderText(/撮りたいシーンや設定で探す/);
+      const searchInput = screen.getByPlaceholderText(
+        /撮りたいシーンや設定で探す/
+      ) as HTMLInputElement;
       await user.type(searchInput, "夜景撮影");
 
       // 送信ボタンを取得（最後のボタン）
@@ -170,11 +172,17 @@ describe("SearchFAB", () => {
       const submitButton = buttons[buttons.length - 1];
       await user.click(submitButton);
 
-      // 送信後に入力欄が閉じることを確認
+      // onSearchコールバックが呼ばれることを確認
+      expect(onSearch).toHaveBeenCalledWith("夜景撮影");
+
+      // 送信後も入力欄は表示されたまま（検索結果を表示するため）
       await waitFor(() => {
-        expect(
-          screen.queryByPlaceholderText(/撮りたいシーンや設定で探す/)
-        ).not.toBeInTheDocument();
+        const searchInputAfter = screen.getByPlaceholderText(
+          /撮りたいシーンや設定で探す/
+        ) as HTMLInputElement;
+        expect(searchInputAfter).toBeInTheDocument();
+        // 入力内容はクリアされている
+        expect(searchInputAfter.value).toBe("");
       });
     });
 

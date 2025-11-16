@@ -9,12 +9,14 @@ interface MasonryGridProps {
   initialPhotos: PhotoCardProps[];
   onPhotoClick?: (photoId: string, photoData: PhotoCardProps) => void;
   skipInitialAnimation?: boolean;
+  isSearchMode?: boolean;
 }
 
 export function MasonryGrid({
   initialPhotos,
   onPhotoClick,
   skipInitialAnimation = false,
+  isSearchMode = false,
 }: MasonryGridProps) {
   const [photos, setPhotos] = useState<PhotoCardProps[]>(initialPhotos);
   const [isLoading, setIsLoading] = useState(false);
@@ -99,13 +101,46 @@ export function MasonryGrid({
 
   // スクロール検出（デバウンス付き）
   const handleScroll = useCallback(() => {
+    // 検索モード中は無限スクロールを無効化
+    if (isSearchMode) return;
+
     if (
       window.innerHeight + document.documentElement.scrollTop >=
       document.documentElement.offsetHeight - 1000
     ) {
       loadMore();
     }
-  }, [loadMore]);
+  }, [loadMore, isSearchMode]);
+
+  // initialPhotosの変更を監視してstateを更新
+  useEffect(() => {
+    console.log(
+      "🔄 [DEBUG] MasonryGrid initialPhotos変更検知:",
+      new Date().toISOString(),
+      "件数:",
+      initialPhotos.length
+    );
+    if (initialPhotos.length > 0) {
+      console.log("📸 [DEBUG] MasonryGrid 最新の投稿ID:", initialPhotos[0].id);
+    }
+
+    // 新しいinitialPhotosで既存のphotosを上書き
+    // （無限スクロールで追加したデータは含まれないため、サーバーから取得した最新データを優先）
+    setPhotos(initialPhotos);
+
+    // 最初の投稿に新着アニメーションを適用（router.refresh後に追加された投稿）
+    if (
+      initialPhotos.length > 0 &&
+      photos.length > 0 &&
+      initialPhotos[0].id !== photos[0].id
+    ) {
+      console.log("✨ [DEBUG] 新しい投稿を検知、アニメーション適用");
+      setNewPhotoIds(new Set([initialPhotos[0].id]));
+      setTimeout(() => {
+        setNewPhotoIds(new Set());
+      }, 2000);
+    }
+  }, [initialPhotos]);
 
   // クライアントサイドマウント検出（ちらつき防止）
   useEffect(() => {
@@ -129,7 +164,10 @@ export function MasonryGrid({
   }, [skipInitialAnimation]);
 
   // スクロールイベントリスナー（デバウンス処理）
+  // 検索モード中は無限スクロールを無効化
   useEffect(() => {
+    if (isSearchMode) return;
+
     let timeoutId: NodeJS.Timeout;
 
     const debouncedScroll = () => {
@@ -142,7 +180,7 @@ export function MasonryGrid({
       clearTimeout(timeoutId);
       window.removeEventListener("scroll", debouncedScroll);
     };
-  }, [handleScroll]);
+  }, [handleScroll, isSearchMode]);
 
   // SSRハイドレーションミスマッチを防ぐため、マウント後に表示
   // skipInitialAnimationが有効な場合はこのチェックをスキップ
@@ -166,11 +204,12 @@ export function MasonryGrid({
         className="masonry-grid"
         columnClassName="masonry-grid_column"
       >
-        {photos.map((photo) => (
+        {photos.map((photo, index) => (
           <PhotoCard
             key={photo.id}
             {...photo}
             isNew={newPhotoIds.has(photo.id)}
+            priority={index < 8}
             onClick={() => onPhotoClick?.(photo.id, photo)}
           />
         ))}

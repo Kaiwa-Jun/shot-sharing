@@ -50,6 +50,7 @@ export function PostForm({ onSuccess, onCancel }: PostFormProps = {}) {
       return;
     }
 
+    console.log("📝 [DEBUG] handleSubmit開始:", new Date().toISOString());
     setIsSubmitting(true);
 
     try {
@@ -57,15 +58,33 @@ export function PostForm({ onSuccess, onCancel }: PostFormProps = {}) {
       formData.append("image", selectedFile);
       formData.append("description", description);
 
+      console.log("📤 [DEBUG] createPost呼び出し前:", new Date().toISOString());
       const result = await createPost(formData);
+      console.log(
+        "📥 [DEBUG] createPost完了:",
+        new Date().toISOString(),
+        result
+      );
 
       if (result.success) {
+        console.log(
+          "✅ [DEBUG] 投稿成功 - onSuccess呼び出し前:",
+          new Date().toISOString()
+        );
         // 成功時のコールバックまたはページ遷移
         if (onSuccess) {
           onSuccess();
         } else {
+          console.log(
+            "🔄 [DEBUG] router.push+refresh開始:",
+            new Date().toISOString()
+          );
           router.push("/");
           router.refresh();
+          console.log(
+            "🔄 [DEBUG] router.push+refresh完了:",
+            new Date().toISOString()
+          );
         }
       }
     } catch (error) {
@@ -76,6 +95,7 @@ export function PostForm({ onSuccess, onCancel }: PostFormProps = {}) {
           : "投稿に失敗しました。もう一度お試しください。"
       );
     } finally {
+      console.log("🏁 [DEBUG] handleSubmit終了:", new Date().toISOString());
       setIsSubmitting(false);
     }
   };

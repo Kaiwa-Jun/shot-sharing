@@ -24,10 +24,7 @@ export function ExifDisplay({ exif, isLoading }: ExifDisplayProps) {
   }
 
   const hasExifData =
-    exif.iso ||
-    exif.f_value ||
-    exif.shutter_speed ||
-    exif.exposure_compensation;
+    exif.iso || exif.fValue || exif.shutterSpeed || exif.exposureCompensation;
 
   return (
     <div className="space-y-2">
@@ -44,10 +41,10 @@ export function ExifDisplay({ exif, isLoading }: ExifDisplayProps) {
 
           {/* 詳細情報（オプション） */}
           <div className="mt-3 grid grid-cols-2 gap-2 text-xs text-gray-600">
-            {exif.camera_make && exif.camera_model && (
+            {exif.cameraMake && exif.cameraModel && (
               <div>
-                <span className="text-gray-500">カメラ:</span>{" "}
-                {exif.camera_make} {exif.camera_model}
+                <span className="text-gray-500">カメラ:</span> {exif.cameraMake}{" "}
+                {exif.cameraModel}
               </div>
             )}
             {exif.lens && (
@@ -55,15 +52,15 @@ export function ExifDisplay({ exif, isLoading }: ExifDisplayProps) {
                 <span className="text-gray-500">レンズ:</span> {exif.lens}
               </div>
             )}
-            {exif.focal_length && (
+            {exif.focalLength && (
               <div>
                 <span className="text-gray-500">焦点距離:</span>{" "}
-                {exif.focal_length}mm
+                {exif.focalLength}mm
               </div>
             )}
-            {exif.white_balance && (
+            {exif.whiteBalance && (
               <div>
-                <span className="text-gray-500">WB:</span> {exif.white_balance}
+                <span className="text-gray-500">WB:</span> {exif.whiteBalance}
               </div>
             )}
           </div>

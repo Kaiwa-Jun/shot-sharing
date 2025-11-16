@@ -14,7 +14,19 @@ const EXAMPLE_QUERIES = [
   "⛅ 曇りの日の風景",
 ];
 
-export function SearchFAB() {
+interface SearchFABProps {
+  onSearch?: (query: string) => void;
+  isLoading?: boolean;
+  showExamples?: boolean;
+  isSearchMode?: boolean;
+}
+
+export function SearchFAB({
+  onSearch,
+  isLoading = false,
+  showExamples = true,
+  isSearchMode = false,
+}: SearchFABProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [query, setQuery] = useState("");
   const lastScrollY = useRef(0);
@@ -35,14 +47,19 @@ export function SearchFAB() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (query.trim()) {
-      // TODO: 検索処理を実装
-      handleCollapse(); // 送信後に入力欄を閉じる
+    if (query.trim() && !isLoading && onSearch) {
+      onSearch(query.trim());
+      setQuery(""); // 送信後に入力内容をクリア
+      // 送信後も展開状態を維持（検索結果を表示するため）
     }
   };
 
   // スクロール方向を検知
+  // 検索モード中は自動開閉を無効化
   useEffect(() => {
+    // 検索モード中はスクロール検出による自動開閉を無効化
+    if (isSearchMode) return;
+
     const handleScroll = () => {
       if (!ticking.current) {
         window.requestAnimationFrame(() => {
@@ -70,13 +87,21 @@ export function SearchFAB() {
     return () => {
       window.removeEventListener("scroll", handleScroll);
     };
-  }, []);
+  }, [isSearchMode]);
+
+  // 検索モードが解除されたらFABを閉じる
+  useEffect(() => {
+    if (!isSearchMode) {
+      setIsExpanded(false);
+      setQuery("");
+    }
+  }, [isSearchMode]);
 
   return (
     <div className="fixed bottom-4 left-0 right-0 z-[60] flex flex-col items-center px-4">
-      {/* 質問例バッジ（展開時のみ表示） */}
+      {/* 質問例バッジ（展開時のみ表示、チャットがない場合のみ） */}
       <AnimatePresence>
-        {isExpanded && (
+        {isExpanded && showExamples && (
           <motion.div
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
@@ -173,7 +198,7 @@ export function SearchFAB() {
                 type="submit"
                 size="icon"
                 className="h-10 w-10 shrink-0 rounded-full bg-primary"
-                disabled={!query.trim()}
+                disabled={!query.trim() || isLoading}
                 onMouseDown={(e) => e.preventDefault()}
               >
                 <Send className="h-5 w-5" />

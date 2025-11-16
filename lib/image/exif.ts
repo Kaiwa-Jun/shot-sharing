@@ -19,12 +19,28 @@ function formatShutterSpeed(exposureTime: number | undefined): string | null {
 
 /**
  * 画像ファイルからExif情報を抽出
- * @param file 画像ファイル
+ * @param input 画像ファイル、Buffer、またはArrayBuffer
  * @returns Exif情報
  */
-export async function extractExifData(file: File): Promise<ExifData> {
+export async function extractExifData(
+  input: File | Buffer | ArrayBuffer
+): Promise<ExifData> {
   try {
-    const exif = await parse(file, {
+    // FileオブジェクトをArrayBufferに変換（クライアント側）
+    let arrayBuffer: ArrayBuffer;
+    if (input instanceof File) {
+      arrayBuffer = await input.arrayBuffer();
+    } else if (Buffer.isBuffer(input)) {
+      // BufferをArrayBufferに変換（サーバー側）
+      arrayBuffer = input.buffer.slice(
+        input.byteOffset,
+        input.byteOffset + input.byteLength
+      ) as ArrayBuffer;
+    } else {
+      arrayBuffer = input;
+    }
+
+    const exif = await parse(arrayBuffer, {
       // 必要な情報のみ抽出してパフォーマンス向上
       pick: [
         "ISO",
@@ -49,15 +65,15 @@ export async function extractExifData(file: File): Promise<ExifData> {
 
     return {
       iso: exif.ISO ?? null,
-      f_value: exif.FNumber ?? null,
-      shutter_speed: formatShutterSpeed(exif.ExposureTime),
-      exposure_compensation: exif.ExposureCompensation ?? null,
-      focal_length: exif.FocalLength ?? null,
-      white_balance: exif.WhiteBalance ?? null,
-      camera_make: exif.Make ?? null,
-      camera_model: exif.Model ?? null,
+      fValue: exif.FNumber ?? null,
+      shutterSpeed: formatShutterSpeed(exif.ExposureTime),
+      exposureCompensation: exif.ExposureCompensation ?? null,
+      focalLength: exif.FocalLength ?? null,
+      whiteBalance: exif.WhiteBalance ?? null,
+      cameraMake: exif.Make ?? null,
+      cameraModel: exif.Model ?? null,
       lens: exif.LensModel ?? null,
-      date_time: exif.DateTimeOriginal?.toISOString() ?? null,
+      dateTime: exif.DateTimeOriginal?.toISOString() ?? null,
       width: exif.ImageWidth ?? null,
       height: exif.ImageHeight ?? null,
     };
@@ -76,11 +92,11 @@ export function formatExifForDisplay(exif: ExifData): string {
   const parts: string[] = [];
 
   if (exif.iso) parts.push(`ISO${exif.iso}`);
-  if (exif.f_value) parts.push(`f/${exif.f_value}`);
-  if (exif.shutter_speed) parts.push(exif.shutter_speed);
-  if (exif.exposure_compensation && exif.exposure_compensation !== 0) {
-    const sign = exif.exposure_compensation > 0 ? "+" : "";
-    parts.push(`${sign}${exif.exposure_compensation}EV`);
+  if (exif.fValue) parts.push(`f/${exif.fValue}`);
+  if (exif.shutterSpeed) parts.push(exif.shutterSpeed);
+  if (exif.exposureCompensation && exif.exposureCompensation !== 0) {
+    const sign = exif.exposureCompensation > 0 ? "+" : "";
+    parts.push(`${sign}${exif.exposureCompensation}EV`);
   }
 
   return parts.length > 0 ? parts.join(" • ") : "撮影設定情報なし";

@@ -7,7 +7,17 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "images.unsplash.com",
       },
+      {
+        protocol: "https",
+        hostname: "**.supabase.co",
+      },
     ],
+  },
+  experimental: {
+    // Server Actionsのボディサイズ制限を10MBに設定
+    serverActions: {
+      bodySizeLimit: "10mb",
+    },
   },
 };
 

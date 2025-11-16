@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { ExifData } from "@/components/gallery/photo-card";
+import { ExifData } from "@/lib/types/exif";
 import { extractExifData } from "@/lib/image/exif";
 import { createThumbnail, resizeForDisplay } from "@/lib/image/resize";
 import {
@@ -51,20 +51,43 @@ export async function getPosts(
     }
 
     // データベースの型からフロントエンド用の型に変換
-    const posts: Post[] = (data || []).map((post) => ({
-      id: post.id,
-      userId: post.user_id,
-      imageUrl: post.image_url,
-      thumbnailUrl: post.thumbnail_url,
-      description: post.description,
-      exifData: post.exif_data as ExifData | null,
-      fileSearchStoreId: post.file_search_store_id,
-      visibility: post.visibility,
-      width: post.width,
-      height: post.height,
-      createdAt: post.created_at,
-      updatedAt: post.updated_at,
-    }));
+    const posts: Post[] = (data || []).map((post) => {
+      // DBのスネークケースExifDataをキャメルケースに変換
+      let exifData: ExifData | null = null;
+      if (post.exif_data) {
+        const dbExif = post.exif_data as any;
+        exifData = {
+          iso: dbExif.iso ?? null,
+          fValue: dbExif.f_value ?? dbExif.fValue ?? null,
+          shutterSpeed: dbExif.shutter_speed ?? dbExif.shutterSpeed ?? null,
+          exposureCompensation:
+            dbExif.exposure_compensation ?? dbExif.exposureCompensation ?? null,
+          focalLength: dbExif.focal_length ?? dbExif.focalLength ?? null,
+          whiteBalance: dbExif.white_balance ?? dbExif.whiteBalance ?? null,
+          cameraMake: dbExif.camera_make ?? dbExif.cameraMake ?? null,
+          cameraModel: dbExif.camera_model ?? dbExif.cameraModel ?? null,
+          lens: dbExif.lens ?? null,
+          dateTime: dbExif.date_time ?? dbExif.dateTime ?? null,
+          width: dbExif.width ?? null,
+          height: dbExif.height ?? null,
+        };
+      }
+
+      return {
+        id: post.id,
+        userId: post.user_id,
+        imageUrl: post.image_url,
+        thumbnailUrl: post.thumbnail_url,
+        description: post.description,
+        exifData: exifData,
+        fileSearchStoreId: post.file_search_store_id,
+        visibility: post.visibility,
+        width: post.width,
+        height: post.height,
+        createdAt: post.created_at,
+        updatedAt: post.updated_at,
+      };
+    });
 
     return { data: posts, error: null };
   } catch (err) {
@@ -124,13 +147,34 @@ export async function getPostById(
       return { data: null, error: "投稿が見つかりません" };
     }
 
+    // DBのスネークケースExifDataをキャメルケースに変換
+    let exifData: ExifData | null = null;
+    if (data.exif_data) {
+      const dbExif = data.exif_data as any;
+      exifData = {
+        iso: dbExif.iso ?? null,
+        fValue: dbExif.f_value ?? dbExif.fValue ?? null,
+        shutterSpeed: dbExif.shutter_speed ?? dbExif.shutterSpeed ?? null,
+        exposureCompensation:
+          dbExif.exposure_compensation ?? dbExif.exposureCompensation ?? null,
+        focalLength: dbExif.focal_length ?? dbExif.focalLength ?? null,
+        whiteBalance: dbExif.white_balance ?? dbExif.whiteBalance ?? null,
+        cameraMake: dbExif.camera_make ?? dbExif.cameraMake ?? null,
+        cameraModel: dbExif.camera_model ?? dbExif.cameraModel ?? null,
+        lens: dbExif.lens ?? null,
+        dateTime: dbExif.date_time ?? dbExif.dateTime ?? null,
+        width: dbExif.width ?? null,
+        height: dbExif.height ?? null,
+      };
+    }
+
     const post: Post = {
       id: data.id,
       userId: data.user_id,
       imageUrl: data.image_url,
       thumbnailUrl: data.thumbnail_url,
       description: data.description,
-      exifData: data.exif_data as ExifData | null,
+      exifData: exifData,
       fileSearchStoreId: data.file_search_store_id,
       visibility: data.visibility,
       width: data.width,
@@ -176,9 +220,9 @@ export async function createPost(formData: FormData) {
     // 2. 画像をBufferに変換
     const imageBuffer = Buffer.from(await imageFile.arrayBuffer());
 
-    // 3. Exif情報を抽出
+    // 3. Exif情報を抽出（Bufferを渡してサーバーサイドで処理）
     console.log("📊 Exif情報を抽出中...");
-    const exifData = await extractExifData(imageFile);
+    const exifData = await extractExifData(imageBuffer);
 
     // 4. 投稿IDを生成
     const postId = crypto.randomUUID();
@@ -216,7 +260,13 @@ export async function createPost(formData: FormData) {
     let fileSearchSuccess = false;
 
     try {
-      await uploadPhotoToFileSearch(imageBuffer, postId, exifData, description);
+      await uploadPhotoToFileSearch(
+        imageBuffer,
+        postId,
+        exifData,
+        description,
+        imageUrl
+      );
       fileSearchSuccess = true;
     } catch (error) {
       console.error("File Search Storeへの登録に失敗しました:", error);
@@ -254,14 +304,19 @@ export async function createPost(formData: FormData) {
     console.log("✅ 投稿が完了しました!");
 
     // キャッシュを再検証
+    console.log("🔄 [DEBUG] revalidatePath開始:", new Date().toISOString());
     revalidatePath("/");
     revalidatePath("/me");
+    console.log("🔄 [DEBUG] revalidatePath完了:", new Date().toISOString());
 
-    return {
+    const result = {
       success: true,
       postId,
       fileSearchSuccess,
     };
+
+    console.log("📤 [DEBUG] Server Action戻り値:", result);
+    return result;
   } catch (error) {
     console.error("投稿処理でエラーが発生しました:", error);
     throw error;
