@@ -89,6 +89,14 @@ export function SearchFAB({
     };
   }, [isSearchMode]);
 
+  // 検索モードが解除されたらFABを閉じる
+  useEffect(() => {
+    if (!isSearchMode) {
+      setIsExpanded(false);
+      setQuery("");
+    }
+  }, [isSearchMode]);
+
   return (
     <div className="fixed bottom-4 left-0 right-0 z-[60] flex flex-col items-center px-4">
       {/* 質問例バッジ（展開時のみ表示、チャットがない場合のみ） */}

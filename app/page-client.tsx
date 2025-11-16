@@ -268,6 +268,14 @@ export function PageClient({ initialPhotos }: PageClientProps) {
     }
   };
 
+  // 検索を閉じる処理
+  const handleCloseSearch = () => {
+    setIsSearchMode(false);
+    setSearchResults([]);
+    setChatMessages([]);
+    setConversationHistory([]);
+  };
+
   // 表示する写真を決定（検索モードか通常モードか）
   const displayPhotos = isSearchMode ? searchResults : initialPhotos;
 
@@ -296,7 +304,11 @@ export function PageClient({ initialPhotos }: PageClientProps) {
       </main>
 
       {/* チャット領域 */}
-      <SearchChat messages={chatMessages} isExpanded={false} />
+      <SearchChat
+        messages={chatMessages}
+        isExpanded={true}
+        onClose={handleCloseSearch}
+      />
 
       {/* フローティングアクションボタン */}
       <SearchFAB

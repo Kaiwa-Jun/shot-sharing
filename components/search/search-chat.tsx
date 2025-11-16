@@ -2,16 +2,17 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import { ChatMessage } from "@/lib/types/search";
-import { Bot, User, ChevronDown } from "lucide-react";
+import { Bot, User, ChevronDown, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 
 interface SearchChatProps {
   messages: ChatMessage[];
   isExpanded: boolean;
+  onClose?: () => void;
 }
 
-export function SearchChat({ messages, isExpanded }: SearchChatProps) {
+export function SearchChat({ messages, isExpanded, onClose }: SearchChatProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [showScrollButton, setShowScrollButton] = useState(false);
@@ -82,12 +83,21 @@ export function SearchChat({ messages, isExpanded }: SearchChatProps) {
         className="fixed bottom-20 left-0 right-0 z-50 mx-auto max-w-2xl px-4"
       >
         <div className="relative rounded-2xl bg-card/95 shadow-2xl backdrop-blur-sm">
+          {/* 閉じるボタン */}
+          <div className="flex justify-end border-b border-border/50 p-2">
+            <button
+              onClick={onClose}
+              className="rounded-full p-1.5 transition-colors hover:bg-accent"
+              aria-label="検索を閉じる"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+
           {/* チャット履歴 */}
           <div
             ref={scrollContainerRef}
-            className={`space-y-4 overflow-y-auto p-4 ${
-              isExpanded ? "max-h-[768px]" : "h-64"
-            } transition-all duration-300`}
+            className="h-64 space-y-4 overflow-y-auto p-4 transition-all duration-300"
           >
             {messages.map((message, index) => (
               <motion.div
