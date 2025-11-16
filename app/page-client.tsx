@@ -17,13 +17,6 @@ interface PageClientProps {
 }
 
 export function PageClient({ initialPhotos }: PageClientProps) {
-  console.log(
-    "🎨 [DEBUG] PageClient レンダリング:",
-    new Date().toISOString(),
-    "photos:",
-    initialPhotos.length
-  );
-
   const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
   const [selectedPost, setSelectedPost] = useState<Post | null>(null);
   const [initialIsSaved, setInitialIsSaved] = useState(false);

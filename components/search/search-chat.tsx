@@ -27,8 +27,9 @@ export function SearchChat({ messages, isExpanded }: SearchChatProps) {
 
     const handleScroll = () => {
       const { scrollTop, scrollHeight, clientHeight } = scrollContainer;
+      const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
       // 最下部から50px以上離れたらボタンを表示
-      const isNearBottom = scrollHeight - scrollTop - clientHeight < 50;
+      const isNearBottom = distanceFromBottom < 50;
       setShowScrollButton(!isNearBottom);
     };
 
@@ -39,7 +40,7 @@ export function SearchChat({ messages, isExpanded }: SearchChatProps) {
     return () => {
       scrollContainer.removeEventListener("scroll", handleScroll);
     };
-  }, []);
+  }, [messages]);
 
   // 最下部にスクロールする関数
   const scrollToBottom = () => {
