@@ -14,7 +14,7 @@ describe("SearchFAB", () => {
     it("初期状態では検索入力欄が表示されない", () => {
       render(<SearchFAB />);
       const searchInput =
-        screen.queryByPlaceholderText(/撮影シーンや設定について質問/);
+        screen.queryByPlaceholderText(/撮りたいシーンや設定で探す/);
       expect(searchInput).not.toBeInTheDocument();
     });
   });
@@ -29,7 +29,7 @@ describe("SearchFAB", () => {
 
       await waitFor(() => {
         const searchInput =
-          screen.getByPlaceholderText(/撮影シーンや設定について質問/);
+          screen.getByPlaceholderText(/撮りたいシーンや設定で探す/);
         expect(searchInput).toBeInTheDocument();
       });
     });
@@ -68,7 +68,7 @@ describe("SearchFAB", () => {
 
       await waitFor(() => {
         const searchInput = screen.getByPlaceholderText(
-          /撮影シーンや設定について質問/
+          /撮りたいシーンや設定で探す/
         ) as HTMLInputElement;
         // 絵文字が除去されることを確認
         expect(searchInput.value).toBe("夕焼けを綺麗に撮るには？");
@@ -87,12 +87,12 @@ describe("SearchFAB", () => {
 
       await waitFor(() => {
         const searchInput =
-          screen.getByPlaceholderText(/撮影シーンや設定について質問/);
+          screen.getByPlaceholderText(/撮りたいシーンや設定で探す/);
         expect(searchInput).toBeInTheDocument();
       });
 
       const searchInput = screen.getByPlaceholderText(
-        /撮影シーンや設定について質問/
+        /撮りたいシーンや設定で探す/
       ) as HTMLInputElement;
       await user.type(searchInput, "星空撮影のコツ");
 
@@ -109,7 +109,7 @@ describe("SearchFAB", () => {
 
       await waitFor(() => {
         const searchInput =
-          screen.getByPlaceholderText(/撮影シーンや設定について質問/);
+          screen.getByPlaceholderText(/撮りたいシーンや設定で探す/);
         expect(searchInput).toBeInTheDocument();
       });
 
@@ -130,12 +130,12 @@ describe("SearchFAB", () => {
 
       await waitFor(() => {
         const searchInput =
-          screen.getByPlaceholderText(/撮影シーンや設定について質問/);
+          screen.getByPlaceholderText(/撮りたいシーンや設定で探す/);
         expect(searchInput).toBeInTheDocument();
       });
 
       const searchInput =
-        screen.getByPlaceholderText(/撮影シーンや設定について質問/);
+        screen.getByPlaceholderText(/撮りたいシーンや設定で探す/);
       await user.type(searchInput, "ポートレート撮影");
 
       // 送信ボタンを取得（最後のボタン）
@@ -157,12 +157,12 @@ describe("SearchFAB", () => {
 
       await waitFor(() => {
         const searchInput =
-          screen.getByPlaceholderText(/撮影シーンや設定について質問/);
+          screen.getByPlaceholderText(/撮りたいシーンや設定で探す/);
         expect(searchInput).toBeInTheDocument();
       });
 
       const searchInput =
-        screen.getByPlaceholderText(/撮影シーンや設定について質問/);
+        screen.getByPlaceholderText(/撮りたいシーンや設定で探す/);
       await user.type(searchInput, "夜景撮影");
 
       // 送信ボタンを取得（最後のボタン）
@@ -173,7 +173,7 @@ describe("SearchFAB", () => {
       // 送信後に入力欄が閉じることを確認
       await waitFor(() => {
         expect(
-          screen.queryByPlaceholderText(/撮影シーンや設定について質問/)
+          screen.queryByPlaceholderText(/撮りたいシーンや設定で探す/)
         ).not.toBeInTheDocument();
       });
     });
@@ -189,12 +189,12 @@ describe("SearchFAB", () => {
 
       await waitFor(() => {
         const searchInput =
-          screen.getByPlaceholderText(/撮影シーンや設定について質問/);
+          screen.getByPlaceholderText(/撮りたいシーンや設定で探す/);
         expect(searchInput).toBeInTheDocument();
       });
 
       const searchInput =
-        screen.getByPlaceholderText(/撮影シーンや設定について質問/);
+        screen.getByPlaceholderText(/撮りたいシーンや設定で探す/);
       await user.type(searchInput, "   ");
 
       // 送信ボタンは無効化されているはず
@@ -207,7 +207,7 @@ describe("SearchFAB", () => {
   });
 
   describe("ボタンの状態", () => {
-    it("マイクボタンが無効化されている", async () => {
+    it("画像添付ボタンが表示される", async () => {
       const user = userEvent.setup();
       render(<SearchFAB />);
 
@@ -217,15 +217,15 @@ describe("SearchFAB", () => {
 
       await waitFor(() => {
         const searchInput =
-          screen.getByPlaceholderText(/撮影シーンや設定について質問/);
+          screen.getByPlaceholderText(/撮りたいシーンや設定で探す/);
         expect(searchInput).toBeInTheDocument();
       });
 
-      // マイクボタンを取得（後ろから2番目のボタン）
+      // 画像添付ボタンを取得（後ろから2番目のボタン）
       const buttons = screen.getAllByRole("button");
-      const micButton = buttons[buttons.length - 2];
+      const imageButton = buttons[buttons.length - 2];
 
-      expect(micButton).toBeDisabled();
+      expect(imageButton).toBeInTheDocument();
     });
   });
 });
