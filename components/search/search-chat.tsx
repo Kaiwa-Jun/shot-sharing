@@ -2,8 +2,8 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import { ChatMessage } from "@/lib/types/search";
-import { Bot, User } from "lucide-react";
-import { useEffect, useRef } from "react";
+import { Bot, User, ChevronDown } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 
 interface SearchChatProps {
   messages: ChatMessage[];
@@ -12,11 +12,39 @@ interface SearchChatProps {
 
 export function SearchChat({ messages, isExpanded }: SearchChatProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [showScrollButton, setShowScrollButton] = useState(false);
 
   // メッセージが更新されたら最下部にスクロール
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  // スクロール位置を監視
+  useEffect(() => {
+    const scrollContainer = scrollContainerRef.current;
+    if (!scrollContainer) return;
+
+    const handleScroll = () => {
+      const { scrollTop, scrollHeight, clientHeight } = scrollContainer;
+      // 最下部から50px以上離れたらボタンを表示
+      const isNearBottom = scrollHeight - scrollTop - clientHeight < 50;
+      setShowScrollButton(!isNearBottom);
+    };
+
+    scrollContainer.addEventListener("scroll", handleScroll);
+    // 初期状態を確認
+    handleScroll();
+
+    return () => {
+      scrollContainer.removeEventListener("scroll", handleScroll);
+    };
+  }, []);
+
+  // 最下部にスクロールする関数
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
 
   if (messages.length === 0) {
     return null;
@@ -35,9 +63,10 @@ export function SearchChat({ messages, isExpanded }: SearchChatProps) {
         }}
         className="fixed bottom-24 left-0 right-0 z-50 mx-auto max-w-2xl px-4"
       >
-        <div className="rounded-2xl bg-card/95 shadow-2xl backdrop-blur-sm">
+        <div className="relative rounded-2xl bg-card/95 shadow-2xl backdrop-blur-sm">
           {/* チャット履歴 */}
           <div
+            ref={scrollContainerRef}
             className={`space-y-4 overflow-y-auto p-4 ${
               isExpanded ? "max-h-96" : "max-h-32"
             } transition-all duration-300`}
@@ -78,6 +107,27 @@ export function SearchChat({ messages, isExpanded }: SearchChatProps) {
             {/* 自動スクロール用のダミー要素 */}
             <div ref={messagesEndRef} />
           </div>
+
+          {/* 最下部へスクロールするボタン */}
+          <AnimatePresence>
+            {showScrollButton && (
+              <motion.button
+                initial={{ y: 20, opacity: 0, scale: 0.8 }}
+                animate={{ y: 0, opacity: 1, scale: 1 }}
+                exit={{ y: 20, opacity: 0, scale: 0.8 }}
+                transition={{
+                  type: "spring",
+                  stiffness: 400,
+                  damping: 25,
+                }}
+                onClick={scrollToBottom}
+                className="absolute bottom-4 left-1/2 -translate-x-1/2 rounded-full bg-primary p-2 shadow-lg transition-colors hover:bg-primary/90"
+                aria-label="最下部へスクロール"
+              >
+                <ChevronDown className="h-5 w-5 text-primary-foreground" />
+              </motion.button>
+            )}
+          </AnimatePresence>
         </div>
       </motion.div>
     </AnimatePresence>
