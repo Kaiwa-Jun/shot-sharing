@@ -11,12 +11,14 @@ import { PhotoCardProps } from "@/components/gallery/photo-card";
 import { Post } from "@/app/actions/posts";
 import { searchPosts } from "@/app/actions/search";
 import { ChatMessage, ConversationMessage } from "@/lib/types/search";
+import type { User } from "@supabase/supabase-js";
 
 interface PageClientProps {
   initialPhotos: PhotoCardProps[];
+  initialUser: User | null;
 }
 
-export function PageClient({ initialPhotos }: PageClientProps) {
+export function PageClient({ initialPhotos, initialUser }: PageClientProps) {
   const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
   const [selectedPost, setSelectedPost] = useState<Post | null>(null);
   const [initialIsSaved, setInitialIsSaved] = useState(false);
@@ -282,7 +284,7 @@ export function PageClient({ initialPhotos }: PageClientProps) {
   return (
     <div className="min-h-screen bg-background">
       {/* ヘッダー */}
-      <Header />
+      <Header initialUser={initialUser} />
 
       {/* メインコンテンツ */}
       <main className="container mx-auto px-4 pb-24 pt-20">

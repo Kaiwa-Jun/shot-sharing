@@ -1,6 +1,7 @@
 import { getPosts } from "@/app/actions/posts";
 import { PhotoCardProps } from "@/components/gallery/photo-card";
 import { PageClient } from "./page-client";
+import { createClient } from "@/lib/supabase/server";
 
 // 動的レンダリングを強制（ビルド時のプリレンダリングをスキップ）
 export const dynamic = "force-dynamic";
@@ -10,6 +11,12 @@ export default async function Home() {
     "🏠 [DEBUG] Home page レンダリング開始:",
     new Date().toISOString()
   );
+
+  // サーバー側で認証状態を取得
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
   // Supabaseから投稿データを取得
   console.log("📡 [DEBUG] getPosts呼び出し前:", new Date().toISOString());
@@ -35,5 +42,5 @@ export default async function Home() {
     })) || [];
 
   console.log("📤 [DEBUG] PageClientに渡すphotos:", photos.length, "件");
-  return <PageClient initialPhotos={photos} />;
+  return <PageClient initialPhotos={photos} initialUser={user} />;
 }
