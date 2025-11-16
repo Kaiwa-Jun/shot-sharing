@@ -60,17 +60,12 @@ export function PostForm({ onSuccess, onCancel }: PostFormProps = {}) {
       const result = await createPost(formData);
 
       if (result.success) {
-        if (!result.fileSearchSuccess) {
-          alert(
-            "投稿は成功しましたが、検索機能への登録に失敗しました。後で再試行されます。"
-          );
-        }
-
         // 成功時のコールバックまたはページ遷移
         if (onSuccess) {
           onSuccess();
         } else {
           router.push("/");
+          router.refresh();
         }
       }
     } catch (error) {
