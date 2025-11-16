@@ -15,10 +15,26 @@ export function SearchChat({ messages, isExpanded }: SearchChatProps) {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [showScrollButton, setShowScrollButton] = useState(false);
 
-  // 新しいメッセージが追加された時のみ最上部にスクロール
+  // 新しいメッセージが追加された時、最新のユーザーメッセージにスクロール
   useEffect(() => {
-    scrollContainerRef.current?.scrollTo({ top: 0, behavior: "smooth" });
-  }, [messages.length]);
+    const scrollContainer = scrollContainerRef.current;
+    if (!scrollContainer) return;
+
+    // 最後のユーザーメッセージを探す
+    const lastUserMessageIndex = messages.findLastIndex(
+      (m) => m.role === "user"
+    );
+
+    if (lastUserMessageIndex >= 0) {
+      // その要素にスクロール
+      const targetElement = scrollContainer.querySelector(
+        `[data-index="${lastUserMessageIndex}"]`
+      );
+      if (targetElement) {
+        targetElement.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    }
+  }, [messages.length, messages]);
 
   // スクロール位置を監視
   useEffect(() => {
@@ -75,6 +91,8 @@ export function SearchChat({ messages, isExpanded }: SearchChatProps) {
             {messages.map((message, index) => (
               <motion.div
                 key={index}
+                data-index={index}
+                data-role={message.role}
                 initial={{ y: 20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: index * 0.1 }}
