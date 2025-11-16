@@ -18,12 +18,14 @@ interface SearchFABProps {
   onSearch?: (query: string) => void;
   isLoading?: boolean;
   showExamples?: boolean;
+  isSearchMode?: boolean;
 }
 
 export function SearchFAB({
   onSearch,
   isLoading = false,
   showExamples = true,
+  isSearchMode = false,
 }: SearchFABProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [query, setQuery] = useState("");
@@ -53,7 +55,11 @@ export function SearchFAB({
   };
 
   // スクロール方向を検知
+  // 検索モード中は自動開閉を無効化
   useEffect(() => {
+    // 検索モード中はスクロール検出による自動開閉を無効化
+    if (isSearchMode) return;
+
     const handleScroll = () => {
       if (!ticking.current) {
         window.requestAnimationFrame(() => {
@@ -81,7 +87,7 @@ export function SearchFAB({
     return () => {
       window.removeEventListener("scroll", handleScroll);
     };
-  }, []);
+  }, [isSearchMode]);
 
   return (
     <div className="fixed bottom-4 left-0 right-0 z-[60] flex flex-col items-center px-4">

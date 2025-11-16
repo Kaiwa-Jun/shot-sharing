@@ -216,6 +216,7 @@ export function PageClient({ initialPhotos }: PageClientProps) {
         onSearch={handleSearch}
         isLoading={isSearching}
         showExamples={chatMessages.length === 0}
+        isSearchMode={isSearchMode}
       />
 
       {/* 詳細モーダル */}
