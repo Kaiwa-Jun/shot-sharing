@@ -9,12 +9,14 @@ interface MasonryGridProps {
   initialPhotos: PhotoCardProps[];
   onPhotoClick?: (photoId: string, photoData: PhotoCardProps) => void;
   skipInitialAnimation?: boolean;
+  isSearchMode?: boolean;
 }
 
 export function MasonryGrid({
   initialPhotos,
   onPhotoClick,
   skipInitialAnimation = false,
+  isSearchMode = false,
 }: MasonryGridProps) {
   const [photos, setPhotos] = useState<PhotoCardProps[]>(initialPhotos);
   const [isLoading, setIsLoading] = useState(false);
@@ -99,13 +101,16 @@ export function MasonryGrid({
 
   // スクロール検出（デバウンス付き）
   const handleScroll = useCallback(() => {
+    // 検索モード中は無限スクロールを無効化
+    if (isSearchMode) return;
+
     if (
       window.innerHeight + document.documentElement.scrollTop >=
       document.documentElement.offsetHeight - 1000
     ) {
       loadMore();
     }
-  }, [loadMore]);
+  }, [loadMore, isSearchMode]);
 
   // initialPhotosの変更を監視してstateを更新
   useEffect(() => {
@@ -159,7 +164,10 @@ export function MasonryGrid({
   }, [skipInitialAnimation]);
 
   // スクロールイベントリスナー（デバウンス処理）
+  // 検索モード中は無限スクロールを無効化
   useEffect(() => {
+    if (isSearchMode) return;
+
     let timeoutId: NodeJS.Timeout;
 
     const debouncedScroll = () => {
@@ -172,7 +180,7 @@ export function MasonryGrid({
       clearTimeout(timeoutId);
       window.removeEventListener("scroll", debouncedScroll);
     };
-  }, [handleScroll]);
+  }, [handleScroll, isSearchMode]);
 
   // SSRハイドレーションミスマッチを防ぐため、マウント後に表示
   // skipInitialAnimationが有効な場合はこのチェックをスキップ

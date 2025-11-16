@@ -195,6 +195,7 @@ export function PageClient({ initialPhotos }: PageClientProps) {
           <MasonryGrid
             initialPhotos={displayPhotos}
             onPhotoClick={handlePhotoClick}
+            isSearchMode={isSearchMode}
           />
         ) : (
           <div className="flex min-h-[50vh] items-center justify-center">
