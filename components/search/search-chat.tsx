@@ -123,37 +123,73 @@ export function SearchChat({ messages, isExpanded, onClose }: SearchChatProps) {
                       : "bg-muted text-foreground"
                   } [&>*:first-child]:mt-0 [&>*:last-child]:mb-0`}
                 >
-                  <ReactMarkdown
-                    components={{
-                      p: ({ children }) => (
-                        <p className="text-sm leading-relaxed">{children}</p>
-                      ),
-                      strong: ({ children }) => (
-                        <strong className="font-bold">{children}</strong>
-                      ),
-                      ul: ({ children }) => (
-                        <ul className="my-2 list-inside list-disc space-y-1">
-                          {children}
-                        </ul>
-                      ),
-                      ol: ({ children }) => (
-                        <ol className="my-2 list-inside list-decimal space-y-1">
-                          {children}
-                        </ol>
-                      ),
-                      li: ({ children }) => (
-                        <li className="text-sm">{children}</li>
-                      ),
-                    }}
-                  >
-                    {message.content}
-                  </ReactMarkdown>
+                  {message.role === "assistant" && !message.content ? (
+                    // ローディングドットアニメーション
+                    <div className="flex gap-1">
+                      <motion.span
+                        className="text-lg"
+                        animate={{ y: [0, -8, 0] }}
+                        transition={{
+                          duration: 0.6,
+                          repeat: Infinity,
+                          ease: "easeInOut",
+                        }}
+                      >
+                        •
+                      </motion.span>
+                      <motion.span
+                        className="text-lg"
+                        animate={{ y: [0, -8, 0] }}
+                        transition={{
+                          duration: 0.6,
+                          repeat: Infinity,
+                          ease: "easeInOut",
+                          delay: 0.2,
+                        }}
+                      >
+                        •
+                      </motion.span>
+                      <motion.span
+                        className="text-lg"
+                        animate={{ y: [0, -8, 0] }}
+                        transition={{
+                          duration: 0.6,
+                          repeat: Infinity,
+                          ease: "easeInOut",
+                          delay: 0.4,
+                        }}
+                      >
+                        •
+                      </motion.span>
+                    </div>
+                  ) : (
+                    <ReactMarkdown
+                      components={{
+                        p: ({ children }) => (
+                          <p className="text-sm leading-relaxed">{children}</p>
+                        ),
+                        strong: ({ children }) => (
+                          <strong className="font-bold">{children}</strong>
+                        ),
+                        ul: ({ children }) => (
+                          <ul className="my-2 list-inside list-disc space-y-1">
+                            {children}
+                          </ul>
+                        ),
+                        ol: ({ children }) => (
+                          <ol className="my-2 list-inside list-decimal space-y-1">
+                            {children}
+                          </ol>
+                        ),
+                        li: ({ children }) => (
+                          <li className="text-sm">{children}</li>
+                        ),
+                      }}
+                    >
+                      {message.content}
+                    </ReactMarkdown>
+                  )}
                 </div>
-                {message.role === "user" && (
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted">
-                    <User className="h-5 w-5 text-muted-foreground" />
-                  </div>
-                )}
               </motion.div>
             ))}
             {/* 自動スクロール用のダミー要素 */}

@@ -201,11 +201,7 @@ export function SearchFAB({
                 disabled={!query.trim() || isLoading}
                 onMouseDown={(e) => e.preventDefault()}
               >
-                {isLoading ? (
-                  <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" />
-                ) : (
-                  <Send className="h-5 w-5" />
-                )}
+                <Send className="h-5 w-5" />
               </Button>
             </motion.form>
           )}
