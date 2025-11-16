@@ -15,9 +15,9 @@ export function SearchChat({ messages, isExpanded }: SearchChatProps) {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [showScrollButton, setShowScrollButton] = useState(false);
 
-  // 新しいメッセージが追加された時のみ最下部にスクロール
+  // 新しいメッセージが追加された時のみ最上部にスクロール
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    scrollContainerRef.current?.scrollTo({ top: 0, behavior: "smooth" });
   }, [messages.length]);
 
   // スクロール位置を監視
@@ -62,14 +62,14 @@ export function SearchChat({ messages, isExpanded }: SearchChatProps) {
           stiffness: 300,
           damping: 30,
         }}
-        className="fixed bottom-24 left-0 right-0 z-50 mx-auto max-w-2xl px-4"
+        className="fixed bottom-20 left-0 right-0 z-50 mx-auto max-w-2xl px-4"
       >
         <div className="relative rounded-2xl bg-card/95 shadow-2xl backdrop-blur-sm">
           {/* チャット履歴 */}
           <div
             ref={scrollContainerRef}
             className={`space-y-4 overflow-y-auto p-4 ${
-              isExpanded ? "max-h-96" : "max-h-32"
+              isExpanded ? "max-h-[768px]" : "h-64"
             } transition-all duration-300`}
           >
             {messages.map((message, index) => (
