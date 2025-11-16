@@ -209,7 +209,7 @@ export function MasonryGrid({
             key={photo.id}
             {...photo}
             isNew={newPhotoIds.has(photo.id)}
-            priority={index < 2}
+            priority={index < 4}
             onClick={() => onPhotoClick?.(photo.id, photo)}
           />
         ))}
