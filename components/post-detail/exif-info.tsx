@@ -1,4 +1,4 @@
-import { ExifData } from "@/components/gallery/photo-card";
+import { ExifData } from "@/lib/types/exif";
 
 interface ExifInfoProps {
   exifData: ExifData;
@@ -6,7 +6,7 @@ interface ExifInfoProps {
 
 export function ExifInfo({ exifData }: ExifInfoProps) {
   const formatExifValue = (
-    value: string | number | undefined,
+    value: string | number | null | undefined,
     prefix = "",
     suffix = ""
   ): string => {
@@ -27,6 +27,7 @@ export function ExifInfo({ exifData }: ExifInfoProps) {
         <span>
           {formatExifValue(
             exifData.exposureCompensation !== undefined &&
+              exifData.exposureCompensation !== null &&
               exifData.exposureCompensation >= 0
               ? `+${exifData.exposureCompensation}`
               : exifData.exposureCompensation,

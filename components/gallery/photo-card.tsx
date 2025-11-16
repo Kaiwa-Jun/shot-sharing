@@ -2,18 +2,12 @@
 
 import { motion } from "framer-motion";
 import Image from "next/image";
-
-export interface ExifData {
-  iso?: number;
-  fValue?: number;
-  shutterSpeed?: string;
-  exposureCompensation?: number;
-}
+import { ExifData } from "@/lib/types/exif";
 
 export interface PhotoCardProps {
   id: string;
   imageUrl: string;
-  exifData?: ExifData;
+  exifData?: ExifData | null;
   onClick?: () => void;
   isNew?: boolean;
 }
@@ -63,6 +57,7 @@ export function PhotoCard({
                   exifData.fValue && `f/${exifData.fValue}`,
                   exifData.shutterSpeed && exifData.shutterSpeed,
                   exifData.exposureCompensation !== undefined &&
+                    exifData.exposureCompensation !== null &&
                     exifData.exposureCompensation !== 0 &&
                     `${exifData.exposureCompensation > 0 ? "+" : ""}${exifData.exposureCompensation}EV`,
                 ]
