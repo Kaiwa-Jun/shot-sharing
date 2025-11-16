@@ -10,6 +10,7 @@ export interface PhotoCardProps {
   exifData?: ExifData | null;
   onClick?: () => void;
   isNew?: boolean;
+  priority?: boolean;
 }
 
 export function PhotoCard({
@@ -18,6 +19,7 @@ export function PhotoCard({
   exifData,
   onClick,
   isNew = false,
+  priority = false,
 }: PhotoCardProps) {
   return (
     <motion.div
@@ -43,7 +45,8 @@ export function PhotoCard({
           width={400}
           height={600}
           className="h-auto w-full object-cover"
-          loading="lazy"
+          priority={priority}
+          loading={priority ? "eager" : "lazy"}
           unoptimized
         />
 

@@ -204,11 +204,12 @@ export function MasonryGrid({
         className="masonry-grid"
         columnClassName="masonry-grid_column"
       >
-        {photos.map((photo) => (
+        {photos.map((photo, index) => (
           <PhotoCard
             key={photo.id}
             {...photo}
             isNew={newPhotoIds.has(photo.id)}
+            priority={index < 2}
             onClick={() => onPhotoClick?.(photo.id, photo)}
           />
         ))}
