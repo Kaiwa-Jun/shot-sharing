@@ -3,6 +3,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { ChatMessage } from "@/lib/types/search";
 import { Bot, User } from "lucide-react";
+import { useEffect, useRef } from "react";
 
 interface SearchChatProps {
   messages: ChatMessage[];
@@ -10,6 +11,13 @@ interface SearchChatProps {
 }
 
 export function SearchChat({ messages, isExpanded }: SearchChatProps) {
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // メッセージが更新されたら最下部にスクロール
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
   if (messages.length === 0) {
     return null;
   }
@@ -67,6 +75,8 @@ export function SearchChat({ messages, isExpanded }: SearchChatProps) {
                 )}
               </motion.div>
             ))}
+            {/* 自動スクロール用のダミー要素 */}
+            <div ref={messagesEndRef} />
           </div>
         </div>
       </motion.div>
