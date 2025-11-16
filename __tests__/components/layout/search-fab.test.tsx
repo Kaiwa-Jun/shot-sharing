@@ -149,7 +149,8 @@ describe("SearchFAB", () => {
   describe("フォーム送信", () => {
     it("フォーム送信後に入力内容がクリアされるが展開状態は維持される", async () => {
       const user = userEvent.setup();
-      render(<SearchFAB />);
+      const onSearch = vi.fn();
+      render(<SearchFAB onSearch={onSearch} />);
 
       // FABを展開
       const fabButton = screen.getByRole("button");
@@ -170,6 +171,9 @@ describe("SearchFAB", () => {
       const buttons = screen.getAllByRole("button");
       const submitButton = buttons[buttons.length - 1];
       await user.click(submitButton);
+
+      // onSearchコールバックが呼ばれることを確認
+      expect(onSearch).toHaveBeenCalledWith("夜景撮影");
 
       // 送信後も入力欄は表示されたまま（検索結果を表示するため）
       await waitFor(() => {
