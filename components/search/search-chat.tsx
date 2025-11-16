@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ChatMessage } from "@/lib/types/search";
 import { Bot, User, ChevronDown } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import ReactMarkdown from "react-markdown";
 
 interface SearchChatProps {
   messages: ChatMessage[];
@@ -106,15 +107,37 @@ export function SearchChat({ messages, isExpanded }: SearchChatProps) {
                   </div>
                 )}
                 <div
-                  className={`max-w-[80%] rounded-2xl px-4 py-3 ${
+                  className={`prose prose-sm max-w-[80%] max-w-none rounded-2xl px-4 py-3 ${
                     message.role === "user"
-                      ? "bg-primary text-primary-foreground"
+                      ? "prose-invert bg-primary text-primary-foreground"
                       : "bg-muted text-foreground"
-                  }`}
+                  } [&>*:first-child]:mt-0 [&>*:last-child]:mb-0`}
                 >
-                  <p className="whitespace-pre-wrap text-sm">
+                  <ReactMarkdown
+                    components={{
+                      p: ({ children }) => (
+                        <p className="text-sm leading-relaxed">{children}</p>
+                      ),
+                      strong: ({ children }) => (
+                        <strong className="font-bold">{children}</strong>
+                      ),
+                      ul: ({ children }) => (
+                        <ul className="my-2 list-inside list-disc space-y-1">
+                          {children}
+                        </ul>
+                      ),
+                      ol: ({ children }) => (
+                        <ol className="my-2 list-inside list-decimal space-y-1">
+                          {children}
+                        </ol>
+                      ),
+                      li: ({ children }) => (
+                        <li className="text-sm">{children}</li>
+                      ),
+                    }}
+                  >
                     {message.content}
-                  </p>
+                  </ReactMarkdown>
                 </div>
                 {message.role === "user" && (
                   <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted">
