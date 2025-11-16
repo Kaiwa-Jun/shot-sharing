@@ -1,13 +1,14 @@
 "use client";
 
 import { motion, useMotionValueEvent, useScroll } from "framer-motion";
-import { Camera, LogOut, User } from "lucide-react";
+import { Camera, LogOut, User, PlusCircle } from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 import { useRouter } from "next/navigation";
 import { LoginPromptModal } from "@/components/auth/login-prompt-modal";
+import { PostModal } from "@/components/posts/post-modal";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,6 +21,7 @@ export function Header() {
   const [user, setUser] = useState<SupabaseUser | null>(null);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const [showPostModal, setShowPostModal] = useState(false);
   const { scrollY } = useScroll();
   const router = useRouter();
   const supabase = createClient();
@@ -143,8 +145,19 @@ export function Header() {
             </motion.div>
           </Link>
 
-          {/* 右: 空（レイアウトバランスのため） */}
-          <div className="w-10" />
+          {/* 右: 投稿ボタン */}
+          {user ? (
+            <motion.button
+              onClick={() => setShowPostModal(true)}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground transition-colors hover:bg-primary/90"
+            >
+              <PlusCircle className="h-5 w-5" />
+            </motion.button>
+          ) : (
+            <div className="w-10" />
+          )}
         </div>
       </motion.header>
 
@@ -153,6 +166,9 @@ export function Header() {
         open={showLoginModal}
         onOpenChange={setShowLoginModal}
       />
+
+      {/* 投稿モーダル */}
+      <PostModal open={showPostModal} onOpenChange={setShowPostModal} />
     </>
   );
 }

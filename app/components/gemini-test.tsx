@@ -27,9 +27,9 @@ export default function GeminiTest() {
     );
 
     if (response.success) {
-      setResult(response.response);
+      setResult(response.response || null);
     } else {
-      setError(response.error);
+      setError(response.error || null);
     }
     setLoading(false);
   };
@@ -44,9 +44,9 @@ export default function GeminiTest() {
     );
 
     if (response.success) {
-      setResult(response.response);
+      setResult(response.response || null);
     } else {
-      setError(response.error);
+      setError(response.error || null);
     }
     setLoading(false);
   };

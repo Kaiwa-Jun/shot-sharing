@@ -1,92 +1,68 @@
-/**
- * Gemini File Search API 関連の機能
- *
- * このファイルは将来的にFile Search APIを使用する際の
- * 実装の基盤となります。
- *
- * 参考: doc/technical-architecture.md
- * - RAG検索: Gemini File Search API使用
- * - 登録単位: 1写真 = 画像ファイル + メタJSON
- * - 検索方式: マルチモーダル（テキスト/画像/併用）
- */
-
-// このファイルは将来実装予定のため、現在は使用していません
-// File Search API実装時にGemini SDKのインポートを追加します
+import { GoogleGenAI } from "@google/genai";
 
 /**
- * ファイルをアップロード（画像・JSON等）
- *
- * @param filePath ファイルパス
- * @param mimeType MIMEタイプ
- * @param displayName 表示名
+ * File Search Store IDを取得
  */
-export async function uploadFile(
-  filePath: string,
-  mimeType: string,
-  displayName?: string
-) {
-  // TODO: 実装予定
-  // const uploadResult = await fileManager.uploadFile(filePath, {
-  //   mimeType,
-  //   displayName,
-  // })
-  // return uploadResult.file
-
-  return null;
+export function getFileSearchStoreId(): string {
+  const storeId = process.env.GEMINI_FILE_SEARCH_STORE_ID;
+  if (!storeId) {
+    throw new Error(
+      "GEMINI_FILE_SEARCH_STORE_ID is not set in environment variables"
+    );
+  }
+  return storeId;
 }
 
 /**
- * アップロードしたファイルの状態を確認
- *
- * @param fileName ファイル名
+ * File Search用のクライアントを取得
  */
-export async function getFileStatus(fileName: string) {
-  // TODO: 実装予定
-  // const file = await fileManager.getFile(fileName)
-  // return file.state === FileState.ACTIVE
+export function getFileSearchClient() {
+  if (!process.env.GEMINI_API_KEY) {
+    throw new Error("GEMINI_API_KEY is not set in environment variables");
+  }
 
-  return false;
+  return new GoogleGenAI({
+    apiKey: process.env.GEMINI_API_KEY,
+  });
 }
 
 /**
- * File Search Storeを作成
- *
- * @param displayName ストア名
+ * File Search Store の情報を取得
  */
-export async function createFileSearchStore(displayName: string) {
-  // TODO: 実装予定
-  // MVP実装時に File Search Store の作成機能を追加
+export async function getFileSearchStoreInfo() {
+  const client = getFileSearchClient();
+  const storeId = getFileSearchStoreId();
 
-  return null;
+  try {
+    const store = await client.fileSearchStores.get({
+      name: storeId,
+    });
+    return store;
+  } catch (error) {
+    console.error("File Search Store の取得に失敗しました:", error);
+    throw error;
+  }
 }
 
 /**
- * File Search Storeにファイルを追加
- *
- * @param storeId ストアID
- * @param fileUri ファイルURI
+ * File Search Store に登録されているファイル一覧を取得
+ * TODO: Phase 3で実装予定
  */
-export async function addFileToStore(storeId: string, fileUri: string) {
-  // TODO: 実装予定
-  // MVP実装時に File Search Store へのファイル追加機能を実装
-
-  return null;
-}
-
-/**
- * File Search Storeで検索
- *
- * @param storeId ストアID
- * @param query 検索クエリ（テキスト）
- * @param imageFile 検索クエリ（画像、オプション）
- */
-export async function searchInStore(
-  storeId: string,
-  query: string,
-  imageFile?: string
-) {
-  // TODO: 実装予定
-  // MVP実装時に File Search API による検索機能を実装
-
+export async function listFilesInStore() {
+  // const client = getFileSearchClient();
+  // const storeId = getFileSearchStoreId();
+  // Phase 3で実装予定
+  console.warn("listFilesInStore は Phase 3 で実装予定です");
   return [];
+}
+
+/**
+ * File Search Store からファイルを削除
+ * TODO: Phase 3で実装予定
+ */
+export async function deleteFileFromStore(fileName: string) {
+  // const client = getFileSearchClient();
+  // Phase 3で実装予定
+  console.warn("deleteFileFromStore は Phase 3 で実装予定です");
+  return { success: true };
 }

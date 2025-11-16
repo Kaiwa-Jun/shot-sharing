@@ -1,7 +1,17 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { ExifData } from "@/components/gallery/photo-card";
+import { extractExifData } from "@/lib/image/exif";
+import { createThumbnail, resizeForDisplay } from "@/lib/image/resize";
+import {
+  uploadImageToStorage,
+  getPublicUrl,
+  generateStoragePath,
+  deleteFromStorage,
+} from "@/lib/supabase/storage";
+import { uploadPhotoToFileSearch } from "@/lib/gemini/file-search-upload";
 
 export interface Post {
   id: string;
@@ -133,5 +143,127 @@ export async function getPostById(
   } catch (err) {
     console.error("Unexpected error fetching post:", err);
     return { data: null, error: "予期しないエラーが発生しました" };
+  }
+}
+
+/**
+ * 投稿作成Server Action
+ * @param formData フォームデータ
+ */
+export async function createPost(formData: FormData) {
+  const supabase = await createClient();
+
+  // 認証チェック
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    throw new Error("認証が必要です");
+  }
+
+  try {
+    // 1. フォームデータの取得
+    const imageFile = formData.get("image") as File;
+    const description = (formData.get("description") as string) || "";
+
+    if (!imageFile) {
+      throw new Error("画像ファイルが選択されていません");
+    }
+
+    console.log("📸 投稿処理を開始します...");
+
+    // 2. 画像をBufferに変換
+    const imageBuffer = Buffer.from(await imageFile.arrayBuffer());
+
+    // 3. Exif情報を抽出
+    console.log("📊 Exif情報を抽出中...");
+    const exifData = await extractExifData(imageFile);
+
+    // 4. 投稿IDを生成
+    const postId = crypto.randomUUID();
+
+    // 5. サムネイルと表示用画像を生成
+    console.log("🖼️ サムネイルと表示用画像を生成中...");
+    const [thumbnailBuffer, displayBuffer] = await Promise.all([
+      createThumbnail(imageBuffer),
+      resizeForDisplay(imageBuffer),
+    ]);
+
+    // 6. Supabase Storageにアップロード
+    console.log("☁️ Supabase Storageにアップロード中...");
+    const imagePath = generateStoragePath(user.id, postId, "original.jpg");
+    const thumbnailPath = generateStoragePath(user.id, postId, "thumbnail.jpg");
+
+    try {
+      await Promise.all([
+        uploadImageToStorage(displayBuffer, imagePath, imageFile.type),
+        uploadImageToStorage(thumbnailBuffer, thumbnailPath, "image/jpeg"),
+      ]);
+    } catch (error) {
+      console.error("Storageへのアップロードに失敗しました:", error);
+      throw new Error("画像のアップロードに失敗しました");
+    }
+
+    // 7. パブリックURLを取得
+    const [imageUrl, thumbnailUrl] = await Promise.all([
+      getPublicUrl(imagePath),
+      getPublicUrl(thumbnailPath),
+    ]);
+
+    // 8. File Search Storeに登録
+    console.log("🔍 File Search Storeに登録中...");
+    let fileSearchSuccess = false;
+
+    try {
+      await uploadPhotoToFileSearch(imageBuffer, postId, exifData, description);
+      fileSearchSuccess = true;
+    } catch (error) {
+      console.error("File Search Storeへの登録に失敗しました:", error);
+      // File Search失敗時でも投稿は続行（後で再登録可能）
+    }
+
+    // 9. DBに投稿情報を保存
+    console.log("💾 DBに投稿情報を保存中...");
+    const { error: dbError } = await supabase.from("posts").insert({
+      id: postId,
+      user_id: user.id,
+      image_url: imageUrl,
+      thumbnail_url: thumbnailUrl,
+      description,
+      exif_data: exifData,
+      visibility: "public",
+    });
+
+    if (dbError) {
+      console.error("DB保存に失敗しました:", dbError);
+
+      // ロールバック: Storageから画像を削除
+      try {
+        await Promise.all([
+          deleteFromStorage(imagePath),
+          deleteFromStorage(thumbnailPath),
+        ]);
+      } catch (cleanupError) {
+        console.error("クリーンアップに失敗しました:", cleanupError);
+      }
+
+      throw new Error("投稿の保存に失敗しました");
+    }
+
+    console.log("✅ 投稿が完了しました!");
+
+    // キャッシュを再検証
+    revalidatePath("/");
+    revalidatePath("/me");
+
+    return {
+      success: true,
+      postId,
+      fileSearchSuccess,
+    };
+  } catch (error) {
+    console.error("投稿処理でエラーが発生しました:", error);
+    throw error;
   }
 }
