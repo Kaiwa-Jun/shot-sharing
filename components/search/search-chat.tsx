@@ -15,10 +15,10 @@ export function SearchChat({ messages, isExpanded }: SearchChatProps) {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [showScrollButton, setShowScrollButton] = useState(false);
 
-  // メッセージが更新されたら最下部にスクロール
+  // 新しいメッセージが追加された時のみ最下部にスクロール
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  }, [messages.length]);
 
   // スクロール位置を監視
   useEffect(() => {
