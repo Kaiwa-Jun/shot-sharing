@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { usePathname } from "next/navigation";
 import { AnimatePresence } from "framer-motion";
 import { Header } from "@/components/layout/header";
 import { SearchFAB } from "@/components/layout/search-fab";
@@ -20,12 +21,16 @@ interface PageClientProps {
 }
 
 export function PageClient({ initialPhotos, initialUser }: PageClientProps) {
+  const pathname = usePathname();
   const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
   const [selectedPost, setSelectedPost] = useState<Post | null>(null);
   const [initialIsSaved, setInitialIsSaved] = useState(false);
 
   // 検索状態
   const [isSearchMode, setIsSearchMode] = useState(false);
+
+  // /me画面ではSearchFABを非表示
+  const showSearchFAB = pathname === "/";
   const [searchResults, setSearchResults] = useState<PhotoCardProps[]>([]);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [conversationHistory, setConversationHistory] = useState<
@@ -319,12 +324,14 @@ export function PageClient({ initialPhotos, initialUser }: PageClientProps) {
       />
 
       {/* フローティングアクションボタン */}
-      <SearchFAB
-        onSearch={handleSearch}
-        isLoading={isSearching}
-        showExamples={chatMessages.length === 0}
-        isSearchMode={isSearchMode}
-      />
+      {showSearchFAB && (
+        <SearchFAB
+          onSearch={handleSearch}
+          isLoading={isSearching}
+          showExamples={chatMessages.length === 0}
+          isSearchMode={isSearchMode}
+        />
+      )}
 
       {/* 詳細モーダル */}
       <AnimatePresence mode="sync">

@@ -6,6 +6,13 @@ export async function middleware(request: NextRequest) {
     request,
   });
 
+  // 認証が不要なパスではスキップ
+  const pathname = request.nextUrl.pathname;
+  const publicPaths = ["/login", "/api/auth"];
+  if (publicPaths.some((path) => pathname.startsWith(path))) {
+    return supabaseResponse;
+  }
+
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
