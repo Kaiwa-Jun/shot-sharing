@@ -1,20 +1,13 @@
 "use client";
 
 import { motion, useMotionValueEvent, useScroll } from "framer-motion";
-import { Camera, LogOut, User, PlusCircle } from "lucide-react";
+import { Camera, User, PlusCircle } from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
-import { useRouter } from "next/navigation";
 import { LoginPromptModal } from "@/components/auth/login-prompt-modal";
 import { PostModal } from "@/components/posts/post-modal";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 
 interface HeaderProps {
   initialUser?: SupabaseUser | null;
@@ -23,18 +16,10 @@ interface HeaderProps {
 export function Header({ initialUser = null }: HeaderProps) {
   const [isHidden, setIsHidden] = useState(false);
   const [user, setUser] = useState<SupabaseUser | null>(initialUser);
-  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showPostModal, setShowPostModal] = useState(false);
-  const [isMounted, setIsMounted] = useState(false);
   const { scrollY } = useScroll();
-  const router = useRouter();
   const supabase = createClient();
-
-  // クライアント側でマウント後に DropdownMenu をレンダリング
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
 
   // 認証状態の監視
   useEffect(() => {
@@ -58,20 +43,6 @@ export function Header({ initialUser = null }: HeaderProps) {
       subscription.unsubscribe();
     };
   }, [supabase.auth]);
-
-  // ログアウト処理
-  const handleLogout = async () => {
-    try {
-      setIsLoggingOut(true);
-      await supabase.auth.signOut();
-      router.push("/");
-      router.refresh();
-    } catch (error) {
-      console.error("ログアウトエラー:", error);
-    } finally {
-      setIsLoggingOut(false);
-    }
-  };
 
   useMotionValueEvent(scrollY, "change", (latest) => {
     const previous = scrollY.getPrevious() ?? 0;
@@ -99,41 +70,12 @@ export function Header({ initialUser = null }: HeaderProps) {
         <div className="container mx-auto flex h-14 items-center justify-between px-4">
           {/* 左: ユーザー情報またはログインボタン */}
           {user ? (
-            isMounted ? (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    className="flex h-10 w-10 items-center justify-center rounded-full bg-muted transition-colors hover:bg-muted/80"
-                  >
-                    {user.user_metadata?.avatar_url ? (
-                      <img
-                        src={user.user_metadata.avatar_url}
-                        alt="User avatar"
-                        className="h-full w-full rounded-full object-cover"
-                      />
-                    ) : (
-                      <User className="h-5 w-5 text-muted-foreground" />
-                    )}
-                  </motion.button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="start">
-                  <DropdownMenuItem
-                    onClick={handleLogout}
-                    disabled={isLoggingOut}
-                    className="cursor-pointer"
-                  >
-                    <LogOut className="mr-2 h-4 w-4" />
-                    <span>
-                      {isLoggingOut ? "ログアウト中..." : "ログアウト"}
-                    </span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            ) : (
-              // マウント前は静的なアバターアイコンのみ表示
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted">
+            <Link href="/me">
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="flex h-10 w-10 items-center justify-center rounded-full bg-muted transition-colors hover:bg-muted/80"
+              >
                 {user.user_metadata?.avatar_url ? (
                   <img
                     src={user.user_metadata.avatar_url}
@@ -143,8 +85,8 @@ export function Header({ initialUser = null }: HeaderProps) {
                 ) : (
                   <User className="h-5 w-5 text-muted-foreground" />
                 )}
-              </div>
-            )
+              </motion.div>
+            </Link>
           ) : (
             <motion.button
               onClick={() => setShowLoginModal(true)}

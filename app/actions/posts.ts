@@ -322,3 +322,180 @@ export async function createPost(formData: FormData) {
     throw error;
   }
 }
+
+/**
+ * DBのスネークケースExifDataをキャメルケースに変換するヘルパー関数
+ */
+function convertExifData(dbExif: any): ExifData | null {
+  if (!dbExif) return null;
+
+  return {
+    iso: dbExif.iso ?? null,
+    fValue: dbExif.f_value ?? dbExif.fValue ?? null,
+    shutterSpeed: dbExif.shutter_speed ?? dbExif.shutterSpeed ?? null,
+    exposureCompensation:
+      dbExif.exposure_compensation ?? dbExif.exposureCompensation ?? null,
+    focalLength: dbExif.focal_length ?? dbExif.focalLength ?? null,
+    whiteBalance: dbExif.white_balance ?? dbExif.whiteBalance ?? null,
+    cameraMake: dbExif.camera_make ?? dbExif.cameraMake ?? null,
+    cameraModel: dbExif.camera_model ?? dbExif.cameraModel ?? null,
+    lens: dbExif.lens ?? null,
+    dateTime: dbExif.date_time ?? dbExif.dateTime ?? null,
+    width: dbExif.width ?? null,
+    height: dbExif.height ?? null,
+  };
+}
+
+/**
+ * 特定ユーザーの投稿一覧を取得（ページネーション対応）
+ */
+export async function getUserPosts(
+  userId: string,
+  limit: number = 20,
+  offset: number = 0
+): Promise<{ data: Post[] | null; error: string | null }> {
+  try {
+    const supabase = await createClient();
+
+    const { data, error } = await supabase
+      .from("posts")
+      .select("*")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false })
+      .range(offset, offset + limit - 1);
+
+    if (error) {
+      console.error("Error fetching user posts:", error);
+      return { data: null, error: error.message };
+    }
+
+    const posts: Post[] = (data || []).map((post) => ({
+      id: post.id,
+      userId: post.user_id,
+      imageUrl: post.image_url,
+      thumbnailUrl: post.thumbnail_url,
+      description: post.description,
+      exifData: convertExifData(post.exif_data),
+      fileSearchStoreId: post.file_search_store_id,
+      visibility: post.visibility,
+      width: post.width,
+      height: post.height,
+      createdAt: post.created_at,
+      updatedAt: post.updated_at,
+    }));
+
+    return { data: posts, error: null };
+  } catch (err) {
+    console.error("Unexpected error fetching user posts:", err);
+    return { data: null, error: "予期しないエラーが発生しました" };
+  }
+}
+
+/**
+ * 特定ユーザーの投稿総数を取得
+ */
+export async function getUserPostsCount(
+  userId: string
+): Promise<{ data: number | null; error: string | null }> {
+  try {
+    const supabase = await createClient();
+
+    const { count, error } = await supabase
+      .from("posts")
+      .select("*", { count: "exact", head: true })
+      .eq("user_id", userId);
+
+    if (error) {
+      console.error("Error counting user posts:", error);
+      return { data: null, error: error.message };
+    }
+
+    return { data: count, error: null };
+  } catch (err) {
+    console.error("Unexpected error counting user posts:", err);
+    return { data: null, error: "予期しないエラーが発生しました" };
+  }
+}
+
+/**
+ * 特定ユーザーが保存した投稿一覧を取得（ページネーション対応）
+ */
+export async function getUserSavedPosts(
+  userId: string,
+  limit: number = 20,
+  offset: number = 0
+): Promise<{ data: Post[] | null; error: string | null }> {
+  try {
+    const supabase = await createClient();
+
+    // savesテーブルとpostsテーブルを結合して取得
+    const { data, error } = await supabase
+      .from("saves")
+      .select(
+        `
+        post_id,
+        created_at,
+        posts (*)
+      `
+      )
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false })
+      .range(offset, offset + limit - 1);
+
+    if (error) {
+      console.error("Error fetching saved posts:", error);
+      return { data: null, error: error.message };
+    }
+
+    const posts: Post[] = (data || [])
+      .filter((save) => save.posts)
+      .map((save) => {
+        const post = save.posts as any;
+        return {
+          id: post.id,
+          userId: post.user_id,
+          imageUrl: post.image_url,
+          thumbnailUrl: post.thumbnail_url,
+          description: post.description,
+          exifData: convertExifData(post.exif_data),
+          fileSearchStoreId: post.file_search_store_id,
+          visibility: post.visibility,
+          width: post.width,
+          height: post.height,
+          createdAt: post.created_at,
+          updatedAt: post.updated_at,
+        };
+      });
+
+    return { data: posts, error: null };
+  } catch (err) {
+    console.error("Unexpected error fetching saved posts:", err);
+    return { data: null, error: "予期しないエラーが発生しました" };
+  }
+}
+
+/**
+ * 特定ユーザーの保存した投稿総数を取得
+ */
+export async function getUserSavedPostsCount(
+  userId: string
+): Promise<{ data: number | null; error: string | null }> {
+  try {
+    const supabase = await createClient();
+
+    const { count, error } = await supabase
+      .from("saves")
+      .select("*", { count: "exact", head: true })
+      .eq("user_id", userId);
+
+    if (error) {
+      console.error("Error counting saved posts:", error);
+      return { data: null, error: error.message };
+    }
+
+    return { data: count, error: null };
+  } catch (err) {
+    console.error("Unexpected error counting saved posts:", err);
+    return { data: null, error: "予期しないエラーが発生しました" };
+  }
+}
