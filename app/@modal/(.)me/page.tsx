@@ -25,11 +25,11 @@ export default async function InterceptedProfilePage() {
   // プロフィール情報を取得
   const { profile } = await getCurrentUserProfile();
 
-  // ユーザーの投稿と保存した投稿を並行取得
+  // ユーザーの投稿と保存した投稿を並行取得（初期表示10枚）
   const [postsResult, savedPostsResult, postsCountResult, savedCountResult] =
     await Promise.all([
-      getUserPosts(user.id, 20, 0),
-      getUserSavedPosts(user.id, 20, 0),
+      getUserPosts(user.id, 10, 0),
+      getUserSavedPosts(user.id, 10, 0),
       getUserPostsCount(user.id),
       getUserSavedPostsCount(user.id),
     ]);

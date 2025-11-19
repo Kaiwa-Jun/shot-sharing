@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion, PanInfo, AnimatePresence } from "framer-motion";
 import { ArrowLeft, LogOut, User } from "lucide-react";
@@ -45,18 +45,108 @@ export function ProfileClient({
   const [selectedPost, setSelectedPost] = useState<Post | null>(null);
   const [initialIsSaved, setInitialIsSaved] = useState(false);
 
-  // デバッグログ
-  console.log("📱 [DEBUG] ProfileClient レンダリング");
-  console.log("📱 [DEBUG] profile:", profile);
-  console.log("📱 [DEBUG] initialUserPhotos:", initialUserPhotos?.length, "件");
-  console.log(
-    "📱 [DEBUG] initialSavedPhotos:",
-    initialSavedPhotos?.length,
-    "件"
+  // 投稿タブの状態
+  const [userPhotos, setUserPhotos] =
+    useState<PhotoCardProps[]>(initialUserPhotos);
+  const [isLoadingPosts, setIsLoadingPosts] = useState(false);
+  const [hasMorePosts, setHasMorePosts] = useState(
+    initialUserPhotos.length < postsCount
   );
-  console.log("📱 [DEBUG] postsCount:", postsCount);
-  console.log("📱 [DEBUG] savedCount:", savedCount);
-  console.log("📱 [DEBUG] userId:", userId);
+
+  // 保存タブの状態
+  const [savedPhotos, setSavedPhotos] =
+    useState<PhotoCardProps[]>(initialSavedPhotos);
+  const [isLoadingSaved, setIsLoadingSaved] = useState(false);
+  const [hasMoreSaved, setHasMoreSaved] = useState(
+    initialSavedPhotos.length < savedCount
+  );
+
+  // 現在のタブ
+  const [activeTab, setActiveTab] = useState("posts");
+
+  // 投稿の追加読み込み
+  const loadMorePosts = useCallback(async () => {
+    if (isLoadingPosts || !hasMorePosts) return;
+
+    setIsLoadingPosts(true);
+    try {
+      const response = await fetch("/api/users/me/posts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ limit: 10, offset: userPhotos.length }),
+      });
+
+      if (response.ok) {
+        const { data } = await response.json();
+        if (data && data.length > 0) {
+          setUserPhotos((prev) => [...prev, ...data]);
+          if (data.length < 10) setHasMorePosts(false);
+        } else {
+          setHasMorePosts(false);
+        }
+      }
+    } catch (error) {
+      console.error("Error loading more posts:", error);
+    } finally {
+      setIsLoadingPosts(false);
+    }
+  }, [userPhotos.length, isLoadingPosts, hasMorePosts]);
+
+  // 保存の追加読み込み
+  const loadMoreSaved = useCallback(async () => {
+    if (isLoadingSaved || !hasMoreSaved) return;
+
+    setIsLoadingSaved(true);
+    try {
+      const response = await fetch("/api/users/me/saves", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ limit: 10, offset: savedPhotos.length }),
+      });
+
+      if (response.ok) {
+        const { data } = await response.json();
+        if (data && data.length > 0) {
+          setSavedPhotos((prev) => [...prev, ...data]);
+          if (data.length < 10) setHasMoreSaved(false);
+        } else {
+          setHasMoreSaved(false);
+        }
+      }
+    } catch (error) {
+      console.error("Error loading more saved:", error);
+    } finally {
+      setIsLoadingSaved(false);
+    }
+  }, [savedPhotos.length, isLoadingSaved, hasMoreSaved]);
+
+  // スクロール検出
+  useEffect(() => {
+    const handleScroll = () => {
+      if (
+        window.innerHeight + document.documentElement.scrollTop >=
+        document.documentElement.offsetHeight - 500
+      ) {
+        if (activeTab === "posts") {
+          loadMorePosts();
+        } else {
+          loadMoreSaved();
+        }
+      }
+    };
+
+    let timeoutId: NodeJS.Timeout;
+    const debouncedScroll = () => {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(handleScroll, 100);
+    };
+
+    window.addEventListener("scroll", debouncedScroll);
+    return () => {
+      clearTimeout(timeoutId);
+      window.removeEventListener("scroll", debouncedScroll);
+    };
+  }, [loadMorePosts, loadMoreSaved, activeTab]);
 
   // 戻るボタンのハンドラー
   const handleBack = () => {
@@ -94,8 +184,7 @@ export function ProfileClient({
     };
     setSelectedPost(tempPost);
 
-    // URLを更新
-    window.history.pushState(null, "", `/posts/${photo.id}`);
+    // /me画面ではURLを変更しない（履歴の複雑化を防ぐ）
 
     // バックグラウンドで詳細データと保存状態を取得
     try {
@@ -122,7 +211,7 @@ export function ProfileClient({
   const handleCloseModal = () => {
     setSelectedPostId(null);
     setSelectedPost(null);
-    window.history.pushState(null, "", "/me");
+    // URLは変更していないので戻す必要なし
   };
 
   // スワイプ終了時のハンドラー
@@ -212,72 +301,114 @@ export function ProfileClient({
       </div>
 
       {/* タブ */}
-      <Tabs defaultValue="posts" className="w-full">
+      <Tabs
+        defaultValue="posts"
+        className="w-full"
+        onValueChange={setActiveTab}
+      >
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="posts">投稿（{postsCount}）</TabsTrigger>
           <TabsTrigger value="saved">保存（{savedCount}）</TabsTrigger>
         </TabsList>
 
         {/* 投稿タブ */}
-        <TabsContent value="posts" className="p-4">
-          {initialUserPhotos.length === 0 ? (
-            <div className="py-8 text-center text-muted-foreground">
-              まだ投稿がありません
-            </div>
-          ) : (
-            <Masonry
-              breakpointCols={breakpointColumns}
-              className="flex w-full gap-2"
-              columnClassName="flex flex-col gap-2"
-            >
-              {initialUserPhotos.map((photo) => (
-                <div
-                  key={photo.id}
-                  className="cursor-pointer overflow-hidden rounded-lg"
-                  onClick={() => handlePhotoClick(photo)}
+        <TabsContent value="posts" className="p-4" asChild>
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.4, ease: "easeOut" }}
+          >
+            {userPhotos.length === 0 ? (
+              <div className="py-8 text-center text-muted-foreground">
+                まだ投稿がありません
+              </div>
+            ) : (
+              <>
+                <Masonry
+                  breakpointCols={breakpointColumns}
+                  className="flex w-full gap-2"
+                  columnClassName="flex flex-col gap-2"
                 >
-                  <Image
-                    src={photo.imageUrl}
-                    alt=""
-                    width={300}
-                    height={400}
-                    className="w-full object-cover"
-                  />
-                </div>
-              ))}
-            </Masonry>
-          )}
+                  {userPhotos.map((photo) => (
+                    <div
+                      key={photo.id}
+                      className="cursor-pointer overflow-hidden rounded-lg"
+                      onClick={() => handlePhotoClick(photo)}
+                    >
+                      <Image
+                        src={photo.imageUrl}
+                        alt=""
+                        width={300}
+                        height={400}
+                        className="w-full object-cover"
+                        unoptimized
+                      />
+                    </div>
+                  ))}
+                </Masonry>
+                {isLoadingPosts && (
+                  <div className="flex justify-center py-4">
+                    <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                  </div>
+                )}
+                {!hasMorePosts && userPhotos.length > 0 && (
+                  <div className="py-4 text-center text-sm text-muted-foreground">
+                    すべての投稿を表示しました
+                  </div>
+                )}
+              </>
+            )}
+          </motion.div>
         </TabsContent>
 
         {/* 保存タブ */}
-        <TabsContent value="saved" className="p-4">
-          {initialSavedPhotos.length === 0 ? (
-            <div className="py-8 text-center text-muted-foreground">
-              保存した投稿がありません
-            </div>
-          ) : (
-            <Masonry
-              breakpointCols={breakpointColumns}
-              className="flex w-full gap-2"
-              columnClassName="flex flex-col gap-2"
-            >
-              {initialSavedPhotos.map((photo) => (
-                <div
-                  key={photo.id}
-                  className="cursor-pointer overflow-hidden rounded-lg"
-                  onClick={() => handlePhotoClick(photo)}
+        <TabsContent value="saved" className="p-4" asChild>
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.4, ease: "easeOut" }}
+          >
+            {savedPhotos.length === 0 ? (
+              <div className="py-8 text-center text-muted-foreground">
+                保存した投稿がありません
+              </div>
+            ) : (
+              <>
+                <Masonry
+                  breakpointCols={breakpointColumns}
+                  className="flex w-full gap-2"
+                  columnClassName="flex flex-col gap-2"
                 >
-                  <Image
-                    src={photo.imageUrl}
-                    alt=""
-                    width={300}
-                    height={400}
-                    className="w-full object-cover"
-                  />
-                </div>
-              ))}
-            </Masonry>
-          )}
+                  {savedPhotos.map((photo) => (
+                    <div
+                      key={photo.id}
+                      className="cursor-pointer overflow-hidden rounded-lg"
+                      onClick={() => handlePhotoClick(photo)}
+                    >
+                      <Image
+                        src={photo.imageUrl}
+                        alt=""
+                        width={300}
+                        height={400}
+                        className="w-full object-cover"
+                        unoptimized
+                      />
+                    </div>
+                  ))}
+                </Masonry>
+                {isLoadingSaved && (
+                  <div className="flex justify-center py-4">
+                    <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                  </div>
+                )}
+                {!hasMoreSaved && savedPhotos.length > 0 && (
+                  <div className="py-4 text-center text-sm text-muted-foreground">
+                    すべての保存を表示しました
+                  </div>
+                )}
+              </>
+            )}
+          </motion.div>
         </TabsContent>
       </Tabs>
 

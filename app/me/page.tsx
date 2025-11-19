@@ -44,14 +44,36 @@ export default async function ProfilePage() {
 
   // ユーザーの投稿と保存した投稿を並行取得
   console.log("📱 [DEBUG] データ取得開始:", new Date().toISOString());
+
+  const startTime = Date.now();
   const [postsResult, savedPostsResult, postsCountResult, savedCountResult] =
     await Promise.all([
-      getUserPosts(user.id, 20, 0),
-      getUserSavedPosts(user.id, 20, 0),
-      getUserPostsCount(user.id),
-      getUserSavedPostsCount(user.id),
+      (async () => {
+        const t = Date.now();
+        const result = await getUserPosts(user.id, 10, 0);
+        console.log(`📱 [DEBUG] getUserPosts: ${Date.now() - t}ms`);
+        return result;
+      })(),
+      (async () => {
+        const t = Date.now();
+        const result = await getUserSavedPosts(user.id, 10, 0);
+        console.log(`📱 [DEBUG] getUserSavedPosts: ${Date.now() - t}ms`);
+        return result;
+      })(),
+      (async () => {
+        const t = Date.now();
+        const result = await getUserPostsCount(user.id);
+        console.log(`📱 [DEBUG] getUserPostsCount: ${Date.now() - t}ms`);
+        return result;
+      })(),
+      (async () => {
+        const t = Date.now();
+        const result = await getUserSavedPostsCount(user.id);
+        console.log(`📱 [DEBUG] getUserSavedPostsCount: ${Date.now() - t}ms`);
+        return result;
+      })(),
     ]);
-  console.log("📱 [DEBUG] データ取得完了:", new Date().toISOString());
+  console.log(`📱 [DEBUG] データ取得完了: ${Date.now() - startTime}ms total`);
 
   // エラーハンドリング
   if (postsResult.error) {

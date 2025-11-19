@@ -359,7 +359,9 @@ export async function getUserPosts(
 
     const { data, error } = await supabase
       .from("posts")
-      .select("*")
+      .select(
+        "id, user_id, image_url, thumbnail_url, description, exif_data, file_search_store_id, visibility, width, height, created_at, updated_at"
+      )
       .eq("user_id", userId)
       .order("created_at", { ascending: false })
       .range(offset, offset + limit - 1);
