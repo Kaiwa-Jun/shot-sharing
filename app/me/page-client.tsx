@@ -230,6 +230,9 @@ export function ProfileClient({
 
   // スワイプ終了時のハンドラー
   const handleDragEnd = (_: unknown, info: PanInfo) => {
+    // モーダルが開いているときはスワイプ処理をスキップ
+    if (selectedPostId) return;
+
     if (info.offset.x < -100) {
       // 右から左へのスワイプでホームに戻る
       router.push("/");

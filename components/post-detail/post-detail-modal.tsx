@@ -1,7 +1,7 @@
 "use client";
 
 import { Post } from "@/app/actions/posts";
-import { motion, useMotionValue, useTransform } from "framer-motion";
+import { motion } from "framer-motion";
 import Image from "next/image";
 import { useState, useEffect } from "react";
 import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
@@ -9,6 +9,7 @@ import { ExifInfo } from "./exif-info";
 import { SaveButton } from "./save-button";
 import { LoginPromptModal } from "@/components/auth/login-prompt-modal";
 import { createClient } from "@/lib/supabase/client";
+import { X } from "lucide-react";
 
 interface PostDetailModalProps {
   post: Post;
@@ -43,25 +44,9 @@ export function PostDetailModal({
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
-  // スワイプクローズ用のモーション値
-  const x = useMotionValue(0);
-  const y = useMotionValue(0);
-  const opacity = useTransform(y, [0, 300], [1, 0]);
-
   // 閉じる処理
   const handleClose = () => {
     onClose();
-  };
-
-  // ドラッグ終了時の処理
-  const handleDragEnd = (_: any, info: any) => {
-    if (!isMobile) return; // デスクトップでは処理しない
-
-    // 任意の方向に150px以上ドラッグした場合は閉じる
-    const distance = Math.sqrt(info.offset.x ** 2 + info.offset.y ** 2);
-    if (distance > 150) {
-      handleClose();
-    }
   };
 
   // 保存ボタンのクリック処理
@@ -113,15 +98,16 @@ export function PostDetailModal({
       {/* モーダルコンテナ */}
       <motion.div
         className="relative h-full w-full max-w-4xl overflow-hidden bg-background"
-        style={isMobile ? { x, y } : {}}
-        drag={isMobile ? true : false}
-        dragConstraints={
-          isMobile ? { top: 0, bottom: 0, left: 0, right: 0 } : undefined
-        }
-        dragElastic={isMobile ? 0.2 : undefined}
-        onDragEnd={isMobile ? handleDragEnd : undefined}
         onClick={(e) => e.stopPropagation()}
       >
+        {/* 閉じるボタン */}
+        <button
+          onClick={handleClose}
+          className="absolute right-4 top-4 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-black/50 text-white hover:bg-black/70"
+        >
+          <X className="h-5 w-5" />
+        </button>
+
         {/* スクロール可能なコンテンツエリア */}
         <div className="h-full overflow-y-auto">
           {/* 画像エリア */}
