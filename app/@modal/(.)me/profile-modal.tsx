@@ -381,14 +381,22 @@ export function ProfileModal({
                       className="cursor-pointer overflow-hidden rounded-lg"
                       onClick={() => handlePhotoClick(photo)}
                     >
-                      <Image
-                        src={photo.imageUrl}
-                        alt=""
-                        width={300}
-                        height={400}
-                        className="w-full object-cover"
-                        unoptimized
-                      />
+                      <motion.div
+                        layoutId={`photo-${photo.id}`}
+                        transition={{
+                          duration: 0.55,
+                          ease: [0.25, 0.1, 0.25, 1],
+                        }}
+                      >
+                        <Image
+                          src={photo.imageUrl}
+                          alt=""
+                          width={300}
+                          height={400}
+                          className="w-full object-cover"
+                          unoptimized
+                        />
+                      </motion.div>
                     </div>
                   ))}
                 </Masonry>
@@ -431,14 +439,22 @@ export function ProfileModal({
                       className="cursor-pointer overflow-hidden rounded-lg"
                       onClick={() => handlePhotoClick(photo)}
                     >
-                      <Image
-                        src={photo.imageUrl}
-                        alt=""
-                        width={300}
-                        height={400}
-                        className="w-full object-cover"
-                        unoptimized
-                      />
+                      <motion.div
+                        layoutId={`photo-${photo.id}`}
+                        transition={{
+                          duration: 0.55,
+                          ease: [0.25, 0.1, 0.25, 1],
+                        }}
+                      >
+                        <Image
+                          src={photo.imageUrl}
+                          alt=""
+                          width={300}
+                          height={400}
+                          className="w-full object-cover"
+                          unoptimized
+                        />
+                      </motion.div>
                     </div>
                   ))}
                 </Masonry>
