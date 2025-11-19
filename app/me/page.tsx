@@ -14,11 +14,6 @@ import { ProfileClient } from "./page-client";
 export const dynamic = "force-dynamic";
 
 export default async function ProfilePage() {
-  console.log(
-    "📱 [DEBUG] ProfilePage レンダリング開始:",
-    new Date().toISOString()
-  );
-
   // サーバー側で認証状態を確認
   const supabase = await createClient();
   const {
@@ -27,61 +22,20 @@ export default async function ProfilePage() {
 
   // 未認証の場合はログイン画面へリダイレクト
   if (!user) {
-    console.log("📱 [DEBUG] 未認証 - ログイン画面へリダイレクト");
     redirect("/login");
   }
 
-  console.log("📱 [DEBUG] ユーザー認証OK:", user.id);
-
   // プロフィール情報を取得
-  const { profile, error: profileError } = await getCurrentUserProfile();
-
-  if (profileError || !profile) {
-    console.error("❌ [DEBUG] Failed to fetch profile:", profileError);
-  } else {
-    console.log("📱 [DEBUG] プロフィール取得OK");
-  }
+  const { profile } = await getCurrentUserProfile();
 
   // ユーザーの投稿と保存した投稿を並行取得
-  console.log("📱 [DEBUG] データ取得開始:", new Date().toISOString());
-
-  const startTime = Date.now();
   const [postsResult, savedPostsResult, postsCountResult, savedCountResult] =
     await Promise.all([
-      (async () => {
-        const t = Date.now();
-        const result = await getUserPosts(user.id, 10, 0);
-        console.log(`📱 [DEBUG] getUserPosts: ${Date.now() - t}ms`);
-        return result;
-      })(),
-      (async () => {
-        const t = Date.now();
-        const result = await getUserSavedPosts(user.id, 10, 0);
-        console.log(`📱 [DEBUG] getUserSavedPosts: ${Date.now() - t}ms`);
-        return result;
-      })(),
-      (async () => {
-        const t = Date.now();
-        const result = await getUserPostsCount(user.id);
-        console.log(`📱 [DEBUG] getUserPostsCount: ${Date.now() - t}ms`);
-        return result;
-      })(),
-      (async () => {
-        const t = Date.now();
-        const result = await getUserSavedPostsCount(user.id);
-        console.log(`📱 [DEBUG] getUserSavedPostsCount: ${Date.now() - t}ms`);
-        return result;
-      })(),
+      getUserPosts(user.id, 10, 0),
+      getUserSavedPosts(user.id, 10, 0),
+      getUserPostsCount(user.id),
+      getUserSavedPostsCount(user.id),
     ]);
-  console.log(`📱 [DEBUG] データ取得完了: ${Date.now() - startTime}ms total`);
-
-  // エラーハンドリング
-  if (postsResult.error) {
-    console.error("Failed to fetch user posts:", postsResult.error);
-  }
-  if (savedPostsResult.error) {
-    console.error("Failed to fetch saved posts:", savedPostsResult.error);
-  }
 
   // Postデータ型をPhotoCardProps型に変換
   const userPhotos: PhotoCardProps[] =
