@@ -3,15 +3,29 @@
 import { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion, PanInfo, AnimatePresence } from "framer-motion";
-import { ArrowLeft, LogOut, User } from "lucide-react";
+import {
+  ArrowLeft,
+  Settings,
+  User,
+  UserPen,
+  HelpCircle,
+  FileText,
+  LogOut,
+} from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { PhotoCardProps } from "@/components/gallery/photo-card";
 import { Post } from "@/app/actions/posts";
 import Masonry from "react-masonry-css";
 import Image from "next/image";
 import { PostDetailModal } from "@/components/post-detail/post-detail-modal";
 import { createClient } from "@/lib/supabase/client";
-import { Button } from "@/components/ui/button";
 
 interface Profile {
   id: string;
@@ -250,12 +264,45 @@ export function ProfileClient({
             <ArrowLeft className="h-5 w-5" />
           </button>
           <h1 className="flex-1 text-center font-semibold">プロフィール</h1>
-          <div className="w-10" /> {/* バランス用のスペーサー */}
+          <div className="w-10" />
         </div>
       </header>
 
       {/* プロフィール情報 */}
-      <div className="border-b px-4 py-6">
+      <div className="relative border-b px-4 py-6">
+        {/* 設定メニュー */}
+        <div className="absolute right-4 top-4">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-accent">
+                <Settings className="h-4 w-4" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem>
+                <UserPen className="mr-2 h-4 w-4" />
+                プロフィール編集
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                <HelpCircle className="mr-2 h-4 w-4" />
+                ヘルプ/お問い合わせ
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                <FileText className="mr-2 h-4 w-4" />
+                利用規約/プライバシーポリシー
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={handleLogout}
+                className="text-red-600 focus:text-red-600"
+              >
+                <LogOut className="mr-2 h-4 w-4" />
+                ログアウト
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+
         <div className="flex items-center gap-4">
           {/* アバター */}
           <div className="h-16 w-16 overflow-hidden rounded-full bg-muted">
@@ -287,17 +334,6 @@ export function ProfileClient({
         {profile?.bio && (
           <p className="mt-4 text-sm text-foreground">{profile.bio}</p>
         )}
-
-        {/* ログアウトボタン */}
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleLogout}
-          className="mt-4 w-full"
-        >
-          <LogOut className="mr-2 h-4 w-4" />
-          ログアウト
-        </Button>
       </div>
 
       {/* タブ */}
