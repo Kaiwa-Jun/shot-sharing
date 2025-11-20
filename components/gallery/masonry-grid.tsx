@@ -10,6 +10,7 @@ interface MasonryGridProps {
   onPhotoClick?: (photoId: string, photoData: PhotoCardProps) => void;
   skipInitialAnimation?: boolean;
   isSearchMode?: boolean;
+  deletedIds?: Set<string>;
 }
 
 export function MasonryGrid({
@@ -17,6 +18,7 @@ export function MasonryGrid({
   onPhotoClick,
   skipInitialAnimation = false,
   isSearchMode = false,
+  deletedIds = new Set(),
 }: MasonryGridProps) {
   const [photos, setPhotos] = useState<PhotoCardProps[]>(initialPhotos);
   const [isLoading, setIsLoading] = useState(false);
@@ -197,6 +199,9 @@ export function MasonryGrid({
     );
   }
 
+  // 削除されたIDを除外
+  const displayedPhotos = photos.filter((photo) => !deletedIds.has(photo.id));
+
   return (
     <div>
       <Masonry
@@ -204,7 +209,7 @@ export function MasonryGrid({
         className="masonry-grid"
         columnClassName="masonry-grid_column"
       >
-        {photos.map((photo, index) => (
+        {displayedPhotos.map((photo, index) => (
           <PhotoCard
             key={photo.id}
             {...photo}
