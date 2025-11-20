@@ -215,6 +215,7 @@ export function MasonryGrid({
             {...photo}
             isNew={newPhotoIds.has(photo.id)}
             priority={index < 8}
+            layoutIdDisabled={newPhotoIds.has(photo.id)}
             onClick={() => onPhotoClick?.(photo.id, photo)}
           />
         ))}
