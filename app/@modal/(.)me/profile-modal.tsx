@@ -10,6 +10,7 @@ import {
   UserPen,
   HelpCircle,
   FileText,
+  Shield,
   LogOut,
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -26,6 +27,7 @@ import Masonry from "react-masonry-css";
 import Image from "next/image";
 import { PostDetailModal } from "@/components/post-detail/post-detail-modal";
 import { createClient } from "@/lib/supabase/client";
+import { ContentView } from "./content-view";
 
 interface Profile {
   id: string;
@@ -61,6 +63,9 @@ export function ProfileModal({
   const [initialIsSaved, setInitialIsSaved] = useState(false);
   const [initialIsOwner, setInitialIsOwner] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
+
+  // ビュー状態 ('profile' | 'terms' | 'privacy')
+  const [view, setView] = useState<"profile" | "terms" | "privacy">("profile");
 
   // 投稿タブの状態
   const [userPhotos, setUserPhotos] =
@@ -250,6 +255,9 @@ export function ProfileModal({
     // モーダルが開いているときはスワイプ処理をスキップ
     if (selectedPostId) return;
 
+    // プロフィールビュー以外ではスワイプで閉じない
+    if (view !== "profile") return;
+
     if (info.offset.x < -100) {
       setIsClosing(true);
     }
@@ -261,6 +269,33 @@ export function ProfileModal({
     640: 2,
   };
 
+  // 利用規約・プライバシーポリシービューの場合
+  if (view === "terms" || view === "privacy") {
+    return (
+      <motion.div
+        ref={scrollContainerRef}
+        initial={{ x: "-100%" }}
+        animate={{ x: isClosing ? "-100%" : 0 }}
+        transition={{ type: "tween", duration: 0.3, ease: "easeOut" }}
+        onAnimationComplete={handleAnimationComplete}
+        drag="x"
+        dragConstraints={{ left: 0, right: 0 }}
+        dragElastic={0.2}
+        onDragEnd={handleDragEnd}
+        className="fixed inset-0 z-50 overflow-y-auto bg-background"
+      >
+        <AnimatePresence mode="wait">
+          <ContentView
+            key={view}
+            type={view}
+            onBack={() => setView("profile")}
+          />
+        </AnimatePresence>
+      </motion.div>
+    );
+  }
+
+  // プロフィールビュー
   return (
     <motion.div
       ref={scrollContainerRef}
@@ -307,9 +342,13 @@ export function ProfileModal({
                 <HelpCircle className="mr-2 h-4 w-4" />
                 ヘルプ/お問い合わせ
               </DropdownMenuItem>
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setView("terms")}>
                 <FileText className="mr-2 h-4 w-4" />
-                利用規約/プライバシーポリシー
+                利用規約
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setView("privacy")}>
+                <Shield className="mr-2 h-4 w-4" />
+                プライバシーポリシー
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
