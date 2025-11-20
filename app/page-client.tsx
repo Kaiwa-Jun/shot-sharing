@@ -10,10 +10,11 @@ import { MasonryGrid } from "@/components/gallery/masonry-grid";
 import { SearchLoadingSkeleton } from "@/components/gallery/search-loading-skeleton";
 import { PostDetailModal } from "@/components/post-detail/post-detail-modal";
 import { PhotoCardProps } from "@/components/gallery/photo-card";
-import { Post } from "@/app/actions/posts";
+import { Post, getPosts } from "@/app/actions/posts";
 import { searchPosts } from "@/app/actions/search";
 import { ChatMessage, ConversationMessage } from "@/lib/types/search";
 import type { User } from "@supabase/supabase-js";
+import { PullToRefresh } from "@/components/ui/pull-to-refresh";
 
 interface PageClientProps {
   initialPhotos: PhotoCardProps[];
@@ -28,6 +29,9 @@ export function PageClient({ initialPhotos, initialUser }: PageClientProps) {
   const [initialIsSaved, setInitialIsSaved] = useState(false);
   const [initialIsOwner, setInitialIsOwner] = useState(false);
   const [deletedIds, setDeletedIds] = useState<Set<string>>(new Set());
+
+  // 投稿データ（Pull-to-Refreshで更新可能）
+  const [photos, setPhotos] = useState<PhotoCardProps[]>(initialPhotos);
 
   // 検索状態
   const [isSearchMode, setIsSearchMode] = useState(false);
@@ -52,9 +56,9 @@ export function PageClient({ initialPhotos, initialUser }: PageClientProps) {
     return () => window.removeEventListener("popstate", handlePopState);
   }, []);
 
-  // initialPhotosの変更を監視
+  // initialPhotosの変更を監視（router.refresh()で更新された場合など）
   useEffect(() => {
-    // initialPhotosが更新されたときの処理（必要に応じて追加）
+    setPhotos(initialPhotos);
   }, [initialPhotos]);
 
   // 投稿選択時の処理
@@ -315,8 +319,37 @@ export function PageClient({ initialPhotos, initialUser }: PageClientProps) {
     setConversationHistory([]);
   };
 
+  // Pull-to-Refreshのリロード処理
+  const handleRefresh = async () => {
+    try {
+      // 最初の20件を取得
+      const { data: posts, error } = await getPosts(20, 0);
+
+      if (error || !posts) {
+        throw new Error(error || "投稿の取得に失敗しました");
+      }
+
+      // PhotoCardProps形式に変換
+      const newPhotos: PhotoCardProps[] = posts.map((post: Post) => ({
+        id: post.id,
+        imageUrl: post.imageUrl,
+        userId: post.userId,
+        exifData: post.exifData || undefined,
+      }));
+
+      // 投稿データを更新
+      setPhotos(newPhotos);
+
+      // 削除済みIDをクリア（リロード時にリセット）
+      setDeletedIds(new Set());
+    } catch (error) {
+      console.error("Failed to refresh posts:", error);
+      throw error; // エラーを再スローしてPullToRefreshコンポーネントに伝える
+    }
+  };
+
   // 表示する写真を決定（検索モードか通常モードか）
-  const displayPhotos = isSearchMode ? searchResults : initialPhotos;
+  const displayPhotos = isSearchMode ? searchResults : photos;
 
   return (
     <div className="min-h-screen bg-background">
@@ -324,29 +357,36 @@ export function PageClient({ initialPhotos, initialUser }: PageClientProps) {
       <Header initialUser={initialUser} />
 
       {/* メインコンテンツ */}
-      <main className="container mx-auto px-4 pb-24 pt-20">
-        {isSearching && isSearchMode ? (
-          // 検索中: ローディングスケルトンを表示
-          <SearchLoadingSkeleton />
-        ) : displayPhotos.length > 0 ? (
-          // 検索結果または通常の投稿を表示
-          <MasonryGrid
-            initialPhotos={displayPhotos}
-            onPhotoClick={handlePhotoClick}
-            isSearchMode={isSearchMode}
-            deletedIds={deletedIds}
-          />
-        ) : (
-          // 投稿がない場合
-          <div className="flex min-h-[50vh] items-center justify-center">
-            <p className="text-muted-foreground">
-              {isSearchMode
-                ? "検索結果が見つかりませんでした。"
-                : "投稿がありません。最初の投稿を作成してみましょう！"}
-            </p>
-          </div>
-        )}
-      </main>
+      <PullToRefresh
+        onRefresh={handleRefresh}
+        disabled={!!selectedPostId || isSearchMode}
+        topOffset={56}
+      >
+        <main className="container mx-auto px-4 pb-24 pt-20">
+          {isSearching && isSearchMode ? (
+            // 検索中: ローディングスケルトンを表示
+            <SearchLoadingSkeleton />
+          ) : displayPhotos.length > 0 ? (
+            // 検索結果または通常の投稿を表示
+            <MasonryGrid
+              key={photos.length} // リロード時にコンポーネントをリセット
+              initialPhotos={displayPhotos}
+              onPhotoClick={handlePhotoClick}
+              isSearchMode={isSearchMode}
+              deletedIds={deletedIds}
+            />
+          ) : (
+            // 投稿がない場合
+            <div className="flex min-h-[50vh] items-center justify-center">
+              <p className="text-muted-foreground">
+                {isSearchMode
+                  ? "検索結果が見つかりませんでした。"
+                  : "投稿がありません。最初の投稿を作成してみましょう！"}
+              </p>
+            </div>
+          )}
+        </main>
+      </PullToRefresh>
 
       {/* チャット領域 */}
       <SearchChat
