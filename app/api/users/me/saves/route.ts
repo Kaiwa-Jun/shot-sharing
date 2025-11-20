@@ -55,6 +55,7 @@ export async function POST(request: NextRequest) {
     const photos = posts?.map((post) => ({
       id: post.id,
       imageUrl: post.imageUrl,
+      userId: post.userId,
       exifData: post.exifData || undefined,
     }));
 

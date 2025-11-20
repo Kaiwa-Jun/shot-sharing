@@ -39,6 +39,7 @@ export default async function InterceptedProfilePage() {
     postsResult.data?.map((post) => ({
       id: post.id,
       imageUrl: post.imageUrl,
+      userId: post.userId,
       exifData: post.exifData || undefined,
     })) || [];
 
@@ -46,6 +47,7 @@ export default async function InterceptedProfilePage() {
     savedPostsResult.data?.map((post) => ({
       id: post.id,
       imageUrl: post.imageUrl,
+      userId: post.userId,
       exifData: post.exifData || undefined,
     })) || [];
 

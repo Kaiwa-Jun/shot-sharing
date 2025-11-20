@@ -1,21 +1,16 @@
 "use client";
 
 import { Post } from "@/app/actions/posts";
-import { motion } from "framer-motion";
+import { motion, PanInfo } from "framer-motion";
 import Image from "next/image";
 import { useState, useEffect } from "react";
 import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
 import { ExifInfo } from "./exif-info";
 import { SaveButton } from "./save-button";
+import { PostActionsMenu } from "./post-actions-menu";
 import { LoginPromptModal } from "@/components/auth/login-prompt-modal";
 import { createClient } from "@/lib/supabase/client";
-import { X, MoreHorizontal, Trash2, Edit } from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { X } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -32,22 +27,27 @@ import { useRouter } from "next/navigation";
 interface PostDetailModalProps {
   post: Post;
   initialIsSaved: boolean;
+  initialIsOwner: boolean;
   onClose: () => void;
   onDeleteSuccess?: () => void;
-  skipAnimation?: boolean;
+  skipInitialAnimation?: boolean;
 }
 
 export function PostDetailModal({
   post,
   initialIsSaved,
+  initialIsOwner,
   onClose,
   onDeleteSuccess,
-  skipAnimation = false,
+  skipInitialAnimation = false,
 }: PostDetailModalProps) {
   const [isSaved, setIsSaved] = useState(initialIsSaved);
-  const [isMobile, setIsMobile] = useState(false);
+  const [isMobile, setIsMobile] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    return window.innerWidth < 768;
+  });
+  const [isMounted, setIsMounted] = useState(false);
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
-  const [isOwner, setIsOwner] = useState(false);
   const [showDeleteAlert, setShowDeleteAlert] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const router = useRouter();
@@ -57,22 +57,9 @@ export function PostDetailModal({
     setIsSaved(initialIsSaved);
   }, [initialIsSaved]);
 
-  // 所有者判定
+  // モバイル判定とマウント検出
   useEffect(() => {
-    const checkOwner = async () => {
-      const supabase = createClient();
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (user && user.id === post.userId) {
-        setIsOwner(true);
-      }
-    };
-    checkOwner();
-  }, [post.userId]);
-
-  // モバイル判定
-  useEffect(() => {
+    setIsMounted(true);
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 768); // md breakpoint
     };
@@ -144,21 +131,42 @@ export function PostDetailModal({
     }
   };
 
+  // スワイプ終了時のハンドラー（スマホサイズのみ）
+  const handleDragEnd = (_: unknown, info: PanInfo) => {
+    // 左から右へのスワイプで閉じる（100px以上）
+    if (info.offset.x > 100) {
+      onClose();
+    }
+  };
+
   return (
     <motion.div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/80"
       onClick={handleClose}
-      initial={skipAnimation ? { opacity: 1 } : { opacity: 0 }}
+      initial={skipInitialAnimation ? { opacity: 1 } : { opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      transition={
-        skipAnimation ? { duration: 0 } : { duration: 0.4, ease: "easeOut" }
-      }
+      transition={{ duration: 0.4, ease: "easeOut" }}
     >
       {/* モーダルコンテナ */}
       <motion.div
         className="relative h-full w-full max-w-4xl overflow-hidden bg-background"
         onClick={(e) => e.stopPropagation()}
+        suppressHydrationWarning
+        initial={
+          skipInitialAnimation
+            ? { opacity: 1, x: 0 }
+            : isMobile
+              ? { opacity: 1, x: "100%" }
+              : { opacity: 0, x: 0 }
+        }
+        animate={isMobile ? { opacity: 1, x: 0 } : { opacity: 1, x: 0 }}
+        exit={isMobile ? { opacity: 1, x: "100%" } : { opacity: 0, x: 0 }}
+        transition={{ type: "tween", duration: 0.3, ease: "easeOut" }}
+        drag={isMobile ? "x" : false}
+        dragConstraints={{ left: 0, right: 0 }}
+        dragElastic={0.2}
+        onDragEnd={isMobile ? handleDragEnd : undefined}
       >
         {/* 閉じるボタン */}
         <button
@@ -172,8 +180,8 @@ export function PostDetailModal({
         <div className="h-full overflow-y-auto">
           {/* 画像エリア */}
           <div className="relative h-[60vh] min-h-[400px] bg-black">
-            {!isMobile ? (
-              // デスクトップ: ピンチズーム有効
+            {isMounted && !isMobile ? (
+              // デスクトップ: ピンチズーム有効（クライアントサイドのみ）
               <TransformWrapper
                 initialScale={1}
                 minScale={1}
@@ -184,14 +192,7 @@ export function PostDetailModal({
                   wrapperClass="!w-full !h-full"
                   contentClass="!w-full !h-full flex items-center justify-center"
                 >
-                  <motion.div
-                    layoutId={`photo-${post.id}`}
-                    className="relative flex h-full w-full items-center justify-center"
-                    transition={{
-                      duration: 0.55,
-                      ease: [0.25, 0.1, 0.25, 1],
-                    }}
-                  >
+                  <div className="relative flex h-full w-full items-center justify-center">
                     <Image
                       src={post.imageUrl}
                       alt={post.description || "Photo"}
@@ -201,20 +202,13 @@ export function PostDetailModal({
                       priority
                       unoptimized
                     />
-                  </motion.div>
+                  </div>
                 </TransformComponent>
               </TransformWrapper>
             ) : (
-              // モバイル: 画像固定（ピンチズーム無効）
+              // モバイル または サーバー側/クライアント初回: 画像固定
               <div className="flex h-full w-full items-center justify-center">
-                <motion.div
-                  layoutId={`photo-${post.id}`}
-                  className="relative flex h-full w-full items-center justify-center"
-                  transition={{
-                    duration: 0.55,
-                    ease: [0.25, 0.1, 0.25, 1],
-                  }}
-                >
+                <div className="relative flex h-full w-full items-center justify-center">
                   <Image
                     src={post.imageUrl}
                     alt={post.description || "Photo"}
@@ -224,7 +218,7 @@ export function PostDetailModal({
                     priority
                     unoptimized
                   />
-                </motion.div>
+                </div>
               </div>
             )}
           </div>
@@ -242,30 +236,10 @@ export function PostDetailModal({
               <div className="flex-1">
                 {post.exifData && <ExifInfo exifData={post.exifData} />}
               </div>
-              {isOwner ? (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <button
-                      className="rounded-full bg-black/50 p-2 text-white transition-colors hover:bg-black/70"
-                      aria-label="メニュー"
-                    >
-                      <MoreHorizontal className="h-6 w-6" />
-                    </button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem disabled>
-                      <Edit className="mr-2 h-4 w-4" />
-                      <span>編集（近日公開）</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      className="text-red-600 focus:text-red-600"
-                      onClick={() => setShowDeleteAlert(true)}
-                    >
-                      <Trash2 className="mr-2 h-4 w-4" />
-                      <span>削除</span>
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+              {initialIsOwner ? (
+                <PostActionsMenu
+                  onDeleteClick={() => setShowDeleteAlert(true)}
+                />
               ) : (
                 <SaveButton isSaved={isSaved} onClick={handleSaveClick} />
               )}

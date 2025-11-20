@@ -7,10 +7,12 @@ import { ExifData } from "@/lib/types/exif";
 export interface PhotoCardProps {
   id: string;
   imageUrl: string;
+  userId?: string;
   exifData?: ExifData | null;
   onClick?: () => void;
   isNew?: boolean;
   priority?: boolean;
+  layoutIdDisabled?: boolean;
 }
 
 export function PhotoCard({
@@ -20,20 +22,21 @@ export function PhotoCard({
   onClick,
   isNew = false,
   priority = false,
+  layoutIdDisabled = false,
 }: PhotoCardProps) {
   return (
     <motion.div
       className="group relative cursor-pointer overflow-hidden shadow-md transition-shadow hover:shadow-xl"
-      initial={isNew ? { opacity: 0, y: 20 } : false}
+      initial={isNew ? { opacity: 0, y: 30 } : false}
       animate={isNew ? { opacity: 1, y: 0 } : {}}
-      transition={{ duration: 0.5, ease: "easeOut" }}
+      transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
       whileHover={{ scale: 1.02 }}
       onClick={onClick}
     >
       {/* 画像 */}
       <motion.div
         className="relative aspect-auto"
-        layoutId={`photo-${id}`}
+        layoutId={layoutIdDisabled ? undefined : `photo-${id}`}
         transition={{
           duration: 0.55,
           ease: [0.25, 0.1, 0.25, 1],

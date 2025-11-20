@@ -59,6 +59,7 @@ export function ProfileModal({
   const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
   const [selectedPost, setSelectedPost] = useState<Post | null>(null);
   const [initialIsSaved, setInitialIsSaved] = useState(false);
+  const [initialIsOwner, setInitialIsOwner] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
 
   // 投稿タブの状態
@@ -189,11 +190,17 @@ export function ProfileModal({
   // 写真クリックのハンドラー
   const handlePhotoClick = async (photo: PhotoCardProps) => {
     setSelectedPostId(photo.id);
+
+    // PhotoCardのuserIdを使って初期所有者判定を行う
+    const initialOwner = photo.userId ? userId === photo.userId : false;
+    setInitialIsOwner(initialOwner);
+
+    // 保存状態をリセット
     setInitialIsSaved(false);
 
     const tempPost: Post = {
       id: photo.id,
-      userId: "",
+      userId: photo.userId || "",
       imageUrl: photo.imageUrl,
       thumbnailUrl: photo.imageUrl,
       description: null,
@@ -218,6 +225,9 @@ export function ProfileModal({
       if (postResponse.ok) {
         const postData = await postResponse.json();
         setSelectedPost(postData.data);
+        // 所有者判定
+        const isOwner = userId === postData.data.userId;
+        setInitialIsOwner(isOwner);
       }
 
       if (saveResponse.ok) {
@@ -481,6 +491,7 @@ export function ProfileModal({
             key={selectedPostId}
             post={selectedPost}
             initialIsSaved={initialIsSaved}
+            initialIsOwner={initialIsOwner}
             onClose={handleCloseModal}
           />
         )}
