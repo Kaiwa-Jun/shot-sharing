@@ -11,12 +11,14 @@ import { SearchFAB } from "@/components/layout/search-fab";
 interface PostDetailPageProps {
   post: Post;
   initialIsSaved: boolean;
+  initialIsOwner: boolean;
   backgroundPhotos: PhotoCardProps[];
 }
 
 export function PostDetailPage({
   post,
   initialIsSaved,
+  initialIsOwner,
   backgroundPhotos,
 }: PostDetailPageProps) {
   const router = useRouter();
@@ -59,6 +61,7 @@ export function PostDetailPage({
       <PostDetailModal
         post={post}
         initialIsSaved={initialIsSaved}
+        initialIsOwner={initialIsOwner}
         onClose={handleClose}
         onDeleteSuccess={() => router.push("/")}
         skipAnimation={true}

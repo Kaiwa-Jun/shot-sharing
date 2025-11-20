@@ -38,6 +38,7 @@ export default async function Home() {
     posts?.map((post) => ({
       id: post.id,
       imageUrl: post.imageUrl,
+      userId: post.userId,
       exifData: post.exifData || undefined,
     })) || [];
 

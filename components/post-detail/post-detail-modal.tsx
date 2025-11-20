@@ -32,6 +32,7 @@ import { useRouter } from "next/navigation";
 interface PostDetailModalProps {
   post: Post;
   initialIsSaved: boolean;
+  initialIsOwner: boolean;
   onClose: () => void;
   onDeleteSuccess?: () => void;
   skipAnimation?: boolean;
@@ -40,6 +41,7 @@ interface PostDetailModalProps {
 export function PostDetailModal({
   post,
   initialIsSaved,
+  initialIsOwner,
   onClose,
   onDeleteSuccess,
   skipAnimation = false,
@@ -47,7 +49,6 @@ export function PostDetailModal({
   const [isSaved, setIsSaved] = useState(initialIsSaved);
   const [isMobile, setIsMobile] = useState(false);
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
-  const [isOwner, setIsOwner] = useState(false);
   const [showDeleteAlert, setShowDeleteAlert] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const router = useRouter();
@@ -56,20 +57,6 @@ export function PostDetailModal({
   useEffect(() => {
     setIsSaved(initialIsSaved);
   }, [initialIsSaved]);
-
-  // 所有者判定
-  useEffect(() => {
-    const checkOwner = async () => {
-      const supabase = createClient();
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (user && user.id === post.userId) {
-        setIsOwner(true);
-      }
-    };
-    checkOwner();
-  }, [post.userId]);
 
   // モバイル判定
   useEffect(() => {
@@ -242,7 +229,7 @@ export function PostDetailModal({
               <div className="flex-1">
                 {post.exifData && <ExifInfo exifData={post.exifData} />}
               </div>
-              {isOwner ? (
+              {initialIsOwner ? (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <button

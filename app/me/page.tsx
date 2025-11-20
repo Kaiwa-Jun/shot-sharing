@@ -42,6 +42,7 @@ export default async function ProfilePage() {
     postsResult.data?.map((post) => ({
       id: post.id,
       imageUrl: post.imageUrl,
+      userId: post.userId,
       exifData: post.exifData || undefined,
     })) || [];
 
@@ -49,6 +50,7 @@ export default async function ProfilePage() {
     savedPostsResult.data?.map((post) => ({
       id: post.id,
       imageUrl: post.imageUrl,
+      userId: post.userId,
       exifData: post.exifData || undefined,
     })) || [];
 

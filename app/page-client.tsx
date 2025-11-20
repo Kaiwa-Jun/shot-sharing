@@ -26,6 +26,7 @@ export function PageClient({ initialPhotos, initialUser }: PageClientProps) {
   const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
   const [selectedPost, setSelectedPost] = useState<Post | null>(null);
   const [initialIsSaved, setInitialIsSaved] = useState(false);
+  const [initialIsOwner, setInitialIsOwner] = useState(false);
   const [deletedIds, setDeletedIds] = useState<Set<string>>(new Set());
 
   // 検索状態
@@ -71,13 +72,20 @@ export function PageClient({ initialPhotos, initialUser }: PageClientProps) {
   ) => {
     // 即座にモーダルを表示（楽観的UI更新）
     setSelectedPostId(photoId);
+
+    // PhotoCardのuserIdを使って初期所有者判定を行う
+    const initialOwner = photoData.userId
+      ? initialUser?.id === photoData.userId
+      : false;
+    setInitialIsOwner(initialOwner);
+
     // 保存状態をリセット（前の投稿の状態が残らないように）
     setInitialIsSaved(false);
 
     // 初期表示用に既存のPhotoCardデータから仮のPostデータを作成
     const tempPost: Post = {
       id: photoData.id,
-      userId: "",
+      userId: photoData.userId || "",
       imageUrl: photoData.imageUrl,
       thumbnailUrl: photoData.imageUrl,
       description: null,
@@ -104,6 +112,11 @@ export function PageClient({ initialPhotos, initialUser }: PageClientProps) {
       if (postResponse.ok) {
         const postData = await postResponse.json();
         setSelectedPost(postData.data);
+        // 所有者判定
+        const isOwner = initialUser
+          ? initialUser.id === postData.data.userId
+          : false;
+        setInitialIsOwner(isOwner);
       }
 
       if (saveResponse.ok) {
@@ -278,6 +291,7 @@ export function PageClient({ initialPhotos, initialUser }: PageClientProps) {
             (post: Post) => ({
               id: post.id,
               imageUrl: post.imageUrl,
+              userId: post.userId,
               exifData: post.exifData || undefined,
             })
           );
@@ -366,6 +380,7 @@ export function PageClient({ initialPhotos, initialUser }: PageClientProps) {
             key={selectedPostId}
             post={selectedPost}
             initialIsSaved={initialIsSaved}
+            initialIsOwner={initialIsOwner}
             onClose={handleCloseModal}
             onDeleteSuccess={handleDeleteSuccess}
           />

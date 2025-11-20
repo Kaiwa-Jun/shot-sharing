@@ -7,6 +7,7 @@ import { ExifData } from "@/lib/types/exif";
 export interface PhotoCardProps {
   id: string;
   imageUrl: string;
+  userId?: string;
   exifData?: ExifData | null;
   onClick?: () => void;
   isNew?: boolean;
