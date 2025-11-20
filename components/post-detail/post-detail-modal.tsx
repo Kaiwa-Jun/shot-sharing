@@ -35,7 +35,7 @@ interface PostDetailModalProps {
   initialIsOwner: boolean;
   onClose: () => void;
   onDeleteSuccess?: () => void;
-  skipAnimation?: boolean;
+  skipInitialAnimation?: boolean;
 }
 
 export function PostDetailModal({
@@ -44,7 +44,7 @@ export function PostDetailModal({
   initialIsOwner,
   onClose,
   onDeleteSuccess,
-  skipAnimation = false,
+  skipInitialAnimation = false,
 }: PostDetailModalProps) {
   const [isSaved, setIsSaved] = useState(initialIsSaved);
   const [isMobile, setIsMobile] = useState<boolean>(() => {
@@ -148,12 +148,10 @@ export function PostDetailModal({
     <motion.div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/80"
       onClick={handleClose}
-      initial={skipAnimation ? { opacity: 1 } : { opacity: 0 }}
+      initial={skipInitialAnimation ? { opacity: 1 } : { opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      transition={
-        skipAnimation ? { duration: 0 } : { duration: 0.4, ease: "easeOut" }
-      }
+      transition={{ duration: 0.4, ease: "easeOut" }}
     >
       {/* モーダルコンテナ */}
       <motion.div
@@ -161,7 +159,7 @@ export function PostDetailModal({
         onClick={(e) => e.stopPropagation()}
         suppressHydrationWarning
         initial={
-          skipAnimation
+          skipInitialAnimation
             ? { opacity: 1, x: 0 }
             : isMobile
               ? { opacity: 1, x: "100%" }

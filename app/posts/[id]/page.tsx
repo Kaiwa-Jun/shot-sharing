@@ -46,6 +46,7 @@ export default async function Page({ params }: PageProps) {
       initialIsSaved={isSaved || false}
       initialIsOwner={isOwner}
       backgroundPhotos={backgroundPhotos}
+      initialUser={user}
     />
   );
 }
