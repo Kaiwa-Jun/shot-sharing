@@ -146,6 +146,10 @@ export function PostDetailModal({
       <motion.div
         className="relative h-full w-full max-w-4xl overflow-hidden bg-background"
         onClick={(e) => e.stopPropagation()}
+        initial={skipAnimation ? { x: 0 } : { x: "100%" }}
+        animate={{ x: 0 }}
+        exit={{ x: "100%" }}
+        transition={{ type: "tween", duration: 0.3, ease: "easeOut" }}
       >
         {/* 閉じるボタン */}
         <button
@@ -171,14 +175,7 @@ export function PostDetailModal({
                   wrapperClass="!w-full !h-full"
                   contentClass="!w-full !h-full flex items-center justify-center"
                 >
-                  <motion.div
-                    layoutId={`photo-${post.id}`}
-                    className="relative flex h-full w-full items-center justify-center"
-                    transition={{
-                      duration: 0.55,
-                      ease: [0.25, 0.1, 0.25, 1],
-                    }}
-                  >
+                  <div className="relative flex h-full w-full items-center justify-center">
                     <Image
                       src={post.imageUrl}
                       alt={post.description || "Photo"}
@@ -188,20 +185,13 @@ export function PostDetailModal({
                       priority
                       unoptimized
                     />
-                  </motion.div>
+                  </div>
                 </TransformComponent>
               </TransformWrapper>
             ) : (
               // モバイル: 画像固定（ピンチズーム無効）
               <div className="flex h-full w-full items-center justify-center">
-                <motion.div
-                  layoutId={`photo-${post.id}`}
-                  className="relative flex h-full w-full items-center justify-center"
-                  transition={{
-                    duration: 0.55,
-                    ease: [0.25, 0.1, 0.25, 1],
-                  }}
-                >
+                <div className="relative flex h-full w-full items-center justify-center">
                   <Image
                     src={post.imageUrl}
                     alt={post.description || "Photo"}
@@ -211,7 +201,7 @@ export function PostDetailModal({
                     priority
                     unoptimized
                   />
-                </motion.div>
+                </div>
               </div>
             )}
           </div>
