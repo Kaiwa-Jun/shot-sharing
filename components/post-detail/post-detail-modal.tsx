@@ -1,7 +1,7 @@
 "use client";
 
 import { Post } from "@/app/actions/posts";
-import { motion } from "framer-motion";
+import { motion, PanInfo } from "framer-motion";
 import Image from "next/image";
 import { useState, useEffect } from "react";
 import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
@@ -51,6 +51,7 @@ export function PostDetailModal({
     if (typeof window === "undefined") return false;
     return window.innerWidth < 768;
   });
+  const [isMounted, setIsMounted] = useState(false);
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
   const [showDeleteAlert, setShowDeleteAlert] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -61,8 +62,9 @@ export function PostDetailModal({
     setIsSaved(initialIsSaved);
   }, [initialIsSaved]);
 
-  // モバイル判定
+  // モバイル判定とマウント検出
   useEffect(() => {
+    setIsMounted(true);
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 768); // md breakpoint
     };
@@ -134,6 +136,14 @@ export function PostDetailModal({
     }
   };
 
+  // スワイプ終了時のハンドラー（スマホサイズのみ）
+  const handleDragEnd = (_: unknown, info: PanInfo) => {
+    // 左から右へのスワイプで閉じる（100px以上）
+    if (info.offset.x > 100) {
+      onClose();
+    }
+  };
+
   return (
     <motion.div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/80"
@@ -149,6 +159,7 @@ export function PostDetailModal({
       <motion.div
         className="relative h-full w-full max-w-4xl overflow-hidden bg-background"
         onClick={(e) => e.stopPropagation()}
+        suppressHydrationWarning
         initial={
           skipAnimation
             ? { opacity: 1, x: 0 }
@@ -159,6 +170,10 @@ export function PostDetailModal({
         animate={isMobile ? { opacity: 1, x: 0 } : { opacity: 1, x: 0 }}
         exit={isMobile ? { opacity: 1, x: "100%" } : { opacity: 0, x: 0 }}
         transition={{ type: "tween", duration: 0.3, ease: "easeOut" }}
+        drag={isMobile ? "x" : false}
+        dragConstraints={{ left: 0, right: 0 }}
+        dragElastic={0.2}
+        onDragEnd={isMobile ? handleDragEnd : undefined}
       >
         {/* 閉じるボタン */}
         <button
@@ -172,8 +187,8 @@ export function PostDetailModal({
         <div className="h-full overflow-y-auto">
           {/* 画像エリア */}
           <div className="relative h-[60vh] min-h-[400px] bg-black">
-            {!isMobile ? (
-              // デスクトップ: ピンチズーム有効
+            {isMounted && !isMobile ? (
+              // デスクトップ: ピンチズーム有効（クライアントサイドのみ）
               <TransformWrapper
                 initialScale={1}
                 minScale={1}
@@ -198,7 +213,7 @@ export function PostDetailModal({
                 </TransformComponent>
               </TransformWrapper>
             ) : (
-              // モバイル: 画像固定（ピンチズーム無効）
+              // モバイル または サーバー側/クライアント初回: 画像固定
               <div className="flex h-full w-full items-center justify-center">
                 <div className="relative flex h-full w-full items-center justify-center">
                   <Image
