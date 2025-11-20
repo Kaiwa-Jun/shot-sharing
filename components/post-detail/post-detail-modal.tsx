@@ -47,7 +47,10 @@ export function PostDetailModal({
   skipAnimation = false,
 }: PostDetailModalProps) {
   const [isSaved, setIsSaved] = useState(initialIsSaved);
-  const [isMobile, setIsMobile] = useState(false);
+  const [isMobile, setIsMobile] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    return window.innerWidth < 768;
+  });
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
   const [showDeleteAlert, setShowDeleteAlert] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -146,9 +149,15 @@ export function PostDetailModal({
       <motion.div
         className="relative h-full w-full max-w-4xl overflow-hidden bg-background"
         onClick={(e) => e.stopPropagation()}
-        initial={skipAnimation ? { x: 0 } : { x: "100%" }}
-        animate={{ x: 0 }}
-        exit={{ x: "100%" }}
+        initial={
+          skipAnimation
+            ? { opacity: 1, x: 0 }
+            : isMobile
+              ? { opacity: 1, x: "100%" }
+              : { opacity: 0, x: 0 }
+        }
+        animate={isMobile ? { opacity: 1, x: 0 } : { opacity: 1, x: 0 }}
+        exit={isMobile ? { opacity: 1, x: "100%" } : { opacity: 0, x: 0 }}
         transition={{ type: "tween", duration: 0.3, ease: "easeOut" }}
       >
         {/* 閉じるボタン */}
