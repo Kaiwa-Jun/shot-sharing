@@ -7,15 +7,10 @@ import { useState, useEffect } from "react";
 import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
 import { ExifInfo } from "./exif-info";
 import { SaveButton } from "./save-button";
+import { PostActionsMenu } from "./post-actions-menu";
 import { LoginPromptModal } from "@/components/auth/login-prompt-modal";
 import { createClient } from "@/lib/supabase/client";
-import { X, MoreHorizontal, Trash2, Edit } from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { X } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -242,29 +237,9 @@ export function PostDetailModal({
                 {post.exifData && <ExifInfo exifData={post.exifData} />}
               </div>
               {initialIsOwner ? (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <button
-                      className="rounded-full bg-black/50 p-2 text-white transition-colors hover:bg-black/70"
-                      aria-label="メニュー"
-                    >
-                      <MoreHorizontal className="h-6 w-6" />
-                    </button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem disabled>
-                      <Edit className="mr-2 h-4 w-4" />
-                      <span>編集（近日公開）</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      className="text-red-600 focus:text-red-600"
-                      onClick={() => setShowDeleteAlert(true)}
-                    >
-                      <Trash2 className="mr-2 h-4 w-4" />
-                      <span>削除</span>
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                <PostActionsMenu
+                  onDeleteClick={() => setShowDeleteAlert(true)}
+                />
               ) : (
                 <SaveButton isSaved={isSaved} onClick={handleSaveClick} />
               )}

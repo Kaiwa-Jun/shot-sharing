@@ -54,15 +54,7 @@ export function PageClient({ initialPhotos, initialUser }: PageClientProps) {
 
   // initialPhotosの変更を監視
   useEffect(() => {
-    console.log(
-      "🔄 [DEBUG] initialPhotos更新検知:",
-      new Date().toISOString(),
-      "件数:",
-      initialPhotos.length
-    );
-    if (initialPhotos.length > 0) {
-      console.log("📸 [DEBUG] 最新の投稿ID:", initialPhotos[0].id);
-    }
+    // initialPhotosが更新されたときの処理（必要に応じて追加）
   }, [initialPhotos]);
 
   // 投稿選択時の処理
