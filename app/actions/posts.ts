@@ -139,6 +139,10 @@ export async function getPostById(
       .single();
 
     if (error) {
+      // 行が見つからないエラーは正常な動作として扱う（ログに出さない）
+      if (error.code === "PGRST116") {
+        return { data: null, error: "投稿が見つかりません" };
+      }
       console.error("Error fetching post:", error);
       return { data: null, error: error.message };
     }
@@ -258,16 +262,27 @@ export async function createPost(formData: FormData) {
     // 8. File Search Storeに登録
     console.log("🔍 File Search Storeに登録中...");
     let fileSearchSuccess = false;
+    let fileSearchStoreId: string | null = null;
 
     try {
-      await uploadPhotoToFileSearch(
+      fileSearchSuccess = true;
+      // アップロード成功時、ファイル名（ID）を取得して保存
+      // uploadPhotoToFileSearchの戻り値を利用するように変更する必要があるが、
+      // 現状のuploadPhotoToFileSearchは戻り値を返しているのでそれを使う
+      const uploadResult = await uploadPhotoToFileSearch(
         imageBuffer,
         postId,
         exifData,
         description,
         imageUrl
       );
-      fileSearchSuccess = true;
+
+      if (uploadResult.success && uploadResult.fileName) {
+        // fileSearchStoreIdとしてファイル名（例: files/xxxxx）を保存
+        // 注: DBのカラム名はfile_search_store_idだが、実際にはFile APIのname (files/...) を保存する
+        // これにより削除時にこのIDを使って削除できる
+        fileSearchStoreId = uploadResult.fileName;
+      }
     } catch (error) {
       console.error("File Search Storeへの登録に失敗しました:", error);
       // File Search失敗時でも投稿は続行（後で再登録可能）
@@ -282,6 +297,7 @@ export async function createPost(formData: FormData) {
       thumbnail_url: thumbnailUrl,
       description,
       exif_data: exifData,
+      file_search_store_id: fileSearchStoreId, // 追加
       visibility: "public",
     });
 
@@ -499,5 +515,91 @@ export async function getUserSavedPostsCount(
   } catch (err) {
     console.error("Unexpected error counting saved posts:", err);
     return { data: null, error: "予期しないエラーが発生しました" };
+  }
+}
+
+/**
+ * 投稿削除Server Action
+ */
+export async function deletePost(postId: string) {
+  const supabase = await createClient();
+
+  // 1. 認証チェック
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    throw new Error("認証が必要です");
+  }
+
+  try {
+    // 2. 投稿の取得と所有権チェック
+    const { data: post, error: fetchError } = await supabase
+      .from("posts")
+      .select("*")
+      .eq("id", postId)
+      .single();
+
+    if (fetchError || !post) {
+      throw new Error("投稿が見つかりません");
+    }
+
+    if (post.user_id !== user.id) {
+      throw new Error("この投稿を削除する権限がありません");
+    }
+
+    console.log(`🗑️ 投稿削除処理を開始します: ${postId}`);
+
+    // 3. Supabase Storageから画像を削除
+    const imagePath = generateStoragePath(user.id, postId, "original.jpg");
+    const thumbnailPath = generateStoragePath(user.id, postId, "thumbnail.jpg");
+
+    try {
+      await Promise.all([
+        deleteFromStorage(imagePath),
+        deleteFromStorage(thumbnailPath),
+      ]);
+      console.log("✅ Storageから画像を削除しました");
+    } catch (storageError) {
+      console.error("Storageからの削除に失敗（処理は続行）:", storageError);
+    }
+
+    // 4. Gemini File Search Storeからデータを削除
+    if (post.file_search_store_id) {
+      try {
+        // 動的インポートで循環参照を回避（必要であれば）
+        const { deleteFileFromStore } = await import(
+          "@/lib/gemini/file-search"
+        );
+        await deleteFileFromStore(post.file_search_store_id);
+      } catch (geminiError) {
+        console.error("Geminiからの削除に失敗（処理は続行）:", geminiError);
+      }
+    }
+
+    // 5. DBから投稿レコードを削除
+    // savesテーブルなどの関連レコードはCASCADE設定されていれば自動削除されるはずだが、
+    // 明示的に削除する必要がある場合はここで行う
+    const { error: deleteError } = await supabase
+      .from("posts")
+      .delete()
+      .eq("id", postId);
+
+    if (deleteError) {
+      throw new Error(`DBからの削除に失敗: ${deleteError.message}`);
+    }
+
+    console.log("✅ DBから投稿を削除しました");
+
+    // 6. キャッシュの再検証
+    revalidatePath("/");
+    revalidatePath("/me");
+    revalidatePath(`/users/${user.id}`);
+
+    return { success: true };
+  } catch (error) {
+    console.error("投稿削除エラー:", error);
+    throw error;
   }
 }

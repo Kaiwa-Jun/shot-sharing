@@ -60,6 +60,7 @@ export function PostDetailPage({
         post={post}
         initialIsSaved={initialIsSaved}
         onClose={handleClose}
+        onDeleteSuccess={() => router.push("/")}
         skipAnimation={true}
       />
     </div>

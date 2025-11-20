@@ -61,8 +61,23 @@ export async function listFilesInStore() {
  * TODO: Phase 3で実装予定
  */
 export async function deleteFileFromStore(fileName: string) {
-  // const client = getFileSearchClient();
-  // Phase 3で実装予定
-  console.warn("deleteFileFromStore は Phase 3 で実装予定です");
-  return { success: true };
+  const client = getFileSearchClient();
+
+  try {
+    await client.files.delete({
+      name: fileName,
+    });
+    console.log(
+      `✅ Gemini File Search Storeからファイルを削除しました: ${fileName}`
+    );
+    return { success: true };
+  } catch (error) {
+    console.error(
+      "Gemini File Search Storeからのファイル削除に失敗しました:",
+      error
+    );
+    // 削除に失敗しても、すでに存在しない場合は成功とみなすなどのハンドリングが必要かもしれないが、
+    // 一旦エラーをログに出してfalseを返す
+    return { success: false, error };
+  }
 }

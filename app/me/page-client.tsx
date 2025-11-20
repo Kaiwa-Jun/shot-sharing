@@ -228,6 +228,18 @@ export function ProfileClient({
     // URLは変更していないので戻す必要なし
   };
 
+  // 削除成功時のハンドラー
+  const handleDeleteSuccess = () => {
+    if (selectedPostId) {
+      // 投稿一覧から削除
+      setUserPhotos((prev) => prev.filter((p) => p.id !== selectedPostId));
+      // 保存一覧からも削除（自分の投稿を保存していた場合）
+      setSavedPhotos((prev) => prev.filter((p) => p.id !== selectedPostId));
+    }
+    handleCloseModal();
+    router.refresh();
+  };
+
   // スワイプ終了時のハンドラー
   const handleDragEnd = (_: unknown, info: PanInfo) => {
     // モーダルが開いているときはスワイプ処理をスキップ
@@ -475,6 +487,7 @@ export function ProfileClient({
             post={selectedPost}
             initialIsSaved={initialIsSaved}
             onClose={handleCloseModal}
+            onDeleteSuccess={handleDeleteSuccess}
           />
         )}
       </AnimatePresence>

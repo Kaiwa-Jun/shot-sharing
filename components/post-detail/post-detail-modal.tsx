@@ -9,12 +9,31 @@ import { ExifInfo } from "./exif-info";
 import { SaveButton } from "./save-button";
 import { LoginPromptModal } from "@/components/auth/login-prompt-modal";
 import { createClient } from "@/lib/supabase/client";
-import { X } from "lucide-react";
+import { X, MoreHorizontal, Trash2, Edit } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { deletePost } from "@/app/actions/posts";
+import { useRouter } from "next/navigation";
 
 interface PostDetailModalProps {
   post: Post;
   initialIsSaved: boolean;
   onClose: () => void;
+  onDeleteSuccess?: () => void;
   skipAnimation?: boolean;
 }
 
@@ -22,16 +41,35 @@ export function PostDetailModal({
   post,
   initialIsSaved,
   onClose,
+  onDeleteSuccess,
   skipAnimation = false,
 }: PostDetailModalProps) {
   const [isSaved, setIsSaved] = useState(initialIsSaved);
   const [isMobile, setIsMobile] = useState(false);
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
+  const [isOwner, setIsOwner] = useState(false);
+  const [showDeleteAlert, setShowDeleteAlert] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const router = useRouter();
 
   // initialIsSavedの変更を監視
   useEffect(() => {
     setIsSaved(initialIsSaved);
   }, [initialIsSaved]);
+
+  // 所有者判定
+  useEffect(() => {
+    const checkOwner = async () => {
+      const supabase = createClient();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (user && user.id === post.userId) {
+        setIsOwner(true);
+      }
+    };
+    checkOwner();
+  }, [post.userId]);
 
   // モバイル判定
   useEffect(() => {
@@ -81,6 +119,28 @@ export function PostDetailModal({
       setIsSaved(data.saved);
     } catch (error) {
       console.error("Error toggling save:", error);
+    }
+  };
+
+  // 削除処理
+  const handleDelete = async () => {
+    setIsDeleting(true);
+    try {
+      await deletePost(post.id);
+
+      if (onDeleteSuccess) {
+        onDeleteSuccess();
+      } else {
+        onClose();
+        // 削除後はリフレッシュして一覧を更新
+        router.refresh();
+      }
+    } catch (error) {
+      console.error("Failed to delete post:", error);
+      alert("投稿の削除に失敗しました");
+    } finally {
+      setIsDeleting(false);
+      setShowDeleteAlert(false);
     }
   };
 
@@ -182,7 +242,33 @@ export function PostDetailModal({
               <div className="flex-1">
                 {post.exifData && <ExifInfo exifData={post.exifData} />}
               </div>
-              <SaveButton isSaved={isSaved} onClick={handleSaveClick} />
+              {isOwner ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      className="rounded-full bg-black/50 p-2 text-white transition-colors hover:bg-black/70"
+                      aria-label="メニュー"
+                    >
+                      <MoreHorizontal className="h-6 w-6" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem disabled>
+                      <Edit className="mr-2 h-4 w-4" />
+                      <span>編集（近日公開）</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      className="text-red-600 focus:text-red-600"
+                      onClick={() => setShowDeleteAlert(true)}
+                    >
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      <span>削除</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : (
+                <SaveButton isSaved={isSaved} onClick={handleSaveClick} />
+              )}
             </div>
 
             {/* 説明文 */}
@@ -217,6 +303,33 @@ export function PostDetailModal({
         open={showLoginPrompt}
         onOpenChange={setShowLoginPrompt}
       />
+
+      {/* 削除確認アラート */}
+      <AlertDialog open={showDeleteAlert} onOpenChange={setShowDeleteAlert}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>投稿を削除しますか？</AlertDialogTitle>
+            <AlertDialogDescription>
+              この操作は取り消せません。投稿は完全に削除されます。
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>
+              キャンセル
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                handleDelete();
+              }}
+              disabled={isDeleting}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {isDeleting ? "削除中..." : "削除"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </motion.div>
   );
 }

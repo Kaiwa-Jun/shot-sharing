@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { AnimatePresence } from "framer-motion";
 import { Header } from "@/components/layout/header";
 import { SearchFAB } from "@/components/layout/search-fab";
@@ -22,9 +22,11 @@ interface PageClientProps {
 
 export function PageClient({ initialPhotos, initialUser }: PageClientProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
   const [selectedPost, setSelectedPost] = useState<Post | null>(null);
   const [initialIsSaved, setInitialIsSaved] = useState(false);
+  const [deletedIds, setDeletedIds] = useState<Set<string>>(new Set());
 
   // 検索状態
   const [isSearchMode, setIsSearchMode] = useState(false);
@@ -119,6 +121,29 @@ export function PageClient({ initialPhotos, initialUser }: PageClientProps) {
     setSelectedPost(null);
     // URLを元に戻す
     window.history.back();
+  };
+
+  // 削除成功時の処理
+  const handleDeleteSuccess = () => {
+    if (selectedPostId) {
+      setDeletedIds((prev) => new Set(prev).add(selectedPostId));
+    }
+
+    // モーダルを閉じる
+    setSelectedPostId(null);
+    setSelectedPost(null);
+
+    // URLをルートに戻す（Next.jsのRouter Stateを確実に更新するため replace を使用）
+    router.replace("/");
+
+    // サーバー側のデータを更新（バックグラウンドで実行）
+    // 少し遅延させて、URLの更新が完了してからリフレッシュする
+    // router.refresh() は非同期で実行され、完了するとinitialPhotosが更新される
+    // MasonryGridはinitialPhotosの更新を検知して再レンダリングされるが、
+    // deletedIdsによるフィルタリングは即座に適用されるため、ユーザー体験はスムーズになる
+    setTimeout(() => {
+      router.refresh();
+    }, 100);
   };
 
   // 検索処理（ストリーミング対応）
@@ -303,6 +328,7 @@ export function PageClient({ initialPhotos, initialUser }: PageClientProps) {
             initialPhotos={displayPhotos}
             onPhotoClick={handlePhotoClick}
             isSearchMode={isSearchMode}
+            deletedIds={deletedIds}
           />
         ) : (
           // 投稿がない場合
@@ -341,6 +367,7 @@ export function PageClient({ initialPhotos, initialUser }: PageClientProps) {
             post={selectedPost}
             initialIsSaved={initialIsSaved}
             onClose={handleCloseModal}
+            onDeleteSuccess={handleDeleteSuccess}
           />
         )}
       </AnimatePresence>
