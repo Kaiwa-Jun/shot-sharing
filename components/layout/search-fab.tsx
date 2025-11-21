@@ -89,9 +89,13 @@ export function SearchFAB({
     };
   }, [isSearchMode]);
 
-  // 検索モードが解除されたらFABを閉じる
+  // 検索モードの状態に応じてFABの展開状態を制御
   useEffect(() => {
-    if (!isSearchMode) {
+    if (isSearchMode) {
+      // 検索モード中は常に展開状態を維持
+      setIsExpanded(true);
+    } else {
+      // 検索モードが解除されたらFABを閉じる
       setIsExpanded(false);
       setQuery("");
     }
