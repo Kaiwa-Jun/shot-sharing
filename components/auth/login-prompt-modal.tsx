@@ -29,6 +29,7 @@ export function LoginPromptModal({
   const supabase = createClient();
   const [isLoading, setIsLoading] = useState(false);
   const [view, setView] = useState<"login" | "terms" | "privacy">("login");
+  const [isExiting, setIsExiting] = useState(false);
 
   const handleLogin = async () => {
     try {
@@ -79,12 +80,26 @@ export function LoginPromptModal({
   if (view === "terms" || view === "privacy") {
     return (
       <div
-        className="fixed inset-0 z-50 bg-background"
+        className="fixed inset-0 z-50"
         onClick={(e) => e.stopPropagation()}
         onMouseDown={(e) => e.stopPropagation()}
       >
-        <AnimatePresence mode="wait">
-          <ContentView key={view} type={view} onBack={() => setView("login")} />
+        <AnimatePresence
+          mode="wait"
+          onExitComplete={() => {
+            if (isExiting) {
+              setView("login");
+              setIsExiting(false);
+            }
+          }}
+        >
+          {!isExiting && (
+            <ContentView
+              key={view}
+              type={view}
+              onBack={() => setIsExiting(true)}
+            />
+          )}
         </AnimatePresence>
       </div>
     );
