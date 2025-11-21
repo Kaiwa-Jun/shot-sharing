@@ -201,8 +201,8 @@ export function ProfileModal({
     const result = await supabase.auth.signOut();
     console.log("🔴 [モーダル版] サインアウト完了:", result);
 
-    console.log("🔴 [モーダル版] /loginへリダイレクト開始");
-    window.location.href = "/login"; // フルページリロードで確実に画面遷移
+    console.log("🔴 [モーダル版] /へリダイレクト開始");
+    window.location.href = "/"; // フルページリロードで確実に画面遷移
     console.log(
       "🔴 [モーダル版] リダイレクト実行後（このログは表示されないはず）"
     );

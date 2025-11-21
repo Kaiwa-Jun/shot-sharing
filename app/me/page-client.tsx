@@ -190,8 +190,8 @@ export function ProfileClient({
     const result = await supabase.auth.signOut();
     console.log("🔴 サインアウト完了:", result);
 
-    console.log("🔴 /loginへリダイレクト開始");
-    window.location.href = "/login";
+    console.log("🔴 /へリダイレクト開始");
+    window.location.href = "/";
     console.log("🔴 リダイレクト実行後（このログは表示されないはず）");
   };
 
