@@ -6,6 +6,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { PhotoCardProps } from "@/components/gallery/photo-card";
 import { MasonryGrid } from "@/components/gallery/masonry-grid";
+import { AnimatePresence } from "framer-motion";
+import { ContentView } from "@/app/@modal/(.)me/content-view";
 
 interface LoginPageClientProps {
   backgroundPhotos: PhotoCardProps[];
@@ -17,6 +19,7 @@ export function LoginPageClient({
   redirectPath,
 }: LoginPageClientProps) {
   const [isLoading, setIsLoading] = useState(false);
+  const [view, setView] = useState<"login" | "terms" | "privacy">("login");
   const router = useRouter();
   const supabase = createClient();
 
@@ -42,6 +45,28 @@ export function LoginPageClient({
     }
   };
 
+  const handleTermsClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setView("terms");
+  };
+
+  const handlePrivacyClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setView("privacy");
+  };
+
+  // 利用規約・プライバシーポリシービューの場合
+  if (view === "terms" || view === "privacy") {
+    return (
+      <div className="min-h-screen bg-background">
+        <AnimatePresence mode="wait">
+          <ContentView key={view} type={view} onBack={() => setView("login")} />
+        </AnimatePresence>
+      </div>
+    );
+  }
+
+  // ログインビュー
   return (
     <div className="relative min-h-screen">
       {/* 背景ギャラリー */}
@@ -120,11 +145,19 @@ export function LoginPageClient({
           <div className="mt-8 border-t pt-6">
             <p className="text-center text-xs text-gray-500">
               ログインすることで、
-              <a href="#" className="underline hover:text-gray-700">
+              <a
+                href="#"
+                onClick={handleTermsClick}
+                className="underline hover:text-gray-700"
+              >
                 利用規約
               </a>
               と
-              <a href="#" className="underline hover:text-gray-700">
+              <a
+                href="#"
+                onClick={handlePrivacyClick}
+                className="underline hover:text-gray-700"
+              >
                 プライバシーポリシー
               </a>
               に同意したものとみなされます。
