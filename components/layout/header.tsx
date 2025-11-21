@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, useMotionValueEvent, useScroll } from "framer-motion";
-import { User, PlusCircle, MoreVertical } from "lucide-react";
+import { User, PlusCircle, Settings } from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
@@ -108,7 +108,7 @@ export function Header({ initialUser = null, onResetSearch }: HeaderProps) {
             whileTap={{ scale: 0.95 }}
             className="flex h-10 w-10 items-center justify-center rounded-full transition-colors hover:bg-muted xl:hidden"
           >
-            <MoreVertical className="h-5 w-5" />
+            <Settings className="h-6 w-6" />
           </motion.button>
           {/* xl以上では左スペースを確保 */}
           <div className="hidden h-10 w-10 xl:block" />
