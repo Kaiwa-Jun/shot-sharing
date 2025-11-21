@@ -4,6 +4,7 @@ import { useState, useRef, ChangeEvent } from "react";
 import Image from "next/image";
 import { Camera, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 interface ImageUploadProps {
   onImageSelect: (file: File) => void;
@@ -20,13 +21,13 @@ export function ImageUpload({ onImageSelect, onImageClear }: ImageUploadProps) {
 
     // 画像形式のバリデーション
     if (!file.type.startsWith("image/")) {
-      alert("画像ファイルを選択してください");
+      toast.error("画像ファイルを選択してください");
       return;
     }
 
     // ファイルサイズのバリデーション（10MB以下）
     if (file.size > 10 * 1024 * 1024) {
-      alert("ファイルサイズは10MB以下にしてください");
+      toast.error("ファイルサイズは10MB以下にしてください");
       return;
     }
 
