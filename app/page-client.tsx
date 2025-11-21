@@ -354,7 +354,7 @@ export function PageClient({ initialPhotos, initialUser }: PageClientProps) {
   return (
     <div className="min-h-screen bg-background">
       {/* ヘッダー */}
-      <Header initialUser={initialUser} />
+      <Header initialUser={initialUser} onResetSearch={handleCloseSearch} />
 
       {/* メインコンテンツ */}
       <PullToRefresh

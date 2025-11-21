@@ -22,6 +22,7 @@ interface MenuSidebarProps {
   onLogoutClick: () => void;
   onTermsClick: () => void;
   onPrivacyClick: () => void;
+  onResetSearch?: () => void;
 }
 
 export function MenuSidebar({
@@ -32,10 +33,15 @@ export function MenuSidebar({
   onLogoutClick,
   onTermsClick,
   onPrivacyClick,
+  onResetSearch,
 }: MenuSidebarProps) {
   const router = useRouter();
 
   const handleNavigation = (path: string) => {
+    // ホームボタンを押した時は検索状態をリセット
+    if (path === "/" && onResetSearch) {
+      onResetSearch();
+    }
     router.push(path);
     onClose();
   };
