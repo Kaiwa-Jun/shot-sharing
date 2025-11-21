@@ -185,11 +185,27 @@ export function ProfileModal({
     }
   };
 
+  // プロフィール編集のハンドラー
+  const handleEditProfile = () => {
+    router.push("/me/edit");
+  };
+
   // ログアウトのハンドラー
   const handleLogout = async () => {
+    console.log("🔴 [モーダル版] ログアウト処理開始");
+    console.log("🔴 [モーダル版] 現在のURL:", window.location.href);
+
     const supabase = createClient();
-    await supabase.auth.signOut();
-    router.push("/login");
+    console.log("🔴 [モーダル版] Supabaseクライアント作成完了");
+
+    const result = await supabase.auth.signOut();
+    console.log("🔴 [モーダル版] サインアウト完了:", result);
+
+    console.log("🔴 [モーダル版] /loginへリダイレクト開始");
+    window.location.href = "/login"; // フルページリロードで確実に画面遷移
+    console.log(
+      "🔴 [モーダル版] リダイレクト実行後（このログは表示されないはず）"
+    );
   };
 
   // 写真クリックのハンドラー
@@ -334,7 +350,7 @@ export function ProfileModal({
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={handleEditProfile}>
                 <UserPen className="mr-2 h-4 w-4" />
                 プロフィール編集
               </DropdownMenuItem>
@@ -352,7 +368,13 @@ export function ProfileModal({
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
-                onClick={handleLogout}
+                onClick={(e) => {
+                  console.log(
+                    "🔴 [モーダル版] ログアウトメニューがクリックされました",
+                    e
+                  );
+                  handleLogout();
+                }}
                 className="text-red-600 focus:text-red-600"
               >
                 <LogOut className="mr-2 h-4 w-4" />
