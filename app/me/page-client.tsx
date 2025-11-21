@@ -330,8 +330,8 @@ export function ProfileClient({
   return (
     <>
       <motion.div
-        initial={{ x: "-100%", opacity: 0 }}
-        animate={{ x: 0, opacity: 1 }}
+        initial={false}
+        animate={{ opacity: 1 }}
         exit={{ x: "100%", opacity: 0 }}
         transition={{ type: "tween", duration: 0.3 }}
         drag="x"
@@ -340,228 +340,235 @@ export function ProfileClient({
         onDragEnd={handleDragEnd}
         className="min-h-screen bg-background"
       >
-        {/* ヘッダー */}
-        <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-          <div className="flex h-14 items-center px-4">
-            <button
-              onClick={handleBack}
-              className="flex h-10 w-10 items-center justify-center rounded-full hover:bg-accent"
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </button>
-            <h1 className="flex-1 text-center font-semibold">プロフィール</h1>
-            <div className="w-10" />
-          </div>
-        </header>
+        <div className="xl:mx-auto xl:max-w-4xl">
+          {/* ヘッダー */}
+          <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+            <div className="flex h-14 items-center px-4">
+              <button
+                onClick={handleBack}
+                className="flex h-10 w-10 items-center justify-center rounded-full hover:bg-accent"
+              >
+                <ArrowLeft className="h-5 w-5" />
+              </button>
+              <h1 className="flex-1 text-center font-semibold">プロフィール</h1>
+              <div className="w-10" />
+            </div>
+          </header>
 
-        {/* プロフィール情報 */}
-        <div className="relative border-b px-4 py-6">
-          {/* 設定メニュー */}
-          <div className="absolute right-4 top-4">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-accent">
-                  <Settings className="h-4 w-4" />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={handleEditProfile}>
-                  <UserPen className="mr-2 h-4 w-4" />
-                  プロフィール編集
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <HelpCircle className="mr-2 h-4 w-4" />
-                  ヘルプ/お問い合わせ
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setView("terms")}>
-                  <FileText className="mr-2 h-4 w-4" />
-                  利用規約
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setView("privacy")}>
-                  <Shield className="mr-2 h-4 w-4" />
-                  プライバシーポリシー
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onClick={(e) => {
-                    console.log("🔴 ログアウトメニューがクリックされました", e);
-                    handleLogout();
-                  }}
-                  className="text-red-600 focus:text-red-600"
-                >
-                  <LogOut className="mr-2 h-4 w-4" />
-                  ログアウト
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-
-          <div className="flex items-center gap-4">
-            {/* アバター */}
-            <div className="h-16 w-16 overflow-hidden rounded-full bg-muted">
-              {profile?.avatar_url ? (
-                <Image
-                  src={profile.avatar_url}
-                  alt="Avatar"
-                  width={64}
-                  height={64}
-                  className="h-full w-full object-cover"
-                />
-              ) : (
-                <div className="flex h-full w-full items-center justify-center">
-                  <User className="h-8 w-8 text-muted-foreground" />
-                </div>
-              )}
+          {/* プロフィール情報 */}
+          <div className="relative border-b px-4 py-6">
+            {/* 設定メニュー */}
+            <div className="absolute right-4 top-4">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-accent">
+                    <Settings className="h-4 w-4" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={handleEditProfile}>
+                    <UserPen className="mr-2 h-4 w-4" />
+                    プロフィール編集
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>
+                    <HelpCircle className="mr-2 h-4 w-4" />
+                    ヘルプ/お問い合わせ
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setView("terms")}>
+                    <FileText className="mr-2 h-4 w-4" />
+                    利用規約
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setView("privacy")}>
+                    <Shield className="mr-2 h-4 w-4" />
+                    プライバシーポリシー
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onClick={(e) => {
+                      console.log(
+                        "🔴 ログアウトメニューがクリックされました",
+                        e
+                      );
+                      handleLogout();
+                    }}
+                    className="text-red-600 focus:text-red-600"
+                  >
+                    <LogOut className="mr-2 h-4 w-4" />
+                    ログアウト
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
 
-            {/* ユーザー情報 */}
-            <div className="flex-1">
-              <h2 className="text-lg font-semibold">
-                {profile?.display_name || "名前未設定"}
-              </h2>
-              <p className="text-sm text-muted-foreground">{profile?.email}</p>
+            <div className="flex items-center gap-4">
+              {/* アバター */}
+              <div className="h-16 w-16 overflow-hidden rounded-full bg-muted">
+                {profile?.avatar_url ? (
+                  <Image
+                    src={profile.avatar_url}
+                    alt="Avatar"
+                    width={64}
+                    height={64}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center">
+                    <User className="h-8 w-8 text-muted-foreground" />
+                  </div>
+                )}
+              </div>
+
+              {/* ユーザー情報 */}
+              <div className="flex-1">
+                <h2 className="text-lg font-semibold">
+                  {profile?.display_name || "名前未設定"}
+                </h2>
+                <p className="text-sm text-muted-foreground">
+                  {profile?.email}
+                </p>
+              </div>
             </div>
+
+            {/* 自己紹介 */}
+            {profile?.bio && (
+              <p className="mt-4 text-sm text-foreground">{profile.bio}</p>
+            )}
           </div>
 
-          {/* 自己紹介 */}
-          {profile?.bio && (
-            <p className="mt-4 text-sm text-foreground">{profile.bio}</p>
-          )}
-        </div>
-
-        {/* タブ */}
-        <PullToRefresh
-          onRefresh={handleRefresh}
-          disabled={!!selectedPostId}
-          topOffset={56}
-        >
-          <Tabs
-            defaultValue="posts"
-            className="w-full"
-            onValueChange={setActiveTab}
+          {/* タブ */}
+          <PullToRefresh
+            onRefresh={handleRefresh}
+            disabled={!!selectedPostId}
+            topOffset={56}
           >
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="posts">投稿（{postsCount}）</TabsTrigger>
-              <TabsTrigger value="saved">保存（{savedCount}）</TabsTrigger>
-            </TabsList>
+            <Tabs
+              defaultValue="posts"
+              className="w-full"
+              onValueChange={setActiveTab}
+            >
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="posts">投稿（{postsCount}）</TabsTrigger>
+                <TabsTrigger value="saved">保存（{savedCount}）</TabsTrigger>
+              </TabsList>
 
-            {/* 投稿タブ */}
-            <TabsContent value="posts" className="p-4" asChild>
-              <motion.div
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.4, ease: "easeOut" }}
-              >
-                {userPhotos.length === 0 ? (
-                  <div className="py-8 text-center text-muted-foreground">
-                    まだ投稿がありません
-                  </div>
-                ) : (
-                  <>
-                    <Masonry
-                      breakpointCols={breakpointColumns}
-                      className="flex w-full gap-2"
-                      columnClassName="flex flex-col gap-2"
-                    >
-                      {userPhotos.map((photo) => (
-                        <div
-                          key={photo.id}
-                          className="cursor-pointer overflow-hidden rounded-lg"
-                          onClick={() => handlePhotoClick(photo)}
-                        >
-                          <motion.div
-                            layoutId={`photo-${photo.id}`}
-                            transition={{
-                              duration: 0.55,
-                              ease: [0.25, 0.1, 0.25, 1],
-                            }}
+              {/* 投稿タブ */}
+              <TabsContent value="posts" className="p-4" asChild>
+                <motion.div
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.4, ease: "easeOut" }}
+                >
+                  {userPhotos.length === 0 ? (
+                    <div className="py-8 text-center text-muted-foreground">
+                      まだ投稿がありません
+                    </div>
+                  ) : (
+                    <>
+                      <Masonry
+                        breakpointCols={breakpointColumns}
+                        className="flex w-full gap-2"
+                        columnClassName="flex flex-col gap-2"
+                      >
+                        {userPhotos.map((photo) => (
+                          <div
+                            key={photo.id}
+                            className="cursor-pointer overflow-hidden rounded-lg"
+                            onClick={() => handlePhotoClick(photo)}
                           >
-                            <Image
-                              src={photo.imageUrl}
-                              alt=""
-                              width={300}
-                              height={400}
-                              className="w-full object-cover"
-                              unoptimized
-                            />
-                          </motion.div>
+                            <motion.div
+                              layoutId={`photo-${photo.id}`}
+                              transition={{
+                                duration: 0.55,
+                                ease: [0.25, 0.1, 0.25, 1],
+                              }}
+                            >
+                              <Image
+                                src={photo.imageUrl}
+                                alt=""
+                                width={300}
+                                height={400}
+                                className="w-full object-cover"
+                                unoptimized
+                              />
+                            </motion.div>
+                          </div>
+                        ))}
+                      </Masonry>
+                      {isLoadingPosts && (
+                        <div className="flex justify-center py-4">
+                          <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
                         </div>
-                      ))}
-                    </Masonry>
-                    {isLoadingPosts && (
-                      <div className="flex justify-center py-4">
-                        <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-                      </div>
-                    )}
-                    {!hasMorePosts && userPhotos.length > 0 && (
-                      <div className="py-4 text-center text-sm text-muted-foreground">
-                        すべての投稿を表示しました
-                      </div>
-                    )}
-                  </>
-                )}
-              </motion.div>
-            </TabsContent>
+                      )}
+                      {!hasMorePosts && userPhotos.length > 0 && (
+                        <div className="py-4 text-center text-sm text-muted-foreground">
+                          すべての投稿を表示しました
+                        </div>
+                      )}
+                    </>
+                  )}
+                </motion.div>
+              </TabsContent>
 
-            {/* 保存タブ */}
-            <TabsContent value="saved" className="p-4" asChild>
-              <motion.div
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.4, ease: "easeOut" }}
-              >
-                {savedPhotos.length === 0 ? (
-                  <div className="py-8 text-center text-muted-foreground">
-                    保存した投稿がありません
-                  </div>
-                ) : (
-                  <>
-                    <Masonry
-                      breakpointCols={breakpointColumns}
-                      className="flex w-full gap-2"
-                      columnClassName="flex flex-col gap-2"
-                    >
-                      {savedPhotos.map((photo) => (
-                        <div
-                          key={photo.id}
-                          className="cursor-pointer overflow-hidden rounded-lg"
-                          onClick={() => handlePhotoClick(photo)}
-                        >
-                          <motion.div
-                            layoutId={`photo-${photo.id}`}
-                            transition={{
-                              duration: 0.55,
-                              ease: [0.25, 0.1, 0.25, 1],
-                            }}
+              {/* 保存タブ */}
+              <TabsContent value="saved" className="p-4" asChild>
+                <motion.div
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.4, ease: "easeOut" }}
+                >
+                  {savedPhotos.length === 0 ? (
+                    <div className="py-8 text-center text-muted-foreground">
+                      保存した投稿がありません
+                    </div>
+                  ) : (
+                    <>
+                      <Masonry
+                        breakpointCols={breakpointColumns}
+                        className="flex w-full gap-2"
+                        columnClassName="flex flex-col gap-2"
+                      >
+                        {savedPhotos.map((photo) => (
+                          <div
+                            key={photo.id}
+                            className="cursor-pointer overflow-hidden rounded-lg"
+                            onClick={() => handlePhotoClick(photo)}
                           >
-                            <Image
-                              src={photo.imageUrl}
-                              alt=""
-                              width={300}
-                              height={400}
-                              className="w-full object-cover"
-                              unoptimized
-                            />
-                          </motion.div>
+                            <motion.div
+                              layoutId={`photo-${photo.id}`}
+                              transition={{
+                                duration: 0.55,
+                                ease: [0.25, 0.1, 0.25, 1],
+                              }}
+                            >
+                              <Image
+                                src={photo.imageUrl}
+                                alt=""
+                                width={300}
+                                height={400}
+                                className="w-full object-cover"
+                                unoptimized
+                              />
+                            </motion.div>
+                          </div>
+                        ))}
+                      </Masonry>
+                      {isLoadingSaved && (
+                        <div className="flex justify-center py-4">
+                          <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
                         </div>
-                      ))}
-                    </Masonry>
-                    {isLoadingSaved && (
-                      <div className="flex justify-center py-4">
-                        <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-                      </div>
-                    )}
-                    {!hasMoreSaved && savedPhotos.length > 0 && (
-                      <div className="py-4 text-center text-sm text-muted-foreground">
-                        すべての保存を表示しました
-                      </div>
-                    )}
-                  </>
-                )}
-              </motion.div>
-            </TabsContent>
-          </Tabs>
-        </PullToRefresh>
+                      )}
+                      {!hasMoreSaved && savedPhotos.length > 0 && (
+                        <div className="py-4 text-center text-sm text-muted-foreground">
+                          すべての保存を表示しました
+                        </div>
+                      )}
+                    </>
+                  )}
+                </motion.div>
+              </TabsContent>
+            </Tabs>
+          </PullToRefresh>
+        </div>
 
         {/* 投稿詳細モーダル */}
         <AnimatePresence mode="sync">

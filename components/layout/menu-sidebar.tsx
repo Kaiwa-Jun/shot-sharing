@@ -11,7 +11,7 @@ import {
   LogOut,
   LogIn,
 } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useState } from "react";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 
@@ -37,7 +37,12 @@ export function MenuSidebar({
   onResetSearch,
 }: MenuSidebarProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const [isExpanded, setIsExpanded] = useState(false);
+
+  // /me画面ではデスクトップサイドバーを非表示
+  const shouldHideDesktopSidebar =
+    pathname === "/me" || pathname === "/me/edit";
 
   const handleNavigation = (path: string) => {
     // ホームボタンを押した時は検索状態をリセット
@@ -199,170 +204,172 @@ export function MenuSidebar({
       </AnimatePresence>
 
       {/* デスクトップ用サイドバー（xl以上、常時表示） */}
-      <motion.div
-        onMouseEnter={() => setIsExpanded(true)}
-        onMouseLeave={() => setIsExpanded(false)}
-        animate={{ width: isExpanded ? 288 : 64 }}
-        transition={{ duration: 0.3, ease: "easeInOut" }}
-        className="fixed left-0 top-0 z-[60] hidden h-full overflow-hidden border-r border-border bg-background shadow-sm xl:block"
-      >
-        {/* メニュー項目 */}
-        <nav className="flex flex-col gap-1 p-2 pt-16">
-          {/* ホーム */}
-          <button
-            onClick={() => handleNavigation("/")}
-            className="flex items-center gap-3 rounded-lg px-4 py-3 text-left transition-colors hover:bg-muted"
-          >
-            <Home className="h-5 w-5 shrink-0" />
-            <motion.span
-              initial={{ opacity: 0 }}
-              animate={{ opacity: isExpanded ? 1 : 0 }}
-              transition={{ duration: 0.2 }}
-              className="whitespace-nowrap"
+      {!shouldHideDesktopSidebar && (
+        <motion.div
+          onMouseEnter={() => setIsExpanded(true)}
+          onMouseLeave={() => setIsExpanded(false)}
+          animate={{ width: isExpanded ? 288 : 64 }}
+          transition={{ duration: 0.3, ease: "easeInOut" }}
+          className="fixed left-0 top-0 z-[60] hidden h-full overflow-hidden border-r border-border bg-background shadow-sm xl:block"
+        >
+          {/* メニュー項目 */}
+          <nav className="flex flex-col gap-1 p-2 pt-16">
+            {/* ホーム */}
+            <button
+              onClick={() => handleNavigation("/")}
+              className="flex items-center gap-3 rounded-lg px-4 py-3 text-left transition-colors hover:bg-muted"
             >
-              ホーム
-            </motion.span>
-          </button>
+              <Home className="h-5 w-5 shrink-0" />
+              <motion.span
+                initial={{ opacity: 0 }}
+                animate={{ opacity: isExpanded ? 1 : 0 }}
+                transition={{ duration: 0.2 }}
+                className="whitespace-nowrap"
+              >
+                ホーム
+              </motion.span>
+            </button>
 
-          {user ? (
-            <>
-              {/* マイページ */}
-              <button
-                onClick={() => handleNavigation("/me")}
-                className="flex items-center gap-3 rounded-lg px-4 py-3 text-left transition-colors hover:bg-muted"
-              >
-                <User className="h-5 w-5 shrink-0" />
-                <motion.span
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: isExpanded ? 1 : 0 }}
-                  transition={{ duration: 0.2 }}
-                  className="whitespace-nowrap"
+            {user ? (
+              <>
+                {/* マイページ */}
+                <button
+                  onClick={() => handleNavigation("/me")}
+                  className="flex items-center gap-3 rounded-lg px-4 py-3 text-left transition-colors hover:bg-muted"
                 >
-                  マイページ
-                </motion.span>
-              </button>
+                  <User className="h-5 w-5 shrink-0" />
+                  <motion.span
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: isExpanded ? 1 : 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="whitespace-nowrap"
+                  >
+                    マイページ
+                  </motion.span>
+                </button>
 
-              {/* プロフィール編集 */}
-              <button
-                onClick={() => handleNavigation("/me/edit")}
-                className="flex items-center gap-3 rounded-lg px-4 py-3 text-left transition-colors hover:bg-muted"
-              >
-                <Edit className="h-5 w-5 shrink-0" />
-                <motion.span
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: isExpanded ? 1 : 0 }}
-                  transition={{ duration: 0.2 }}
-                  className="whitespace-nowrap"
+                {/* プロフィール編集 */}
+                <button
+                  onClick={() => handleNavigation("/me/edit")}
+                  className="flex items-center gap-3 rounded-lg px-4 py-3 text-left transition-colors hover:bg-muted"
                 >
-                  プロフィール編集
-                </motion.span>
-              </button>
+                  <Edit className="h-5 w-5 shrink-0" />
+                  <motion.span
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: isExpanded ? 1 : 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="whitespace-nowrap"
+                  >
+                    プロフィール編集
+                  </motion.span>
+                </button>
 
-              {/* 利用規約 */}
-              <button
-                onClick={handleTerms}
-                className="flex items-center gap-3 rounded-lg px-4 py-3 text-left transition-colors hover:bg-muted"
-              >
-                <FileText className="h-5 w-5 shrink-0" />
-                <motion.span
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: isExpanded ? 1 : 0 }}
-                  transition={{ duration: 0.2 }}
-                  className="whitespace-nowrap"
+                {/* 利用規約 */}
+                <button
+                  onClick={handleTerms}
+                  className="flex items-center gap-3 rounded-lg px-4 py-3 text-left transition-colors hover:bg-muted"
                 >
-                  利用規約
-                </motion.span>
-              </button>
+                  <FileText className="h-5 w-5 shrink-0" />
+                  <motion.span
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: isExpanded ? 1 : 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="whitespace-nowrap"
+                  >
+                    利用規約
+                  </motion.span>
+                </button>
 
-              {/* プライバシーポリシー */}
-              <button
-                onClick={handlePrivacy}
-                className="flex items-center gap-3 rounded-lg px-4 py-3 text-left transition-colors hover:bg-muted"
-              >
-                <Lock className="h-5 w-5 shrink-0" />
-                <motion.span
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: isExpanded ? 1 : 0 }}
-                  transition={{ duration: 0.2 }}
-                  className="whitespace-nowrap"
+                {/* プライバシーポリシー */}
+                <button
+                  onClick={handlePrivacy}
+                  className="flex items-center gap-3 rounded-lg px-4 py-3 text-left transition-colors hover:bg-muted"
                 >
-                  プライバシーポリシー
-                </motion.span>
-              </button>
+                  <Lock className="h-5 w-5 shrink-0" />
+                  <motion.span
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: isExpanded ? 1 : 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="whitespace-nowrap"
+                  >
+                    プライバシーポリシー
+                  </motion.span>
+                </button>
 
-              {/* ログアウト */}
-              <button
-                onClick={handleLogout}
-                className={`flex items-center gap-3 rounded-lg px-4 py-3 text-left transition-colors ${
-                  isExpanded
-                    ? "text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/20"
-                    : "hover:bg-muted"
-                }`}
-              >
-                <LogOut className="h-5 w-5 shrink-0" />
-                <motion.span
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: isExpanded ? 1 : 0 }}
-                  transition={{ duration: 0.2 }}
-                  className="whitespace-nowrap"
+                {/* ログアウト */}
+                <button
+                  onClick={handleLogout}
+                  className={`flex items-center gap-3 rounded-lg px-4 py-3 text-left transition-colors ${
+                    isExpanded
+                      ? "text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/20"
+                      : "hover:bg-muted"
+                  }`}
                 >
-                  ログアウト
-                </motion.span>
-              </button>
-            </>
-          ) : (
-            <>
-              {/* 新規登録/ログイン */}
-              <button
-                onClick={handleLogin}
-                className="flex items-center gap-3 rounded-lg px-4 py-3 text-left transition-colors hover:bg-muted"
-              >
-                <LogIn className="h-5 w-5 shrink-0" />
-                <motion.span
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: isExpanded ? 1 : 0 }}
-                  transition={{ duration: 0.2 }}
-                  className="whitespace-nowrap"
+                  <LogOut className="h-5 w-5 shrink-0" />
+                  <motion.span
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: isExpanded ? 1 : 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="whitespace-nowrap"
+                  >
+                    ログアウト
+                  </motion.span>
+                </button>
+              </>
+            ) : (
+              <>
+                {/* 新規登録/ログイン */}
+                <button
+                  onClick={handleLogin}
+                  className="flex items-center gap-3 rounded-lg px-4 py-3 text-left transition-colors hover:bg-muted"
                 >
-                  新規登録/ログイン
-                </motion.span>
-              </button>
+                  <LogIn className="h-5 w-5 shrink-0" />
+                  <motion.span
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: isExpanded ? 1 : 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="whitespace-nowrap"
+                  >
+                    新規登録/ログイン
+                  </motion.span>
+                </button>
 
-              {/* 利用規約 */}
-              <button
-                onClick={handleTerms}
-                className="flex items-center gap-3 rounded-lg px-4 py-3 text-left transition-colors hover:bg-muted"
-              >
-                <FileText className="h-5 w-5 shrink-0" />
-                <motion.span
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: isExpanded ? 1 : 0 }}
-                  transition={{ duration: 0.2 }}
-                  className="whitespace-nowrap"
+                {/* 利用規約 */}
+                <button
+                  onClick={handleTerms}
+                  className="flex items-center gap-3 rounded-lg px-4 py-3 text-left transition-colors hover:bg-muted"
                 >
-                  利用規約
-                </motion.span>
-              </button>
+                  <FileText className="h-5 w-5 shrink-0" />
+                  <motion.span
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: isExpanded ? 1 : 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="whitespace-nowrap"
+                  >
+                    利用規約
+                  </motion.span>
+                </button>
 
-              {/* プライバシーポリシー */}
-              <button
-                onClick={handlePrivacy}
-                className="flex items-center gap-3 rounded-lg px-4 py-3 text-left transition-colors hover:bg-muted"
-              >
-                <Lock className="h-5 w-5 shrink-0" />
-                <motion.span
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: isExpanded ? 1 : 0 }}
-                  transition={{ duration: 0.2 }}
-                  className="whitespace-nowrap"
+                {/* プライバシーポリシー */}
+                <button
+                  onClick={handlePrivacy}
+                  className="flex items-center gap-3 rounded-lg px-4 py-3 text-left transition-colors hover:bg-muted"
                 >
-                  プライバシーポリシー
-                </motion.span>
-              </button>
-            </>
-          )}
-        </nav>
-      </motion.div>
+                  <Lock className="h-5 w-5 shrink-0" />
+                  <motion.span
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: isExpanded ? 1 : 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="whitespace-nowrap"
+                  >
+                    プライバシーポリシー
+                  </motion.span>
+                </button>
+              </>
+            )}
+          </nav>
+        </motion.div>
+      )}
     </>
   );
 }

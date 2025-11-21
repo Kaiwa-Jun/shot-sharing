@@ -56,6 +56,7 @@ export default async function ProfilePage() {
 
   return (
     <ProfileClient
+      key={user.id} // ページ遷移時に強制的に再レンダリング
       profile={profile}
       initialUserPhotos={userPhotos}
       initialSavedPhotos={savedPhotos}
