@@ -90,7 +90,7 @@ export function SearchChat({
         transition={{
           duration: 0.2,
         }}
-        className="fixed inset-0 z-50 bg-black/30 p-6 pb-24 backdrop-blur-sm"
+        className="fixed inset-0 z-50 bg-black/30 p-6 pb-24 backdrop-blur-sm xl:left-16"
         onClick={onClose}
       >
         <div
