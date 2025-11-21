@@ -5,15 +5,15 @@ import { PhotoCardProps } from "@/components/gallery/photo-card";
 import { MasonryGrid } from "@/components/gallery/masonry-grid";
 import { AuthTabs } from "@/components/auth/auth-tabs";
 
-interface LoginPageClientProps {
+interface SignupPageClientProps {
   backgroundPhotos: PhotoCardProps[];
   redirectPath: string;
 }
 
-export function LoginPageClient({
+export function SignupPageClient({
   backgroundPhotos,
   redirectPath,
-}: LoginPageClientProps) {
+}: SignupPageClientProps) {
   const router = useRouter();
 
   return (
@@ -40,7 +40,7 @@ export function LoginPageClient({
             </p>
           </div>
 
-          <AuthTabs activeTab="login" redirectPath={redirectPath} />
+          <AuthTabs activeTab="signup" redirectPath={redirectPath} />
 
           <div className="text-center">
             <button

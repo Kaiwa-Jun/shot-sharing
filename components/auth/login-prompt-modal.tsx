@@ -7,9 +7,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 import { usePathname } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
+import { AuthTabs } from "./auth-tabs";
 import { useState } from "react";
 import { AnimatePresence } from "framer-motion";
 import { ContentView } from "@/app/@modal/(.)me/content-view";
@@ -26,53 +25,37 @@ export function LoginPromptModal({
   context = "default",
 }: LoginPromptModalProps) {
   const pathname = usePathname();
-  const supabase = createClient();
-  const [isLoading, setIsLoading] = useState(false);
   const [view, setView] = useState<"login" | "terms" | "privacy">("login");
   const [isExiting, setIsExiting] = useState(false);
+  const [currentTab, setCurrentTab] = useState<"login" | "signup">("login");
+  const [previousTab, setPreviousTab] = useState<"login" | "signup">("login");
 
-  const handleLogin = async () => {
-    try {
-      setIsLoading(true);
-      const redirectPath = pathname || "/";
-
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: {
-          redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(redirectPath)}`,
-        },
-      });
-
-      if (error) {
-        console.error("ログインエラー:", error);
-        alert("ログインに失敗しました。もう一度お試しください。");
-        setIsLoading(false);
-      }
-      // OAuth遷移が成功した場合、setIsLoadingは不要（ページ遷移するため）
-    } catch (error) {
-      console.error("ログインエラー:", error);
-      alert("ログインに失敗しました。もう一度お試しください。");
-      setIsLoading(false);
-    }
-  };
-
-  const handleTermsClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
+  const handleTermsClick = () => {
+    setPreviousTab(currentTab);
     setView("terms");
   };
 
-  const handlePrivacyClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
+  const handlePrivacyClick = () => {
+    setPreviousTab(currentTab);
     setView("privacy");
   };
 
+  const handleBackToAuth = () => {
+    setIsExiting(true);
+  };
+
   const handleOpenChange = (open: boolean) => {
+    console.log("🔍 [LoginPromptModal] handleOpenChange called:", {
+      open,
+      currentView: view,
+      currentTab,
+      stackTrace: new Error().stack,
+    });
     onOpenChange(open);
     // モーダルが閉じられたらログインビューに戻す
     if (!open) {
       setView("login");
+      setCurrentTab("login");
     }
   };
 
@@ -80,7 +63,7 @@ export function LoginPromptModal({
   if (view === "terms" || view === "privacy") {
     return (
       <div
-        className="fixed inset-0 z-50"
+        className="fixed inset-0 z-[70]"
         onClick={(e) => e.stopPropagation()}
         onMouseDown={(e) => e.stopPropagation()}
       >
@@ -89,16 +72,13 @@ export function LoginPromptModal({
           onExitComplete={() => {
             if (isExiting) {
               setView("login");
+              setCurrentTab(previousTab);
               setIsExiting(false);
             }
           }}
         >
           {!isExiting && (
-            <ContentView
-              key={view}
-              type={view}
-              onBack={() => setIsExiting(true)}
-            />
+            <ContentView key={view} type={view} onBack={handleBackToAuth} />
           )}
         </AnimatePresence>
       </div>
@@ -108,67 +88,26 @@ export function LoginPromptModal({
   // 文言を条件分岐
   const title = context === "save" ? "ログインが必要です" : "Shot Sharing";
   const description =
-    context === "save" ? "作例を保存するには、ログインが必要です。" : null;
+    context === "save"
+      ? "作例を保存するには、ログインが必要です。"
+      : "アカウントをお持ちでない方は新規登録してください。";
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
-          {description && (
-            <DialogDescription>
-              {description}
-              <br />
-              Googleアカウントでログインしてください。
-            </DialogDescription>
-          )}
-          {!description && (
-            <DialogDescription>
-              Googleアカウントでログインしてください。
-            </DialogDescription>
-          )}
+          <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
-        <div className="flex flex-col gap-3 pt-4">
-          <Button onClick={handleLogin} disabled={isLoading} className="w-full">
-            {isLoading ? (
-              <span className="flex items-center gap-2">
-                <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                ログイン中...
-              </span>
-            ) : (
-              "Googleでログイン"
-            )}
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => handleOpenChange(false)}
-            className="w-full"
-            disabled={isLoading}
-          >
-            キャンセル
-          </Button>
-        </div>
 
-        {/* 利用規約・プライバシーポリシーへのリンク */}
-        <div className="border-t pt-4">
-          <p className="text-center text-xs text-muted-foreground">
-            ログインすることで、
-            <button
-              onClick={handleTermsClick}
-              className="underline hover:text-foreground"
-            >
-              利用規約
-            </button>
-            と
-            <button
-              onClick={handlePrivacyClick}
-              className="underline hover:text-foreground"
-            >
-              プライバシーポリシー
-            </button>
-            に同意したものとみなされます。
-          </p>
-        </div>
+        <AuthTabs
+          activeTab={currentTab}
+          onTabChange={setCurrentTab}
+          onClose={() => handleOpenChange(false)}
+          redirectPath={pathname || "/"}
+          onTermsClick={handleTermsClick}
+          onPrivacyClick={handlePrivacyClick}
+        />
       </DialogContent>
     </Dialog>
   );

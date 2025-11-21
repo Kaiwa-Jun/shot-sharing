@@ -71,6 +71,17 @@ export function PostDetailModal({
 
   // 閉じる処理
   const handleClose = () => {
+    console.log("🔍 [PostDetailModal] handleClose called", {
+      showLoginPrompt,
+      stackTrace: new Error().stack,
+    });
+
+    // ログインプロンプトが表示されている場合は閉じない
+    if (showLoginPrompt) {
+      console.log("⚠️ [PostDetailModal] LoginPrompt is open, ignoring close");
+      return;
+    }
+
     onClose();
   };
 

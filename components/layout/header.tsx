@@ -1,13 +1,18 @@
 "use client";
 
 import { motion, useMotionValueEvent, useScroll } from "framer-motion";
-import { Camera, User, PlusCircle } from "lucide-react";
+import { User, PlusCircle, MoreVertical } from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 import { LoginPromptModal } from "@/components/auth/login-prompt-modal";
 import { PostModal } from "@/components/posts/post-modal";
+import { MenuSidebar } from "@/components/layout/menu-sidebar";
+import { ContentView } from "@/app/@modal/(.)me/content-view";
+import { signOut } from "@/app/actions/auth";
+import { useRouter } from "next/navigation";
+import { AnimatePresence } from "framer-motion";
 
 interface HeaderProps {
   initialUser?: SupabaseUser | null;
@@ -18,8 +23,13 @@ export function Header({ initialUser = null }: HeaderProps) {
   const [user, setUser] = useState<SupabaseUser | null>(initialUser);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showPostModal, setShowPostModal] = useState(false);
+  const [showMenuSidebar, setShowMenuSidebar] = useState(false);
+  const [contentView, setContentView] = useState<"terms" | "privacy" | null>(
+    null
+  );
   const { scrollY } = useScroll();
   const supabase = createClient();
+  const router = useRouter();
 
   // 認証状態の監視
   useEffect(() => {
@@ -56,6 +66,28 @@ export function Header({ initialUser = null }: HeaderProps) {
     }
   });
 
+  // ログアウト処理
+  const handleLogout = async () => {
+    const result = await signOut();
+    if (result.success) {
+      router.push("/");
+      router.refresh();
+    }
+  };
+
+  // 利用規約・プライバシーポリシー表示
+  const handleShowTerms = () => {
+    setContentView("terms");
+  };
+
+  const handleShowPrivacy = () => {
+    setContentView("privacy");
+  };
+
+  const handleCloseContentView = () => {
+    setContentView(null);
+  };
+
   return (
     <>
       <motion.header
@@ -68,7 +100,31 @@ export function Header({ initialUser = null }: HeaderProps) {
         className="fixed left-0 right-0 top-0 z-50 border-b border-border/40 bg-background/80 backdrop-blur-lg"
       >
         <div className="container mx-auto flex h-14 items-center justify-between px-4">
-          {/* 左: ユーザー情報またはログインボタン */}
+          {/* 左: メニューアイコン */}
+          <motion.button
+            onClick={() => setShowMenuSidebar(true)}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="flex h-10 w-10 items-center justify-center rounded-full transition-colors hover:bg-muted"
+          >
+            <MoreVertical className="h-5 w-5" />
+          </motion.button>
+
+          {/* 中央: 投稿ボタン（ログイン時のみ） */}
+          {user ? (
+            <motion.button
+              onClick={() => setShowPostModal(true)}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground transition-colors hover:bg-primary/90"
+            >
+              <PlusCircle className="h-5 w-5" />
+            </motion.button>
+          ) : (
+            <div className="w-10" />
+          )}
+
+          {/* 右: アバターアイコン（ログイン時のみ） */}
           {user ? (
             <Link href="/me">
               <motion.div
@@ -88,47 +144,21 @@ export function Header({ initialUser = null }: HeaderProps) {
               </motion.div>
             </Link>
           ) : (
-            <motion.button
-              onClick={() => setShowLoginModal(true)}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-            >
-              ログイン
-            </motion.button>
-          )}
-
-          {/* 中央: アプリアイコン */}
-          <Link href="/" className="absolute left-1/2 -translate-x-1/2">
-            <motion.div
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="flex items-center gap-2"
-            >
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-primary to-primary/60">
-                <Camera className="h-5 w-5 text-primary-foreground" />
-              </div>
-              <span className="hidden font-bold tracking-tight sm:inline-block">
-                Shot Sharing
-              </span>
-            </motion.div>
-          </Link>
-
-          {/* 右: 投稿ボタン */}
-          {user ? (
-            <motion.button
-              onClick={() => setShowPostModal(true)}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground transition-colors hover:bg-primary/90"
-            >
-              <PlusCircle className="h-5 w-5" />
-            </motion.button>
-          ) : (
             <div className="w-10" />
           )}
         </div>
       </motion.header>
+
+      {/* メニューサイドバー */}
+      <MenuSidebar
+        open={showMenuSidebar}
+        onClose={() => setShowMenuSidebar(false)}
+        user={user}
+        onLoginClick={() => setShowLoginModal(true)}
+        onLogoutClick={handleLogout}
+        onTermsClick={handleShowTerms}
+        onPrivacyClick={handleShowPrivacy}
+      />
 
       {/* ログインモーダル */}
       <LoginPromptModal
@@ -138,6 +168,15 @@ export function Header({ initialUser = null }: HeaderProps) {
 
       {/* 投稿モーダル */}
       <PostModal open={showPostModal} onOpenChange={setShowPostModal} />
+
+      {/* 利用規約・プライバシーポリシー表示 */}
+      {contentView && (
+        <div className="fixed inset-0 z-[70]">
+          <AnimatePresence mode="wait">
+            <ContentView type={contentView} onBack={handleCloseContentView} />
+          </AnimatePresence>
+        </div>
+      )}
     </>
   );
 }
