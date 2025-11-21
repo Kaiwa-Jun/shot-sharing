@@ -169,6 +169,11 @@ export function ProfileClient({
     router.push("/");
   };
 
+  // プロフィール編集のハンドラー
+  const handleEditProfile = () => {
+    router.push("/me/edit");
+  };
+
   // ログアウトのハンドラー
   const handleLogout = async () => {
     const supabase = createClient();
@@ -340,7 +345,7 @@ export function ProfileClient({
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={handleEditProfile}>
                 <UserPen className="mr-2 h-4 w-4" />
                 プロフィール編集
               </DropdownMenuItem>
