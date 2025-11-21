@@ -5,6 +5,9 @@ import { ChatMessage } from "@/lib/types/search";
 import { Bot, User, ChevronDown, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
+import { parseAIResponse } from "@/lib/utils/parse-ai-response";
+import { CameraSettingsCard } from "./camera-settings-card";
+import { TipsCard } from "./tips-card";
 
 interface SearchChatProps {
   messages: ChatMessage[];
@@ -162,7 +165,63 @@ export function SearchChat({ messages, isExpanded, onClose }: SearchChatProps) {
                         •
                       </motion.span>
                     </div>
+                  ) : message.role === "assistant" ? (
+                    // AI回答の場合、構造化して表示
+                    (() => {
+                      const parsed = parseAIResponse(message.content);
+
+                      return (
+                        <div className="space-y-0">
+                          {/* カメラ設定カード */}
+                          {parsed.cameraSettings && (
+                            <CameraSettingsCard
+                              settings={parsed.cameraSettings}
+                            />
+                          )}
+
+                          {/* 撮影のポイント & コツ */}
+                          <TipsCard
+                            shootingPoint={parsed.shootingPoint}
+                            tips={parsed.tips}
+                          />
+
+                          {/* その他のコンテンツ */}
+                          {parsed.otherContent && (
+                            <ReactMarkdown
+                              components={{
+                                p: ({ children }) => (
+                                  <p className="text-sm leading-relaxed">
+                                    {children}
+                                  </p>
+                                ),
+                                strong: ({ children }) => (
+                                  <strong className="font-bold">
+                                    {children}
+                                  </strong>
+                                ),
+                                ul: ({ children }) => (
+                                  <ul className="my-2 list-inside list-disc space-y-1">
+                                    {children}
+                                  </ul>
+                                ),
+                                ol: ({ children }) => (
+                                  <ol className="my-2 list-inside list-decimal space-y-1">
+                                    {children}
+                                  </ol>
+                                ),
+                                li: ({ children }) => (
+                                  <li className="text-sm">{children}</li>
+                                ),
+                              }}
+                            >
+                              {parsed.otherContent}
+                            </ReactMarkdown>
+                          )}
+                        </div>
+                      );
+                    })()
                   ) : (
+                    // ユーザーメッセージの場合は通常表示
                     <ReactMarkdown
                       components={{
                         p: ({ children }) => (

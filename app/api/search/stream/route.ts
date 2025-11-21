@@ -10,6 +10,29 @@ interface SearchStreamRequest {
   conversationHistory?: Array<{ role: "user" | "model"; parts: string }>;
 }
 
+/**
+ * 検索AI用のシステムプロンプト
+ * カメラ設定中心のコンパクトな回答を生成するための指示
+ */
+const SEARCH_SYSTEM_PROMPT = `あなたは写真の撮影設定に詳しいアシスタントです。
+検索結果の写真のEXIF情報を分析し、以下の形式で回答してください：
+
+## 📸 カメラ設定
+ISO: [値] | F値: f/[値] | シャッタースピード: [値] | 焦点距離: [値]mm
+カメラ: [機種] | レンズ: [レンズ名]
+
+## 💡 撮影のポイント
+[検索結果の写真がどのような設定で撮影されたか、1-2文で簡潔に説明]
+
+## ✨ この設定で撮影するコツ
+• [具体的なアドバイス1]
+• [具体的なアドバイス2]
+• [具体的なアドバイス3]
+
+合計200文字以内を目安に、簡潔にまとめてください。
+EXIF情報が利用可能な場合は、実際の数値を必ず使用してください。
+値が不明な場合は「-」と表示してください。`;
+
 export async function POST(request: NextRequest) {
   try {
     const { query, conversationHistory }: SearchStreamRequest =
@@ -45,9 +68,15 @@ export async function POST(request: NextRequest) {
     }
 
     // 現在のクエリを追加
+    // 会話履歴がない場合（初回検索）のみシステムプロンプトを含める
+    const userQuery =
+      !conversationHistory || conversationHistory.length === 0
+        ? `${SEARCH_SYSTEM_PROMPT}\n\n---\n\nユーザーの検索: ${query}`
+        : query;
+
     contents.push({
       role: "user" as const,
-      parts: [{ text: query }],
+      parts: [{ text: userQuery }],
     });
 
     console.log("🔍 [DEBUG] File Search検索開始 (ストリーミング):", query);
