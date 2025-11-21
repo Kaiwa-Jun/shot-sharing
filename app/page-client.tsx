@@ -364,7 +364,7 @@ export function PageClient({ initialPhotos, initialUser }: PageClientProps) {
           disabled={!!selectedPostId || isSearchMode}
           topOffset={56}
         >
-          <main className="container mx-auto px-4 pb-24 pt-20">
+          <main className="container mx-auto px-4 pb-24 pt-20 xl:pl-20">
             {photos.length > 0 ? (
               // 通常の投稿を表示
               <MasonryGrid

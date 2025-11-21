@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, useMotionValueEvent, useScroll } from "framer-motion";
-import { User, PlusCircle, MoreVertical } from "lucide-react";
+import { User, PlusCircle, Settings } from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
@@ -101,15 +101,17 @@ export function Header({ initialUser = null, onResetSearch }: HeaderProps) {
         className="fixed left-0 right-0 top-0 z-50 border-b border-border/40 bg-background/80 backdrop-blur-lg"
       >
         <div className="container mx-auto flex h-14 items-center justify-between px-4">
-          {/* 左: メニューアイコン */}
+          {/* 左: メニューアイコン（xl未満のみ表示） */}
           <motion.button
             onClick={() => setShowMenuSidebar(true)}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            className="flex h-10 w-10 items-center justify-center rounded-full transition-colors hover:bg-muted"
+            className="flex h-10 w-10 items-center justify-center rounded-full transition-colors hover:bg-muted xl:hidden"
           >
-            <MoreVertical className="h-5 w-5" />
+            <Settings className="h-6 w-6" />
           </motion.button>
+          {/* xl以上では左スペースを確保 */}
+          <div className="hidden h-10 w-10 xl:block" />
 
           {/* 中央: 投稿ボタン（ログイン時のみ） */}
           {user ? (
