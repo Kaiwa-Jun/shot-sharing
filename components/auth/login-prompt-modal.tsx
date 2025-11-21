@@ -45,6 +45,12 @@ export function LoginPromptModal({
   };
 
   const handleOpenChange = (open: boolean) => {
+    console.log("🔍 [LoginPromptModal] handleOpenChange called:", {
+      open,
+      currentView: view,
+      currentTab,
+      stackTrace: new Error().stack,
+    });
     onOpenChange(open);
     // モーダルが閉じられたらログインビューに戻す
     if (!open) {

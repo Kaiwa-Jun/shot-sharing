@@ -23,10 +23,18 @@ export function AuthTabs({
   onTermsClick,
   onPrivacyClick,
 }: AuthTabsProps) {
+  const handleTabChange = (value: string) => {
+    console.log("🔍 [AuthTabs] Tab changed:", {
+      from: activeTab,
+      to: value,
+    });
+    onTabChange?.(value as "login" | "signup");
+  };
+
   return (
     <Tabs
       value={activeTab}
-      onValueChange={(value) => onTabChange?.(value as "login" | "signup")}
+      onValueChange={handleTabChange}
       className={className}
     >
       <TabsList className="grid w-full grid-cols-2">
