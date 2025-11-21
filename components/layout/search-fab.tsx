@@ -31,6 +31,7 @@ export function SearchFAB({
   const [query, setQuery] = useState("");
   const lastScrollY = useRef(0);
   const ticking = useRef(false);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   // 検索モード中は常に展開状態を維持（ちらつき防止のため直接計算）
   const isExpanded = isSearchMode || isExpandedInternal;
@@ -99,6 +100,18 @@ export function SearchFAB({
       setQuery("");
     }
   }, [isSearchMode]);
+
+  // 展開時に入力欄に自動フォーカス
+  useEffect(() => {
+    if (isExpanded && inputRef.current) {
+      // requestAnimationFrameを使って次のフレームでフォーカス
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          inputRef.current?.focus();
+        });
+      });
+    }
+  }, [isExpanded]);
 
   return (
     <div className="fixed bottom-4 left-0 right-0 z-[60] flex flex-col items-center px-4">
@@ -178,11 +191,13 @@ export function SearchFAB({
 
               {/* テキスト入力 */}
               <input
+                ref={inputRef}
                 type="text"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="撮りたいシーンや設定で探す"
                 className="flex-1 bg-transparent outline-none placeholder:text-muted-foreground"
+                autoFocus
               />
 
               {/* 画像添付ボタン */}

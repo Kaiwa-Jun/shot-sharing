@@ -357,42 +357,42 @@ export function PageClient({ initialPhotos, initialUser }: PageClientProps) {
       <Header initialUser={initialUser} onResetSearch={handleCloseSearch} />
 
       {/* メインコンテンツ */}
-      <PullToRefresh
-        onRefresh={handleRefresh}
-        disabled={!!selectedPostId || isSearchMode}
-        topOffset={56}
-      >
-        <main className="container mx-auto px-4 pb-24 pt-20">
-          {isSearching && isSearchMode ? (
-            // 検索中: ローディングスケルトンを表示
-            <SearchLoadingSkeleton />
-          ) : displayPhotos.length > 0 ? (
-            // 検索結果または通常の投稿を表示
-            <MasonryGrid
-              key={photos.length} // リロード時にコンポーネントをリセット
-              initialPhotos={displayPhotos}
-              onPhotoClick={handlePhotoClick}
-              isSearchMode={isSearchMode}
-              deletedIds={deletedIds}
-            />
-          ) : (
-            // 投稿がない場合
-            <div className="flex min-h-[50vh] items-center justify-center">
-              <p className="text-muted-foreground">
-                {isSearchMode
-                  ? "検索結果が見つかりませんでした。"
-                  : "投稿がありません。最初の投稿を作成してみましょう！"}
-              </p>
-            </div>
-          )}
-        </main>
-      </PullToRefresh>
+      {/* 検索モード時は非表示（DOMには残す） */}
+      <div className={isSearchMode ? "hidden" : ""}>
+        <PullToRefresh
+          onRefresh={handleRefresh}
+          disabled={!!selectedPostId || isSearchMode}
+          topOffset={56}
+        >
+          <main className="container mx-auto px-4 pb-24 pt-20">
+            {photos.length > 0 ? (
+              // 通常の投稿を表示
+              <MasonryGrid
+                key={photos.length} // リロード時にコンポーネントをリセット
+                initialPhotos={photos}
+                onPhotoClick={handlePhotoClick}
+                isSearchMode={false}
+                deletedIds={deletedIds}
+              />
+            ) : (
+              // 投稿がない場合
+              <div className="flex min-h-[50vh] items-center justify-center">
+                <p className="text-muted-foreground">
+                  投稿がありません。最初の投稿を作成してみましょう！
+                </p>
+              </div>
+            )}
+          </main>
+        </PullToRefresh>
+      </div>
 
       {/* チャット領域 */}
       <SearchChat
         messages={chatMessages}
         isExpanded={true}
         onClose={handleCloseSearch}
+        searchResults={searchResults}
+        onPhotoClick={handlePhotoClick}
       />
 
       {/* フローティングアクションボタン */}
