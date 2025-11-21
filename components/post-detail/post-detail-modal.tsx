@@ -276,6 +276,7 @@ export function PostDetailModal({
       <LoginPromptModal
         open={showLoginPrompt}
         onOpenChange={setShowLoginPrompt}
+        context="save"
       />
 
       {/* 削除確認アラート */}
