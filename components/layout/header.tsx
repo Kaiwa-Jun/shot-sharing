@@ -16,9 +16,10 @@ import { AnimatePresence } from "framer-motion";
 
 interface HeaderProps {
   initialUser?: SupabaseUser | null;
+  onResetSearch?: () => void;
 }
 
-export function Header({ initialUser = null }: HeaderProps) {
+export function Header({ initialUser = null, onResetSearch }: HeaderProps) {
   const [isHidden, setIsHidden] = useState(false);
   const [user, setUser] = useState<SupabaseUser | null>(initialUser);
   const [showLoginModal, setShowLoginModal] = useState(false);
@@ -158,6 +159,7 @@ export function Header({ initialUser = null }: HeaderProps) {
         onLogoutClick={handleLogout}
         onTermsClick={handleShowTerms}
         onPrivacyClick={handleShowPrivacy}
+        onResetSearch={onResetSearch}
       />
 
       {/* ログインモーダル */}

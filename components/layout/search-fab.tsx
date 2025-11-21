@@ -27,17 +27,20 @@ export function SearchFAB({
   showExamples = true,
   isSearchMode = false,
 }: SearchFABProps) {
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isExpandedInternal, setIsExpandedInternal] = useState(false);
   const [query, setQuery] = useState("");
   const lastScrollY = useRef(0);
   const ticking = useRef(false);
 
+  // 検索モード中は常に展開状態を維持（ちらつき防止のため直接計算）
+  const isExpanded = isSearchMode || isExpandedInternal;
+
   const handleExpand = () => {
-    setIsExpanded(true);
+    setIsExpandedInternal(true);
   };
 
   const handleCollapse = () => {
-    setIsExpanded(false);
+    setIsExpandedInternal(false);
     setQuery("");
   };
 
@@ -67,11 +70,11 @@ export function SearchFAB({
 
           // 下スクロール（scrollY が増加）→ 展開
           if (currentScrollY > lastScrollY.current && currentScrollY > 50) {
-            setIsExpanded(true);
+            setIsExpandedInternal(true);
           }
           // 上スクロール（scrollY が減少）→ 閉じる
           else if (currentScrollY < lastScrollY.current) {
-            setIsExpanded(false);
+            setIsExpandedInternal(false);
           }
 
           lastScrollY.current = currentScrollY;
@@ -89,10 +92,10 @@ export function SearchFAB({
     };
   }, [isSearchMode]);
 
-  // 検索モードが解除されたらFABを閉じる
+  // 検索モードが解除されたらFABの内部状態をリセット
   useEffect(() => {
     if (!isSearchMode) {
-      setIsExpanded(false);
+      setIsExpandedInternal(false);
       setQuery("");
     }
   }, [isSearchMode]);
