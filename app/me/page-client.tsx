@@ -10,6 +10,7 @@ import {
   UserPen,
   HelpCircle,
   FileText,
+  Shield,
   LogOut,
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -27,6 +28,7 @@ import Image from "next/image";
 import { PostDetailModal } from "@/components/post-detail/post-detail-modal";
 import { createClient } from "@/lib/supabase/client";
 import { PullToRefresh } from "@/components/ui/pull-to-refresh";
+import { ContentView } from "@/app/@modal/(.)me/content-view";
 
 interface Profile {
   id: string;
@@ -60,6 +62,9 @@ export function ProfileClient({
   const [selectedPost, setSelectedPost] = useState<Post | null>(null);
   const [initialIsSaved, setInitialIsSaved] = useState(false);
   const [initialIsOwner, setInitialIsOwner] = useState(false);
+
+  // ビュー状態 ('profile' | 'terms' | 'privacy')
+  const [view, setView] = useState<"profile" | "terms" | "privacy">("profile");
 
   // 投稿タブの状態
   const [userPhotos, setUserPhotos] =
@@ -169,11 +174,25 @@ export function ProfileClient({
     router.push("/");
   };
 
+  // プロフィール編集のハンドラー
+  const handleEditProfile = () => {
+    router.push("/me/edit");
+  };
+
   // ログアウトのハンドラー
   const handleLogout = async () => {
+    console.log("🔴 ログアウト処理開始");
+    console.log("🔴 現在のURL:", window.location.href);
+
     const supabase = createClient();
-    await supabase.auth.signOut();
-    router.push("/login");
+    console.log("🔴 Supabaseクライアント作成完了");
+
+    const result = await supabase.auth.signOut();
+    console.log("🔴 サインアウト完了:", result);
+
+    console.log("🔴 /loginへリダイレクト開始");
+    window.location.href = "/login";
+    console.log("🔴 リダイレクト実行後（このログは表示されないはず）");
   };
 
   // 写真クリックのハンドラー
@@ -291,6 +310,9 @@ export function ProfileClient({
     // モーダルが開いているときはスワイプ処理をスキップ
     if (selectedPostId) return;
 
+    // プロフィールビュー以外ではスワイプで閉じない
+    if (view !== "profile") return;
+
     if (info.offset.x < -100) {
       // 右から左へのスワイプでホームに戻る
       router.push("/");
@@ -303,6 +325,22 @@ export function ProfileClient({
     640: 2,
   };
 
+  // 利用規約・プライバシーポリシービューの場合
+  if (view === "terms" || view === "privacy") {
+    return (
+      <div className="min-h-screen bg-background">
+        <AnimatePresence mode="wait">
+          <ContentView
+            key={view}
+            type={view}
+            onBack={() => setView("profile")}
+          />
+        </AnimatePresence>
+      </div>
+    );
+  }
+
+  // プロフィールビュー
   return (
     <motion.div
       initial={{ x: "-100%", opacity: 0 }}
@@ -340,7 +378,7 @@ export function ProfileClient({
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={handleEditProfile}>
                 <UserPen className="mr-2 h-4 w-4" />
                 プロフィール編集
               </DropdownMenuItem>
@@ -348,13 +386,20 @@ export function ProfileClient({
                 <HelpCircle className="mr-2 h-4 w-4" />
                 ヘルプ/お問い合わせ
               </DropdownMenuItem>
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setView("terms")}>
                 <FileText className="mr-2 h-4 w-4" />
-                利用規約/プライバシーポリシー
+                利用規約
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setView("privacy")}>
+                <Shield className="mr-2 h-4 w-4" />
+                プライバシーポリシー
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
-                onClick={handleLogout}
+                onClick={(e) => {
+                  console.log("🔴 ログアウトメニューがクリックされました", e);
+                  handleLogout();
+                }}
                 className="text-red-600 focus:text-red-600"
               >
                 <LogOut className="mr-2 h-4 w-4" />
