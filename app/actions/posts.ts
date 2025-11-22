@@ -12,6 +12,7 @@ import {
   deleteFromStorage,
 } from "@/lib/supabase/storage";
 import { uploadPhotoToFileSearch } from "@/lib/gemini/file-search-upload";
+import { searchWithFileSearch } from "@/lib/gemini/file-search-query";
 
 export interface Post {
   id: string;
@@ -601,5 +602,141 @@ export async function deletePost(postId: string) {
   } catch (error) {
     console.error("投稿削除エラー:", error);
     throw error;
+  }
+}
+
+/**
+ * 類似検索クエリを構築
+ * 投稿の説明文とExif情報から検索クエリを生成
+ */
+function buildSimilarityQuery(post: Post): string {
+  const parts: string[] = [];
+
+  // 説明文を追加
+  if (post.description) {
+    parts.push(post.description);
+  }
+
+  // Exif情報から撮影設定を追加
+  if (post.exifData) {
+    const exif = post.exifData;
+    const settings: string[] = [];
+
+    if (exif.iso) settings.push(`ISO${exif.iso}`);
+    if (exif.fValue) settings.push(`f/${exif.fValue}`);
+    if (exif.shutterSpeed) settings.push(exif.shutterSpeed);
+    if (exif.focalLength) settings.push(`${exif.focalLength}mm`);
+
+    if (settings.length > 0) {
+      parts.push(`撮影設定: ${settings.join(" ")}`);
+    }
+
+    // カメラとレンズ情報
+    if (exif.cameraMake || exif.cameraModel) {
+      const camera = [exif.cameraMake, exif.cameraModel]
+        .filter(Boolean)
+        .join(" ");
+      if (camera) parts.push(`カメラ: ${camera}`);
+    }
+    if (exif.lens) {
+      parts.push(`レンズ: ${exif.lens}`);
+    }
+  }
+
+  // クエリが空の場合はデフォルトのクエリを使用
+  if (parts.length === 0) {
+    return "類似した写真を探してください";
+  }
+
+  return parts.join(" ");
+}
+
+/**
+ * 類似作例を取得
+ * Gemini File Search APIのベクトル検索を使用して、現在の投稿に類似した作例を取得
+ * @param postId 現在の投稿ID
+ * @param limit 取得件数（デフォルト: 10）
+ * @returns 類似作例のリスト
+ */
+export async function getSimilarPosts(
+  postId: string,
+  limit: number = 10
+): Promise<{ data: Post[] | null; error: string | null }> {
+  try {
+    console.log(`🔍 類似作例を検索中: ${postId}`);
+
+    // 1. 現在の投稿を取得
+    const { data: currentPost, error: postError } = await getPostById(postId);
+    if (postError || !currentPost) {
+      console.error("投稿の取得エラー:", postError);
+      return { data: null, error: "投稿が見つかりません" };
+    }
+
+    // 2. file_search_store_idが未設定の場合はフォールバック
+    console.log(
+      `📋 [DEBUG] file_search_store_id: ${currentPost.fileSearchStoreId || "未設定"}`
+    );
+
+    if (!currentPost.fileSearchStoreId) {
+      console.log("⚠️ file_search_store_idが未設定、最新の投稿を返します");
+      const { data: fallbackPosts } = await getPosts(limit + 1, 0);
+      console.log(
+        `📊 [DEBUG] フォールバック投稿数: ${fallbackPosts?.length || 0}`
+      );
+      const filteredPosts =
+        fallbackPosts?.filter((p) => p.id !== postId).slice(0, limit) || [];
+      console.log(`✅ [DEBUG] フィルタ後: ${filteredPosts.length}件を返却`);
+      return { data: filteredPosts, error: null };
+    }
+
+    // 3. 類似検索クエリを構築
+    const query = buildSimilarityQuery(currentPost);
+    console.log("📝 検索クエリ:", query);
+
+    // 4. File Search APIで類似検索を実行
+    console.log(`🔍 [DEBUG] File Search API呼び出し開始`);
+    const { postIds } = await searchWithFileSearch(query);
+    console.log(`✅ ${postIds.length}件の類似作例を検出`);
+    console.log(`📋 [DEBUG] 検出されたpost_ids:`, postIds.slice(0, 5));
+
+    // 5. 自分自身を除外
+    const filteredPostIds = postIds.filter((id) => id !== postId);
+
+    // 類似作例が少ない場合は空配列を返す
+    if (filteredPostIds.length === 0) {
+      console.log("⚠️ 類似作例が見つかりませんでした");
+      return { data: [], error: null };
+    }
+
+    // 6. 投稿データを取得（十分な量を取得してフィルタリング）
+    const { data: allPosts, error: fetchError } = await getPosts(100, 0);
+    if (fetchError || !allPosts) {
+      console.error("投稿一覧の取得エラー:", fetchError);
+      return { data: null, error: "投稿の取得に失敗しました" };
+    }
+
+    // 7. post_idsの順序を保持してソート（類似度順）
+    const similarPosts = filteredPostIds
+      .map((id) => allPosts.find((p) => p.id === id))
+      .filter((post): post is Post => post !== undefined)
+      .slice(0, limit);
+
+    console.log(`📤 ${similarPosts.length}件の類似作例を返却`);
+
+    return { data: similarPosts, error: null };
+  } catch (error) {
+    console.error("類似作例の取得エラー:", error);
+
+    // エラー時はフォールバック（最新の投稿を返す）
+    try {
+      const { data: fallbackPosts } = await getPosts(limit + 1, 0);
+      const filteredPosts =
+        fallbackPosts?.filter((p) => p.id !== postId).slice(0, limit) || [];
+      console.log(`⚠️ フォールバック: ${filteredPosts.length}件の投稿を返却`);
+      return { data: filteredPosts, error: null };
+    } catch (fallbackError) {
+      console.error("フォールバックも失敗:", fallbackError);
+      return { data: null, error: "類似作例の取得に失敗しました" };
+    }
   }
 }

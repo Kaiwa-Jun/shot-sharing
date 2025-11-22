@@ -8,6 +8,8 @@ import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
 import { ExifInfo } from "./exif-info";
 import { SaveButton } from "./save-button";
 import { PostActionsMenu } from "./post-actions-menu";
+import { SimilarPostsCarousel } from "./similar-posts-carousel";
+import { SimilarPostsSkeleton } from "./similar-posts-skeleton";
 import { LoginPromptModal } from "@/components/auth/login-prompt-modal";
 import { createClient } from "@/lib/supabase/client";
 import { X } from "lucide-react";
@@ -31,6 +33,9 @@ interface PostDetailModalProps {
   onClose: () => void;
   onDeleteSuccess?: () => void;
   skipInitialAnimation?: boolean;
+  similarPosts?: Post[];
+  onSimilarPostClick?: (postId: string) => void;
+  isSimilarPostsLoading?: boolean;
 }
 
 export function PostDetailModal({
@@ -40,7 +45,16 @@ export function PostDetailModal({
   onClose,
   onDeleteSuccess,
   skipInitialAnimation = false,
+  similarPosts = [],
+  onSimilarPostClick,
+  isSimilarPostsLoading = false,
 }: PostDetailModalProps) {
+  console.log(`🖼️ [DEBUG] PostDetailModal: レンダリング`, {
+    postId: post.id,
+    similarPostsCount: similarPosts.length,
+    hasSimilarPostClick: !!onSimilarPostClick,
+  });
+
   const [isSaved, setIsSaved] = useState(initialIsSaved);
   const [isMobile, setIsMobile] = useState<boolean>(() => {
     if (typeof window === "undefined") return false;
@@ -263,22 +277,16 @@ export function PostDetailModal({
               </div>
             )}
 
-            {/* 類似作例セクション（仮表示） */}
-            <div className="border-t pt-6">
-              <h3 className="mb-4 text-lg font-semibold">類似の作例</h3>
-              <div className="flex gap-4 overflow-x-auto pb-4">
-                {/* プレースホルダー */}
-                {[1, 2, 3, 4].map((i) => (
-                  <div
-                    key={i}
-                    className="h-32 w-24 flex-shrink-0 rounded bg-muted"
-                  />
-                ))}
-              </div>
-              <p className="mt-2 text-sm text-muted-foreground">
-                ※ 類似作例の表示は今後実装予定です
-              </p>
-            </div>
+            {/* 類似作例セクション */}
+            {onSimilarPostClick &&
+              (isSimilarPostsLoading ? (
+                <SimilarPostsSkeleton />
+              ) : (
+                <SimilarPostsCarousel
+                  posts={similarPosts}
+                  onPostClick={onSimilarPostClick}
+                />
+              ))}
           </motion.div>
         </div>
       </motion.div>

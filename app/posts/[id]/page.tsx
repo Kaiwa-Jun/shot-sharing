@@ -1,6 +1,5 @@
-import { getPostById } from "@/app/actions/posts";
+import { getPostById, getPosts, getSimilarPosts } from "@/app/actions/posts";
 import { checkIsSaved } from "@/app/actions/saves";
-import { getPosts } from "@/app/actions/posts";
 import { PostDetailPage } from "./page-client";
 import { PhotoCardProps } from "@/components/gallery/photo-card";
 import { notFound } from "next/navigation";
@@ -40,6 +39,18 @@ export default async function Page({ params }: PageProps) {
       exifData: p.exifData ?? undefined,
     })) || [];
 
+  // 類似作例を取得
+  console.log(`🔍 [DEBUG] 投稿詳細ページ: 類似作例を取得中 (postId: ${id})`);
+  const { data: similarPosts, error: similarError } = await getSimilarPosts(
+    id,
+    10
+  );
+  console.log(`📊 [DEBUG] 類似作例の取得結果:`, {
+    count: similarPosts?.length || 0,
+    error: similarError,
+    postIds: similarPosts?.map((p) => p.id).slice(0, 5) || [],
+  });
+
   return (
     <PostDetailPage
       post={post}
@@ -47,6 +58,7 @@ export default async function Page({ params }: PageProps) {
       initialIsOwner={isOwner}
       backgroundPhotos={backgroundPhotos}
       initialUser={user}
+      similarPosts={similarPosts || []}
     />
   );
 }

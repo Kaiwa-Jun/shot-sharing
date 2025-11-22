@@ -14,6 +14,7 @@ interface PostDetailPageProps {
   initialIsOwner: boolean;
   backgroundPhotos: PhotoCardProps[];
   initialUser: any;
+  similarPosts: Post[];
 }
 
 export function PostDetailPage({
@@ -22,6 +23,7 @@ export function PostDetailPage({
   initialIsOwner,
   backgroundPhotos,
   initialUser,
+  similarPosts,
 }: PostDetailPageProps) {
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(true);
@@ -32,6 +34,11 @@ export function PostDetailPage({
 
   const handleDeleteSuccess = () => {
     setIsOpen(false);
+  };
+
+  const handleSimilarPostClick = (postId: string) => {
+    // 新しい投稿ページに遷移（ブラウザバック対応）
+    router.push(`/posts/${postId}`);
   };
 
   const handleExitComplete = () => {
@@ -61,6 +68,8 @@ export function PostDetailPage({
             onClose={handleClose}
             onDeleteSuccess={handleDeleteSuccess}
             skipInitialAnimation={true}
+            similarPosts={similarPosts}
+            onSimilarPostClick={handleSimilarPostClick}
           />
         )}
       </AnimatePresence>

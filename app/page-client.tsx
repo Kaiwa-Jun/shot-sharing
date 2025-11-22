@@ -10,7 +10,7 @@ import { MasonryGrid } from "@/components/gallery/masonry-grid";
 import { SearchLoadingSkeleton } from "@/components/gallery/search-loading-skeleton";
 import { PostDetailModal } from "@/components/post-detail/post-detail-modal";
 import { PhotoCardProps } from "@/components/gallery/photo-card";
-import { Post, getPosts } from "@/app/actions/posts";
+import { Post, getPosts, getSimilarPosts } from "@/app/actions/posts";
 import { searchPosts } from "@/app/actions/search";
 import { ChatMessage, ConversationMessage } from "@/lib/types/search";
 import type { User } from "@supabase/supabase-js";
@@ -29,6 +29,12 @@ export function PageClient({ initialPhotos, initialUser }: PageClientProps) {
   const [initialIsSaved, setInitialIsSaved] = useState(false);
   const [initialIsOwner, setInitialIsOwner] = useState(false);
   const [deletedIds, setDeletedIds] = useState<Set<string>>(new Set());
+  const [similarPosts, setSimilarPosts] = useState<Post[]>([]);
+  const [isSimilarPostsLoading, setIsSimilarPostsLoading] = useState(false);
+  // 類似作例のキャッシュ（投稿IDをキーにして保存）
+  const [similarPostsCache, setSimilarPostsCache] = useState<
+    Map<string, Post[]>
+  >(new Map());
 
   // 投稿データ（Pull-to-Refreshで更新可能）
   const [photos, setPhotos] = useState<PhotoCardProps[]>(initialPhotos);
@@ -98,12 +104,43 @@ export function PageClient({ initialPhotos, initialUser }: PageClientProps) {
     // URLを更新（History APIを使用してページ遷移なし）
     window.history.pushState(null, "", `/posts/${photoId}`);
 
-    // バックグラウンドで詳細データと保存状態を取得
+    // キャッシュをチェック
+    const cachedSimilarPosts = similarPostsCache.get(photoId);
+    if (cachedSimilarPosts) {
+      console.log(
+        `💾 [DEBUG] キャッシュから類似作例を取得: ${cachedSimilarPosts.length}件`
+      );
+      setSimilarPosts(cachedSimilarPosts);
+      setIsSimilarPostsLoading(false); // キャッシュがある場合はローディングなし
+    } else {
+      setIsSimilarPostsLoading(true); // キャッシュがない場合はローディング開始
+    }
+
+    // バックグラウンドで詳細データ、保存状態、類似作例を取得
     try {
-      const [postResponse, saveResponse] = await Promise.all([
+      console.log(`🔍 [DEBUG] 投稿詳細データを取得中: ${photoId}`);
+
+      // キャッシュがある場合は類似作例の取得をスキップ
+      const promises: Promise<any>[] = [
         fetch(`/api/posts/${photoId}`),
         fetch(`/api/saves/check?postId=${photoId}`),
-      ]);
+      ];
+
+      if (!cachedSimilarPosts) {
+        promises.push(getSimilarPosts(photoId, 10));
+      }
+
+      const results = await Promise.all(promises);
+      const postResponse = results[0];
+      const saveResponse = results[1];
+      const similarPostsResult = cachedSimilarPosts ? null : results[2];
+
+      if (!cachedSimilarPosts && similarPostsResult) {
+        console.log(`📊 [DEBUG] 類似作例の取得結果:`, {
+          count: similarPostsResult.data?.length || 0,
+          error: similarPostsResult.error,
+        });
+      }
 
       if (postResponse.ok) {
         const postData = await postResponse.json();
@@ -119,8 +156,30 @@ export function PageClient({ initialPhotos, initialUser }: PageClientProps) {
         const saveData = await saveResponse.json();
         setInitialIsSaved(saveData.saved);
       }
+
+      // 類似作例を設定（キャッシュがない場合のみ）
+      if (!cachedSimilarPosts && similarPostsResult) {
+        if (similarPostsResult.data) {
+          setSimilarPosts(similarPostsResult.data);
+          // キャッシュに保存
+          setSimilarPostsCache((prev) =>
+            new Map(prev).set(photoId, similarPostsResult.data)
+          );
+          console.log(
+            `✅ [DEBUG] 類似作例を設定してキャッシュに保存: ${similarPostsResult.data.length}件`
+          );
+        } else {
+          setSimilarPosts([]);
+          // 空の結果もキャッシュに保存（再取得を防ぐため）
+          setSimilarPostsCache((prev) => new Map(prev).set(photoId, []));
+          console.log(`⚠️ [DEBUG] 類似作例なし（キャッシュに保存）`);
+        }
+      }
     } catch (error) {
       console.error("Error fetching post data:", error);
+      setSimilarPosts([]);
+    } finally {
+      setIsSimilarPostsLoading(false); // ローディング終了
     }
   };
 
@@ -128,8 +187,25 @@ export function PageClient({ initialPhotos, initialUser }: PageClientProps) {
   const handleCloseModal = () => {
     setSelectedPostId(null);
     setSelectedPost(null);
+    setSimilarPosts([]);
     // URLを元に戻す
     window.history.back();
+  };
+
+  // 類似作例クリック時の処理
+  const handleSimilarPostClick = (postId: string) => {
+    console.log(`🎯 [DEBUG] 類似作例クリック: ${postId}`);
+    // 新しい投稿をモーダルで表示
+    // handlePhotoClickを使ってモーダルを更新
+    const clickedPost = similarPosts.find((p) => p.id === postId);
+    if (clickedPost) {
+      handlePhotoClick(postId, {
+        id: clickedPost.id,
+        imageUrl: clickedPost.imageUrl,
+        userId: clickedPost.userId,
+        exifData: clickedPost.exifData || undefined,
+      });
+    }
   };
 
   // 削除成功時の処理
@@ -415,6 +491,9 @@ export function PageClient({ initialPhotos, initialUser }: PageClientProps) {
             initialIsOwner={initialIsOwner}
             onClose={handleCloseModal}
             onDeleteSuccess={handleDeleteSuccess}
+            similarPosts={similarPosts}
+            onSimilarPostClick={handleSimilarPostClick}
+            isSimilarPostsLoading={isSimilarPostsLoading}
           />
         )}
       </AnimatePresence>
