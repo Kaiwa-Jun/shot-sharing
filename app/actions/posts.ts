@@ -12,7 +12,7 @@ import {
   deleteFromStorage,
 } from "@/lib/supabase/storage";
 import { uploadPhotoToFileSearch } from "@/lib/gemini/file-search-upload";
-import { searchWithFileSearch } from "@/lib/gemini/file-search-query";
+import { searchSimilarPostsWithFileSearch } from "@/lib/gemini/file-search-query";
 
 export interface Post {
   id: string;
@@ -725,9 +725,9 @@ export async function getSimilarPosts(
     const query = buildSimilarityQuery(currentPost);
     console.log("📝 検索クエリ:", query);
 
-    // 4. File Search APIで類似検索を実行
+    // 4. File Search APIで類似検索を実行（軽量版）
     console.log(`🔍 [DEBUG] File Search API呼び出し開始`);
-    const { postIds } = await searchWithFileSearch(query);
+    const { postIds } = await searchSimilarPostsWithFileSearch(query);
     console.log(`✅ ${postIds.length}件の類似作例を検出`);
     console.log(`📋 [DEBUG] 検出されたpost_ids:`, postIds.slice(0, 5));
 
