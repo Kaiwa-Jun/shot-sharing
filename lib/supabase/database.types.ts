@@ -41,40 +41,49 @@ export type Database = {
     Tables: {
       posts: {
         Row: {
+          caption: string | null;
           created_at: string | null;
           description: string | null;
           exif_data: Json | null;
           file_search_store_id: string | null;
+          height: number | null;
           id: string;
           image_url: string;
           thumbnail_url: string;
           updated_at: string | null;
           user_id: string;
           visibility: string | null;
+          width: number | null;
         };
         Insert: {
+          caption?: string | null;
           created_at?: string | null;
           description?: string | null;
           exif_data?: Json | null;
           file_search_store_id?: string | null;
+          height?: number | null;
           id?: string;
           image_url: string;
           thumbnail_url: string;
           updated_at?: string | null;
           user_id: string;
           visibility?: string | null;
+          width?: number | null;
         };
         Update: {
+          caption?: string | null;
           created_at?: string | null;
           description?: string | null;
           exif_data?: Json | null;
           file_search_store_id?: string | null;
+          height?: number | null;
           id?: string;
           image_url?: string;
           thumbnail_url?: string;
           updated_at?: string | null;
           user_id?: string;
           visibility?: string | null;
+          width?: number | null;
         };
         Relationships: [
           {
@@ -152,12 +161,38 @@ export type Database = {
           },
         ];
       };
+      similar_posts_cache: {
+        Row: {
+          created_at: string;
+          post_id: string;
+          similar_post_ids: string[];
+        };
+        Insert: {
+          created_at?: string;
+          post_id: string;
+          similar_post_ids: string[];
+        };
+        Update: {
+          created_at?: string;
+          post_id?: string;
+          similar_post_ids?: string[];
+        };
+        Relationships: [
+          {
+            foreignKeyName: "similar_posts_cache_post_id_fkey";
+            columns: ["post_id"];
+            isOneToOne: true;
+            referencedRelation: "posts";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
     };
     Views: {
       [_ in never]: never;
     };
     Functions: {
-      [_ in never]: never;
+      delete_old_similar_posts_cache: { Args: never; Returns: undefined };
     };
     Enums: {
       [_ in never]: never;

@@ -18,11 +18,6 @@ export function SimilarPostsSkeleton() {
           </div>
         ))}
       </div>
-
-      {/* スクロールヒント（モバイル用） */}
-      <p className="mt-2 text-xs text-muted-foreground md:hidden">
-        ← スワイプして他の作例を見る →
-      </p>
     </div>
   );
 }

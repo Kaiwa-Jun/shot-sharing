@@ -35,6 +35,8 @@ export function PageClient({ initialPhotos, initialUser }: PageClientProps) {
   const [similarPostsCache, setSimilarPostsCache] = useState<
     Map<string, Post[]>
   >(new Map());
+  // スクロール位置を保存
+  const [savedScrollPosition, setSavedScrollPosition] = useState<number>(0);
 
   // 投稿データ（Pull-to-Refreshで更新可能）
   const [photos, setPhotos] = useState<PhotoCardProps[]>(initialPhotos);
@@ -72,6 +74,11 @@ export function PageClient({ initialPhotos, initialUser }: PageClientProps) {
     photoId: string,
     photoData: PhotoCardProps
   ) => {
+    // 現在のスクロール位置を保存（最初の投稿を開く時のみ）
+    if (!selectedPostId) {
+      setSavedScrollPosition(window.scrollY);
+    }
+
     // 即座にモーダルを表示（楽観的UI更新）
     setSelectedPostId(photoId);
 
@@ -188,8 +195,15 @@ export function PageClient({ initialPhotos, initialUser }: PageClientProps) {
     setSelectedPostId(null);
     setSelectedPost(null);
     setSimilarPosts([]);
-    // URLを元に戻す
-    window.history.back();
+
+    // URLをホームに戻す（replaceStateで履歴を置き換え）
+    window.history.replaceState(null, "", "/");
+
+    // スクロール位置を復元
+    window.scrollTo({
+      top: savedScrollPosition,
+      behavior: "instant", // 即座にスクロール
+    });
   };
 
   // 類似作例クリック時の処理

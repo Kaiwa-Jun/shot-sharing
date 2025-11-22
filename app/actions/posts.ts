@@ -665,6 +665,38 @@ export async function getSimilarPosts(
   try {
     console.log(`🔍 類似作例を検索中: ${postId}`);
 
+    // サーバーサイドキャッシュをチェック（24時間以内のキャッシュのみ使用）
+    const supabase = await createClient();
+    const { data: cachedData, error: cacheError } = await supabase
+      .from("similar_posts_cache")
+      .select("similar_post_ids, created_at")
+      .eq("post_id", postId)
+      .gte(
+        "created_at",
+        new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
+      )
+      .single();
+
+    if (!cacheError && cachedData && cachedData.similar_post_ids) {
+      console.log(
+        `💾 [SERVER CACHE] キャッシュヒット: ${cachedData.similar_post_ids.length}件`
+      );
+
+      // キャッシュから投稿データを取得
+      const { data: allPosts } = await getPosts(100, 0);
+      if (allPosts) {
+        const similarPosts = cachedData.similar_post_ids
+          .map((id: string) => allPosts.find((p: Post) => p.id === id))
+          .filter((post: Post | undefined): post is Post => post !== undefined)
+          .slice(0, limit);
+
+        console.log(`✅ [SERVER CACHE] ${similarPosts.length}件を返却`);
+        return { data: similarPosts, error: null };
+      }
+    } else {
+      console.log(`🔍 [SERVER CACHE] キャッシュミス、Gemini APIで検索`);
+    }
+
     // 1. 現在の投稿を取得
     const { data: currentPost, error: postError } = await getPostById(postId);
     if (postError || !currentPost) {
@@ -722,6 +754,29 @@ export async function getSimilarPosts(
       .slice(0, limit);
 
     console.log(`📤 ${similarPosts.length}件の類似作例を返却`);
+
+    // 8. サーバーサイドキャッシュに保存（UPSERT）
+    const similarPostIds = similarPosts.map((p) => p.id);
+    const { error: cacheInsertError } = await supabase
+      .from("similar_posts_cache")
+      .upsert(
+        {
+          post_id: postId,
+          similar_post_ids: similarPostIds,
+          created_at: new Date().toISOString(),
+        },
+        {
+          onConflict: "post_id",
+        }
+      );
+
+    if (cacheInsertError) {
+      console.warn("⚠️ [SERVER CACHE] キャッシュ保存エラー:", cacheInsertError);
+    } else {
+      console.log(
+        `✅ [SERVER CACHE] ${similarPostIds.length}件をキャッシュに保存`
+      );
+    }
 
     return { data: similarPosts, error: null };
   } catch (error) {

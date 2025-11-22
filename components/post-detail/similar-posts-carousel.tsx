@@ -83,13 +83,6 @@ export function SimilarPostsCarousel({
           </motion.button>
         ))}
       </div>
-
-      {/* スクロールヒント（モバイル用） */}
-      {posts.length > 2 && (
-        <p className="mt-2 text-xs text-muted-foreground md:hidden">
-          ← スワイプして他の作例を見る →
-        </p>
-      )}
     </div>
   );
 }
