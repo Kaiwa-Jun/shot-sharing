@@ -10,31 +10,39 @@ export function ExifInfo({ exifData }: ExifInfoProps) {
     prefix = "",
     suffix = ""
   ): string => {
-    if (value === undefined || value === null) return "-";
+    if (value === undefined || value === null) return "";
     return `${prefix}${value}${suffix}`;
   };
 
+  // カメラ機種とレンズの組み立て
+  const cameraInfo = [
+    exifData.cameraMake && exifData.cameraModel
+      ? `${exifData.cameraMake} ${exifData.cameraModel}`
+      : exifData.cameraModel || exifData.cameraMake,
+    exifData.lens,
+  ]
+    .filter(Boolean)
+    .join(" | ");
+
+  // 撮影設定の組み立て
+  const shootingSettings = [
+    formatExifValue(exifData.iso, "ISO"),
+    formatExifValue(exifData.fValue, "f/"),
+    formatExifValue(exifData.shutterSpeed),
+  ].filter((v) => v !== "");
+
   return (
-    <div className="flex items-center gap-3 rounded-lg bg-muted px-4 py-3">
-      <span className="text-lg">📸</span>
-      <div className="font-mono text-sm">
-        <span>{formatExifValue(exifData.iso, "ISO")}</span>
-        <span className="mx-2">•</span>
-        <span>{formatExifValue(exifData.fValue, "f/")}</span>
-        <span className="mx-2">•</span>
-        <span>{formatExifValue(exifData.shutterSpeed)}</span>
-        <span className="mx-2">•</span>
-        <span>
-          {formatExifValue(
-            exifData.exposureCompensation !== undefined &&
-              exifData.exposureCompensation !== null &&
-              exifData.exposureCompensation >= 0
-              ? `+${exifData.exposureCompensation}`
-              : exifData.exposureCompensation,
-            "",
-            "EV"
-          )}
-        </span>
+    <div className="rounded-lg bg-muted px-4 py-3">
+      <div className="space-y-1 text-sm">
+        {/* 1行目: カメラ機種とレンズ */}
+        {cameraInfo && <div className="font-medium">{cameraInfo}</div>}
+
+        {/* 2行目: ISO、F値、シャッタースピード */}
+        {shootingSettings.length > 0 && (
+          <div className="font-mono text-muted-foreground">
+            {shootingSettings.join(" • ")}
+          </div>
+        )}
       </div>
     </div>
   );

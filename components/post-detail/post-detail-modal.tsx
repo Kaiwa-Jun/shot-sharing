@@ -175,7 +175,7 @@ export function PostDetailModal({
     >
       {/* モーダルコンテナ */}
       <motion.div
-        className="relative h-full w-full max-w-4xl overflow-hidden bg-background"
+        className="relative h-full w-full max-w-4xl overflow-hidden bg-background md:my-8 md:h-[calc(100vh-4rem)] md:rounded-lg"
         onClick={(e) => e.stopPropagation()}
         suppressHydrationWarning
         initial={
@@ -203,8 +203,8 @@ export function PostDetailModal({
 
         {/* スクロール可能なコンテンツエリア */}
         <div className="h-full overflow-y-auto">
-          {/* 画像エリア */}
-          <div className="relative h-[60vh] min-h-[400px] bg-black">
+          {/* 画像エリア - スマホでは小さめ、デスクトップでは中程度 */}
+          <div className="relative h-[45vh] min-h-[300px] bg-black md:h-[50vh] md:min-h-[350px]">
             {isMounted && !isMobile ? (
               // デスクトップ: ピンチズーム有効（クライアントサイドのみ）
               <TransformWrapper

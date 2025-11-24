@@ -1,6 +1,6 @@
 "use client";
 
-import { MoreHorizontal, Trash2, Edit } from "lucide-react";
+import { MoreHorizontal, Trash2 } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,10 +24,6 @@ export function PostActionsMenu({ onDeleteClick }: PostActionsMenuProps) {
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuItem disabled>
-          <Edit className="mr-2 h-4 w-4" />
-          <span>編集（近日公開）</span>
-        </DropdownMenuItem>
         <DropdownMenuItem
           className="text-red-600 focus:text-red-600"
           onClick={onDeleteClick}

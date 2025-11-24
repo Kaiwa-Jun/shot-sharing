@@ -26,7 +26,7 @@ export function PhotoCard({
 }: PhotoCardProps) {
   return (
     <motion.div
-      className="group relative cursor-pointer overflow-hidden shadow-md transition-shadow hover:shadow-xl"
+      className="group relative cursor-pointer overflow-hidden rounded-lg"
       initial={isNew ? { opacity: 0, y: 30 } : false}
       animate={isNew ? { opacity: 1, y: 0 } : {}}
       transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
