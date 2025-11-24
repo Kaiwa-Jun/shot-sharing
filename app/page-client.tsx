@@ -32,10 +32,6 @@ export function PageClient({ initialPhotos, initialUser }: PageClientProps) {
   const [deletedIds, setDeletedIds] = useState<Set<string>>(new Set());
   const [similarPosts, setSimilarPosts] = useState<Post[]>([]);
   const [isSimilarPostsLoading, setIsSimilarPostsLoading] = useState(false);
-  // 類似作例のキャッシュ（投稿IDをキーにして保存）
-  const [similarPostsCache, setSimilarPostsCache] = useState<
-    Map<string, Post[]>
-  >(new Map());
   // スクロール位置を保存
   const [savedScrollPosition, setSavedScrollPosition] = useState<number>(0);
 
@@ -112,43 +108,24 @@ export function PageClient({ initialPhotos, initialUser }: PageClientProps) {
     // URLを更新（History APIを使用してページ遷移なし）
     window.history.pushState(null, "", `/posts/${photoId}`);
 
-    // キャッシュをチェック
-    const cachedSimilarPosts = similarPostsCache.get(photoId);
-    if (cachedSimilarPosts) {
-      console.log(
-        `💾 [DEBUG] キャッシュから類似作例を取得: ${cachedSimilarPosts.length}件`
-      );
-      setSimilarPosts(cachedSimilarPosts);
-      setIsSimilarPostsLoading(false); // キャッシュがある場合はローディングなし
-    } else {
-      setIsSimilarPostsLoading(true); // キャッシュがない場合はローディング開始
-    }
+    // ローディング開始
+    setIsSimilarPostsLoading(true);
 
     // バックグラウンドで詳細データ、保存状態、類似作例を取得
     try {
       console.log(`🔍 [DEBUG] 投稿詳細データを取得中: ${photoId}`);
 
-      // キャッシュがある場合は類似作例の取得をスキップ
-      const promises: Promise<any>[] = [
-        fetch(`/api/posts/${photoId}`),
-        fetch(`/api/saves/check?postId=${photoId}`),
-      ];
+      const [postResponse, saveResponse, similarPostsResult] =
+        await Promise.all([
+          fetch(`/api/posts/${photoId}`),
+          fetch(`/api/saves/check?postId=${photoId}`),
+          getSimilarPostsWithEmbedding(photoId, 10),
+        ]);
 
-      if (!cachedSimilarPosts) {
-        promises.push(getSimilarPostsWithEmbedding(photoId, 10));
-      }
-
-      const results = await Promise.all(promises);
-      const postResponse = results[0];
-      const saveResponse = results[1];
-      const similarPostsResult = cachedSimilarPosts ? null : results[2];
-
-      if (!cachedSimilarPosts && similarPostsResult) {
-        console.log(`📊 [DEBUG] 類似作例の取得結果:`, {
-          count: similarPostsResult.data?.length || 0,
-          error: similarPostsResult.error,
-        });
-      }
+      console.log(`📊 [DEBUG] 類似作例の取得結果:`, {
+        count: similarPostsResult.data?.length || 0,
+        error: similarPostsResult.error,
+      });
 
       if (postResponse.ok) {
         const postData = await postResponse.json();
@@ -165,23 +142,15 @@ export function PageClient({ initialPhotos, initialUser }: PageClientProps) {
         setInitialIsSaved(saveData.saved);
       }
 
-      // 類似作例を設定（キャッシュがない場合のみ）
-      if (!cachedSimilarPosts && similarPostsResult) {
-        if (similarPostsResult.data) {
-          setSimilarPosts(similarPostsResult.data);
-          // キャッシュに保存
-          setSimilarPostsCache((prev) =>
-            new Map(prev).set(photoId, similarPostsResult.data)
-          );
-          console.log(
-            `✅ [DEBUG] 類似作例を設定してキャッシュに保存: ${similarPostsResult.data.length}件`
-          );
-        } else {
-          setSimilarPosts([]);
-          // 空の結果もキャッシュに保存（再取得を防ぐため）
-          setSimilarPostsCache((prev) => new Map(prev).set(photoId, []));
-          console.log(`⚠️ [DEBUG] 類似作例なし（キャッシュに保存）`);
-        }
+      // 類似作例を設定
+      if (similarPostsResult.data) {
+        setSimilarPosts(similarPostsResult.data);
+        console.log(
+          `✅ [DEBUG] 類似作例を設定: ${similarPostsResult.data.length}件`
+        );
+      } else {
+        setSimilarPosts([]);
+        console.log(`⚠️ [DEBUG] 類似作例なし`);
       }
     } catch (error) {
       console.error("Error fetching post data:", error);
