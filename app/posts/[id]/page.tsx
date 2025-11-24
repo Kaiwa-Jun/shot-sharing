@@ -1,4 +1,5 @@
-import { getPostById, getPosts, getSimilarPosts } from "@/app/actions/posts";
+import { getPostById, getPosts } from "@/app/actions/posts";
+import { getSimilarPostsWithEmbedding } from "@/app/actions/similar-posts-embedding";
 import { checkIsSaved } from "@/app/actions/saves";
 import { PostDetailPage } from "./page-client";
 import { PhotoCardProps } from "@/components/gallery/photo-card";
@@ -41,10 +42,8 @@ export default async function Page({ params }: PageProps) {
 
   // 類似作例を取得
   console.log(`🔍 [DEBUG] 投稿詳細ページ: 類似作例を取得中 (postId: ${id})`);
-  const { data: similarPosts, error: similarError } = await getSimilarPosts(
-    id,
-    10
-  );
+  const { data: similarPosts, error: similarError } =
+    await getSimilarPostsWithEmbedding(id, 10);
   console.log(`📊 [DEBUG] 類似作例の取得結果:`, {
     count: similarPosts?.length || 0,
     error: similarError,

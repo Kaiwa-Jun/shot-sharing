@@ -10,7 +10,8 @@ import { MasonryGrid } from "@/components/gallery/masonry-grid";
 import { SearchLoadingSkeleton } from "@/components/gallery/search-loading-skeleton";
 import { PostDetailModal } from "@/components/post-detail/post-detail-modal";
 import { PhotoCardProps } from "@/components/gallery/photo-card";
-import { Post, getPosts, getSimilarPosts } from "@/app/actions/posts";
+import { Post, getPosts } from "@/app/actions/posts";
+import { getSimilarPostsWithEmbedding } from "@/app/actions/similar-posts-embedding";
 import { searchPosts } from "@/app/actions/search";
 import { ChatMessage, ConversationMessage } from "@/lib/types/search";
 import type { User } from "@supabase/supabase-js";
@@ -134,7 +135,7 @@ export function PageClient({ initialPhotos, initialUser }: PageClientProps) {
       ];
 
       if (!cachedSimilarPosts) {
-        promises.push(getSimilarPosts(photoId, 10));
+        promises.push(getSimilarPostsWithEmbedding(photoId, 10));
       }
 
       const results = await Promise.all(promises);
