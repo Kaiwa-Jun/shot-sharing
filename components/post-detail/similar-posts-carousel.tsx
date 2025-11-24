@@ -43,7 +43,7 @@ export function SimilarPostsCarousel({
             transition={{ duration: 0.2 }}
           >
             {/* サムネイル */}
-            <div className="relative aspect-[3/4] overflow-hidden rounded-lg bg-muted">
+            <div className="relative aspect-[3/4] overflow-hidden rounded-lg bg-muted md:aspect-square">
               <Image
                 src={post.thumbnailUrl}
                 alt={post.description || "類似作例"}

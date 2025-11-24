@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { PhotoCardProps } from "@/components/gallery/photo-card";
 import { Post } from "@/app/actions/posts";
+import { getSimilarPostsWithEmbedding } from "@/app/actions/similar-posts-embedding";
 import Masonry from "react-masonry-css";
 import Image from "next/image";
 import { PostDetailModal } from "@/components/post-detail/post-detail-modal";
@@ -62,6 +63,8 @@ export function ProfileClient({
   const [selectedPost, setSelectedPost] = useState<Post | null>(null);
   const [initialIsSaved, setInitialIsSaved] = useState(false);
   const [initialIsOwner, setInitialIsOwner] = useState(false);
+  const [similarPosts, setSimilarPosts] = useState<Post[]>([]);
+  const [isSimilarPostsLoading, setIsSimilarPostsLoading] = useState(false);
 
   // ビュー状態 ('profile' | 'terms' | 'privacy')
   const [view, setView] = useState<"profile" | "terms" | "privacy">("profile");
@@ -227,12 +230,24 @@ export function ProfileClient({
 
     // /me画面ではURLを変更しない（履歴の複雑化を防ぐ）
 
-    // バックグラウンドで詳細データと保存状態を取得
+    // ローディング開始
+    setIsSimilarPostsLoading(true);
+
+    // バックグラウンドで詳細データ、保存状態、類似作例を取得
     try {
-      const [postResponse, saveResponse] = await Promise.all([
-        fetch(`/api/posts/${photo.id}`),
-        fetch(`/api/saves/check?postId=${photo.id}`),
-      ]);
+      console.log(`🔍 [DEBUG] 投稿詳細データを取得中: ${photo.id}`);
+
+      const [postResponse, saveResponse, similarPostsResult] =
+        await Promise.all([
+          fetch(`/api/posts/${photo.id}`),
+          fetch(`/api/saves/check?postId=${photo.id}`),
+          getSimilarPostsWithEmbedding(photo.id, 10),
+        ]);
+
+      console.log(`📊 [DEBUG] 類似作例の取得結果:`, {
+        count: similarPostsResult.data?.length || 0,
+        error: similarPostsResult.error,
+      });
 
       if (postResponse.ok) {
         const postData = await postResponse.json();
@@ -246,8 +261,37 @@ export function ProfileClient({
         const saveData = await saveResponse.json();
         setInitialIsSaved(saveData.saved);
       }
+
+      // 類似作例を設定
+      if (similarPostsResult.data) {
+        setSimilarPosts(similarPostsResult.data);
+        console.log(
+          `✅ [DEBUG] 類似作例を設定: ${similarPostsResult.data.length}件`
+        );
+      } else {
+        setSimilarPosts([]);
+        console.log(`⚠️ [DEBUG] 類似作例なし`);
+      }
     } catch (error) {
       console.error("Error fetching post data:", error);
+      setSimilarPosts([]);
+    } finally {
+      setIsSimilarPostsLoading(false); // ローディング終了
+    }
+  };
+
+  // 類似作例クリック時の処理
+  const handleSimilarPostClick = (postId: string) => {
+    console.log(`🎯 [DEBUG] 類似作例クリック: ${postId}`);
+    // 新しい投稿をモーダルで表示
+    const clickedPost = similarPosts.find((p) => p.id === postId);
+    if (clickedPost) {
+      handlePhotoClick({
+        id: clickedPost.id,
+        imageUrl: clickedPost.imageUrl,
+        userId: clickedPost.userId,
+        exifData: clickedPost.exifData || undefined,
+      });
     }
   };
 
@@ -255,6 +299,7 @@ export function ProfileClient({
   const handleCloseModal = () => {
     setSelectedPostId(null);
     setSelectedPost(null);
+    setSimilarPosts([]);
     // URLは変更していないので戻す必要なし
   };
 
@@ -580,6 +625,9 @@ export function ProfileClient({
               initialIsOwner={initialIsOwner}
               onClose={handleCloseModal}
               onDeleteSuccess={handleDeleteSuccess}
+              similarPosts={similarPosts}
+              onSimilarPostClick={handleSimilarPostClick}
+              isSimilarPostsLoading={isSimilarPostsLoading}
             />
           )}
         </AnimatePresence>
