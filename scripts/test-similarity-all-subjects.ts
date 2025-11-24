@@ -53,12 +53,12 @@ async function testSubject(subject: string) {
 
   const embedding = JSON.parse(embeddingData.embedding as string);
 
-  // 類似検索を実行
+  // 類似検索を実行（閾値0.85で精度向上）
   const { data: similarPosts, error } = await supabase.rpc(
     "search_similar_posts",
     {
       query_embedding: `[${embedding.join(",")}]`,
-      match_threshold: 0.5,
+      match_threshold: 0.85,
       match_count: 5,
     }
   );

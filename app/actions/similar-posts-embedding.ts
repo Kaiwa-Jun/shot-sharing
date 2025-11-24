@@ -42,7 +42,7 @@ export async function getSimilarPostsWithEmbedding(
     );
 
     // 2. pgvectorを使用してコサイン類似度で検索
-    const threshold = 0.7;
+    const threshold = 0.85;
     console.log(
       `🔍 [Embedding] 類似度閾値: ${threshold}, 取得件数: ${limit + 1}`
     );
@@ -51,7 +51,7 @@ export async function getSimilarPostsWithEmbedding(
       "search_similar_posts",
       {
         query_embedding: queryEmbedding,
-        match_threshold: threshold, // 類似度の閾値（0.7以上のみ返す）- より厳格に
+        match_threshold: threshold, // 類似度の閾値（0.85以上のみ返す）- 関連性の低い投稿を除外
         match_count: limit + 1, // +1は自分自身を含むため
       }
     );
