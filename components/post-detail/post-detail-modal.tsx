@@ -11,6 +11,7 @@ import { PostActionsMenu } from "./post-actions-menu";
 import { SimilarPostsCarousel } from "./similar-posts-carousel";
 import { SimilarPostsSkeleton } from "./similar-posts-skeleton";
 import { LoginPromptModal } from "@/components/auth/login-prompt-modal";
+import { ShareTextPreviewModal } from "./share-text-preview-modal";
 import { createClient } from "@/lib/supabase/client";
 import { X } from "lucide-react";
 import {
@@ -25,6 +26,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { deletePost } from "@/app/actions/posts";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { ExifData } from "@/lib/types/exif";
 
 interface PostDetailModalProps {
   post: Post;
@@ -36,6 +39,88 @@ interface PostDetailModalProps {
   similarPosts?: Post[];
   onSimilarPostClick?: (postId: string) => void;
   isSimilarPostsLoading?: boolean;
+}
+
+/**
+ * SONYカメラのモデル名を読みやすい形式に変換
+ */
+function formatCameraModel(model: string): string {
+  // ILCE-7M3 → α7III
+  // ILCE-7M4 → α7IV
+  // ILCE-7RM3 → α7RIII
+  // ILCE-6400 → α6400
+  const cameraMap: Record<string, string> = {
+    "ILCE-7M3": "α7III",
+    "ILCE-7M4": "α7IV",
+    "ILCE-7M5": "α7V",
+    "ILCE-7RM3": "α7RIII",
+    "ILCE-7RM4": "α7RIV",
+    "ILCE-7RM5": "α7RV",
+    "ILCE-7SM3": "α7SIII",
+    "ILCE-7SM4": "α7SIV",
+    "ILCE-6400": "α6400",
+    "ILCE-6600": "α6600",
+    "ILCE-6700": "α6700",
+    "ILCE-1": "α1",
+    "ILCE-9": "α9",
+    "ILCE-9M2": "α9II",
+  };
+
+  return cameraMap[model] || model;
+}
+
+/**
+ * ExifデータからX投稿用テキストを生成（ラベル付きフォーマット）
+ */
+function generateExifTextForX(
+  exifData: ExifData | null,
+  description?: string
+): string {
+  const lines: string[] = [];
+
+  // Exifデータがある場合
+  if (exifData) {
+    // カメラ
+    if (exifData.cameraModel) {
+      const formattedModel = formatCameraModel(exifData.cameraModel);
+      lines.push(`カメラ：${formattedModel}`);
+    } else if (exifData.cameraMake) {
+      lines.push(`カメラ：${exifData.cameraMake}`);
+    }
+
+    // レンズ
+    if (exifData.lens) {
+      lines.push(`レンズ：${exifData.lens}`);
+    }
+
+    // 空行を追加
+    if (lines.length > 0) lines.push("");
+
+    // 撮影設定
+    if (exifData.iso) {
+      lines.push(`ISO:${exifData.iso}`);
+    }
+    if (exifData.fValue) {
+      lines.push(`F値：${exifData.fValue}`);
+    }
+    if (exifData.shutterSpeed) {
+      lines.push(`SS:${exifData.shutterSpeed}`);
+    }
+  }
+
+  // 説明文がある場合は追加
+  if (description) {
+    if (lines.length > 0) lines.push("");
+    lines.push(description);
+  }
+
+  // ハッシュタグを追加
+  if (lines.length > 0) lines.push("");
+  lines.push("#カメラ初心者");
+  lines.push("#写真初心者");
+  lines.push("#カメラ好きと繋がりたい");
+
+  return lines.join("\n");
 }
 
 export function PostDetailModal({
@@ -64,6 +149,8 @@ export function PostDetailModal({
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
   const [showDeleteAlert, setShowDeleteAlert] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [showShareTextModal, setShowShareTextModal] = useState(false);
+  const [shareText, setShareText] = useState("");
   const router = useRouter();
 
   // initialIsSavedの変更を監視
@@ -131,6 +218,45 @@ export function PostDetailModal({
       setIsSaved(data.saved);
     } catch (error) {
       console.error("Error toggling save:", error);
+    }
+  };
+
+  // Xで共有する処理
+  const handleShareToX = async () => {
+    try {
+      // Exifテキスト生成
+      const exifText = generateExifTextForX(
+        post.exifData,
+        post.description || undefined
+      );
+
+      // 画像をダウンロード
+      const response = await fetch(post.imageUrl);
+      const blob = await response.blob();
+      const blobUrl = URL.createObjectURL(blob);
+
+      const link = document.createElement("a");
+      link.href = blobUrl;
+      link.download = `shot-${post.id}.jpg`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      // Blob URLをクリーンアップ
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 100);
+
+      // テキストプレビューモーダルを表示
+      setShareText(exifText);
+      setShowShareTextModal(true);
+    } catch (error) {
+      console.error("画像のダウンロードに失敗しました:", error);
+      // エラーが発生してもモーダルは表示する
+      const exifText = generateExifTextForX(
+        post.exifData,
+        post.description || undefined
+      );
+      setShareText(exifText);
+      setShowShareTextModal(true);
     }
   };
 
@@ -264,6 +390,7 @@ export function PostDetailModal({
               {initialIsOwner ? (
                 <PostActionsMenu
                   onDeleteClick={() => setShowDeleteAlert(true)}
+                  onShareToXClick={handleShareToX}
                 />
               ) : (
                 <SaveButton isSaved={isSaved} onClick={handleSaveClick} />
@@ -324,6 +451,13 @@ export function PostDetailModal({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* X共有テキストプレビューモーダル */}
+      <ShareTextPreviewModal
+        open={showShareTextModal}
+        onOpenChange={setShowShareTextModal}
+        initialText={shareText}
+      />
     </motion.div>
   );
 }

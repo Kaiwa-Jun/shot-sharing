@@ -1,6 +1,6 @@
 "use client";
 
-import { MoreHorizontal, Trash2 } from "lucide-react";
+import { MoreHorizontal, Trash2, Share2 } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,9 +10,13 @@ import {
 
 interface PostActionsMenuProps {
   onDeleteClick: () => void;
+  onShareToXClick?: () => void;
 }
 
-export function PostActionsMenu({ onDeleteClick }: PostActionsMenuProps) {
+export function PostActionsMenu({
+  onDeleteClick,
+  onShareToXClick,
+}: PostActionsMenuProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -24,6 +28,12 @@ export function PostActionsMenu({ onDeleteClick }: PostActionsMenuProps) {
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
+        {onShareToXClick && (
+          <DropdownMenuItem onClick={onShareToXClick}>
+            <Share2 className="mr-2 h-4 w-4" />
+            <span>Xで共有する</span>
+          </DropdownMenuItem>
+        )}
         <DropdownMenuItem
           className="text-red-600 focus:text-red-600"
           onClick={onDeleteClick}
