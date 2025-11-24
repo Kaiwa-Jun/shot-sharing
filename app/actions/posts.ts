@@ -13,6 +13,10 @@ import {
 } from "@/lib/supabase/storage";
 import { uploadPhotoToFileSearch } from "@/lib/gemini/file-search-upload";
 import { searchSimilarPostsWithFileSearch } from "@/lib/gemini/file-search-query";
+import {
+  generateImageEmbedding,
+  embeddingToString,
+} from "@/lib/gemini/embedding";
 
 export interface Post {
   id: string;
@@ -260,33 +264,46 @@ export async function createPost(formData: FormData) {
       getPublicUrl(thumbnailPath),
     ]);
 
-    // 8. File Search Storeに登録
-    console.log("🔍 File Search Storeに登録中...");
+    // 8. File Search Store登録 + Embedding生成（並列実行）
+    console.log("🔍 File Search StoreとEmbedding生成を並列実行中...");
     let fileSearchSuccess = false;
     let fileSearchStoreId: string | null = null;
+    let embeddingVector: number[] | null = null;
 
-    try {
-      fileSearchSuccess = true;
-      // アップロード成功時、ファイル名（ID）を取得して保存
-      // uploadPhotoToFileSearchの戻り値を利用するように変更する必要があるが、
-      // 現状のuploadPhotoToFileSearchは戻り値を返しているのでそれを使う
-      const uploadResult = await uploadPhotoToFileSearch(
+    const [fileSearchResult, embeddingResult] = await Promise.allSettled([
+      // File Search Storeへの登録
+      uploadPhotoToFileSearch(
         imageBuffer,
         postId,
         exifData,
         description,
         imageUrl
-      );
+      ),
+      // Embedding生成
+      generateImageEmbedding(imageBuffer, imageFile.type),
+    ]);
 
-      if (uploadResult.success && uploadResult.fileName) {
-        // fileSearchStoreIdとしてファイル名（例: files/xxxxx）を保存
-        // 注: DBのカラム名はfile_search_store_idだが、実際にはFile APIのname (files/...) を保存する
-        // これにより削除時にこのIDを使って削除できる
-        fileSearchStoreId = uploadResult.fileName;
+    // File Search Storeの結果を処理
+    if (fileSearchResult.status === "fulfilled") {
+      fileSearchSuccess = true;
+      if (fileSearchResult.value.success && fileSearchResult.value.fileName) {
+        fileSearchStoreId = fileSearchResult.value.fileName;
       }
-    } catch (error) {
-      console.error("File Search Storeへの登録に失敗しました:", error);
+    } else {
+      console.error(
+        "File Search Storeへの登録に失敗しました:",
+        fileSearchResult.reason
+      );
       // File Search失敗時でも投稿は続行（後で再登録可能）
+    }
+
+    // Embeddingの結果を処理
+    if (embeddingResult.status === "fulfilled") {
+      embeddingVector = embeddingResult.value;
+      console.log("✅ Embedding生成成功");
+    } else {
+      console.error("Embedding生成に失敗しました:", embeddingResult.reason);
+      // Embedding失敗時でも投稿は続行（後で再生成可能）
     }
 
     // 9. DBに投稿情報を保存
@@ -316,6 +333,29 @@ export async function createPost(formData: FormData) {
       }
 
       throw new Error("投稿の保存に失敗しました");
+    }
+
+    // 10. Embeddingをpost_embeddingsテーブルに保存
+    if (embeddingVector) {
+      console.log("💾 Embeddingを保存中...");
+      try {
+        const { error: embeddingError } = await supabase
+          .from("post_embeddings")
+          .insert({
+            post_id: postId,
+            embedding: embeddingToString(embeddingVector),
+          });
+
+        if (embeddingError) {
+          console.error("Embedding保存に失敗しました:", embeddingError);
+          // Embedding保存失敗時でも投稿は続行（後で再生成可能）
+        } else {
+          console.log("✅ Embedding保存成功");
+        }
+      } catch (error) {
+        console.error("Embedding保存でエラーが発生しました:", error);
+        // Embedding保存失敗時でも投稿は続行
+      }
     }
 
     console.log("✅ 投稿が完了しました!");
@@ -606,41 +646,30 @@ export async function deletePost(postId: string) {
 }
 
 /**
- * 類似検索クエリを構築
- * 投稿の説明文とExif情報から検索クエリを生成
+ * 類似検索クエリを構築（最適化版）
+ * 投稿の説明文を最優先し、最小限のEXIF情報のみを追加
+ * カメラモデル・レンズは除外してノイズを削減し、検索パフォーマンスを向上
  */
 function buildSimilarityQuery(post: Post): string {
   const parts: string[] = [];
 
-  // 説明文を追加
+  // 説明文を最優先で追加（最も重要な検索キー）
   if (post.description) {
     parts.push(post.description);
   }
 
-  // Exif情報から撮影設定を追加
+  // Exif情報から最小限の撮影設定のみ追加
+  // カメラモデル・レンズは除外（ノイズになるため）
   if (post.exifData) {
     const exif = post.exifData;
-    const settings: string[] = [];
 
-    if (exif.iso) settings.push(`ISO${exif.iso}`);
-    if (exif.fValue) settings.push(`f/${exif.fValue}`);
-    if (exif.shutterSpeed) settings.push(exif.shutterSpeed);
-    if (exif.focalLength) settings.push(`${exif.focalLength}mm`);
+    // 重要な撮影設定のみ（ISO、F値、焦点距離）
+    if (exif.iso) parts.push(`ISO${exif.iso}`);
+    if (exif.fValue) parts.push(`f${exif.fValue}`);
+    if (exif.focalLength) parts.push(`${exif.focalLength}mm`);
 
-    if (settings.length > 0) {
-      parts.push(`撮影設定: ${settings.join(" ")}`);
-    }
-
-    // カメラとレンズ情報
-    if (exif.cameraMake || exif.cameraModel) {
-      const camera = [exif.cameraMake, exif.cameraModel]
-        .filter(Boolean)
-        .join(" ");
-      if (camera) parts.push(`カメラ: ${camera}`);
-    }
-    if (exif.lens) {
-      parts.push(`レンズ: ${exif.lens}`);
-    }
+    // シャッタースピード、カメラモデル、レンズは除外
+    // → 検索ノイズを削減して精度とパフォーマンスを向上
   }
 
   // クエリが空の場合はデフォルトのクエリを使用
@@ -648,6 +677,9 @@ function buildSimilarityQuery(post: Post): string {
     return "類似した写真を探してください";
   }
 
+  console.log(
+    `📝 [最適化] 検索クエリ (${parts.length}要素): ${parts.join(" ")}`
+  );
   return parts.join(" ");
 }
 
@@ -663,17 +695,22 @@ export async function getSimilarPosts(
   limit: number = 10
 ): Promise<{ data: Post[] | null; error: string | null }> {
   try {
+    const startTime = Date.now();
     console.log(`🔍 類似作例を検索中: ${postId}`);
 
-    // サーバーサイドキャッシュをチェック（24時間以内のキャッシュのみ使用）
+    // サーバーサイドキャッシュをチェック（7日間以内のキャッシュを使用）
+    // 24時間 → 7日間に延長してキャッシュヒット率を向上
     const supabase = await createClient();
+    const CACHE_DURATION_DAYS = 7;
     const { data: cachedData, error: cacheError } = await supabase
       .from("similar_posts_cache")
       .select("similar_post_ids, created_at")
       .eq("post_id", postId)
       .gte(
         "created_at",
-        new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
+        new Date(
+          Date.now() - CACHE_DURATION_DAYS * 24 * 60 * 60 * 1000
+        ).toISOString()
       )
       .single();
 
@@ -698,7 +735,9 @@ export async function getSimilarPosts(
     }
 
     // 1. 現在の投稿を取得
+    const step1Start = Date.now();
     const { data: currentPost, error: postError } = await getPostById(postId);
+    console.log(`⏱️ [PERF] getPostById: ${Date.now() - step1Start}ms`);
     if (postError || !currentPost) {
       console.error("投稿の取得エラー:", postError);
       return { data: null, error: "投稿が見つかりません" };
@@ -725,9 +764,34 @@ export async function getSimilarPosts(
     const query = buildSimilarityQuery(currentPost);
     console.log("📝 検索クエリ:", query);
 
-    // 4. File Search APIで類似検索を実行（軽量版）
-    console.log(`🔍 [DEBUG] File Search API呼び出し開始`);
-    const { postIds } = await searchSimilarPostsWithFileSearch(query);
+    // 4-6. File Search APIと投稿データ取得を並列実行（最適化）
+    console.log(`🔍 [DEBUG] File Search APIと投稿データ取得を並列実行`);
+    const parallelStart = Date.now();
+
+    const [similarResult, postsResult] = await Promise.all([
+      // File Search APIで類似検索を実行（軽量版）
+      (async () => {
+        const step4Start = Date.now();
+        const result = await searchSimilarPostsWithFileSearch(query);
+        console.log(
+          `⏱️ [PERF] searchSimilarPostsWithFileSearch: ${Date.now() - step4Start}ms`
+        );
+        return result;
+      })(),
+      // 投稿データを取得（十分な量を取得してフィルタリング）
+      (async () => {
+        const step6Start = Date.now();
+        const result = await getPosts(100, 0);
+        console.log(`⏱️ [PERF] getPosts(100): ${Date.now() - step6Start}ms`);
+        return result;
+      })(),
+    ]);
+
+    console.log(`⏱️ [PERF] 並列処理完了: ${Date.now() - parallelStart}ms`);
+
+    const { postIds } = similarResult;
+    const { data: allPosts, error: fetchError } = postsResult;
+
     console.log(`✅ ${postIds.length}件の類似作例を検出`);
     console.log(`📋 [DEBUG] 検出されたpost_ids:`, postIds.slice(0, 5));
 
@@ -740,8 +804,6 @@ export async function getSimilarPosts(
       return { data: [], error: null };
     }
 
-    // 6. 投稿データを取得（十分な量を取得してフィルタリング）
-    const { data: allPosts, error: fetchError } = await getPosts(100, 0);
     if (fetchError || !allPosts) {
       console.error("投稿一覧の取得エラー:", fetchError);
       return { data: null, error: "投稿の取得に失敗しました" };
@@ -754,6 +816,7 @@ export async function getSimilarPosts(
       .slice(0, limit);
 
     console.log(`📤 ${similarPosts.length}件の類似作例を返却`);
+    console.log(`⏱️ [PERF] 合計処理時間: ${Date.now() - startTime}ms`);
 
     // 8. サーバーサイドキャッシュに保存（UPSERT）
     const similarPostIds = similarPosts.map((p) => p.id);

@@ -79,6 +79,13 @@ export async function uploadPhotoToFileSearch(
           { key: "post_id", stringValue: postId },
           { key: "content_type", stringValue: "photo_metadata" },
         ],
+        // チャンキング設定を追加（検索パフォーマンス最適化）
+        chunkingConfig: {
+          whiteSpaceConfig: {
+            maxTokensPerChunk: 150, // 小さなチャンクに分割（推奨: 100-200）
+            maxOverlapTokens: 15, // 重複を最小限に（推奨: 10-20）
+          },
+        },
       },
     });
 
@@ -102,9 +109,39 @@ export async function uploadPhotoToFileSearch(
 
     console.log("✅ File Search Storeへのアップロード完了");
 
+    // デバッグ: 完了したoperationの構造を確認
+    console.log("🔍 [DEBUG] 完了した操作オブジェクトの構造:");
+    console.log("  - operation.name:", (operation as any).name);
+    console.log("  - operation.done:", (operation as any).done);
+    console.log(
+      "  - operation.response:",
+      JSON.stringify((operation as any).response, null, 2)
+    );
+    console.log(
+      "  - operation.metadata:",
+      JSON.stringify((operation as any).metadata, null, 2)
+    );
+
+    // アップロード完了後、ドキュメントIDを取得
+    // 完了したoperationのresponse.documentNameに正しいドキュメントIDが含まれる
+    const documentName = (operation as any).response?.documentName || null;
+
+    if (!documentName) {
+      console.error("❌ ドキュメント名の取得に失敗しました");
+      console.log(
+        "🔍 [DEBUG] 完了した操作オブジェクト全体:",
+        JSON.stringify(operation, null, 2)
+      );
+      throw new Error(
+        "File Search Storeへのアップロードは完了しましたが、ドキュメントIDの取得に失敗しました"
+      );
+    }
+
+    console.log(`📁 ドキュメント名: ${documentName}`);
+
     return {
       success: true,
-      fileName: operation.name || null,
+      fileName: documentName,
     };
   } catch (error) {
     console.error("File Search Storeへのアップロードに失敗:", error);
