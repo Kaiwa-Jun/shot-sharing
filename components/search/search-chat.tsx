@@ -129,7 +129,7 @@ export function SearchChat({
                     </div>
                   )}
                   <div
-                    className={`prose prose-sm max-w-[80%] max-w-none rounded-2xl px-4 py-3 ${
+                    className={`prose prose-sm max-w-[80%] rounded-2xl px-4 py-3 ${
                       message.role === "user"
                         ? "prose-invert bg-primary text-primary-foreground"
                         : "bg-muted text-foreground"
@@ -270,7 +270,7 @@ export function SearchChat({
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: 0.2 }}
-                      className="ml-11 mt-4"
+                      className="ml-11 mt-4 max-w-[80%]"
                     >
                       <h4 className="mb-3 text-sm font-semibold text-muted-foreground">
                         関連する作例 ({message.searchResults.length}件)
