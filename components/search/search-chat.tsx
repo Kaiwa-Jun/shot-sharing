@@ -14,6 +14,7 @@ interface SearchChatProps {
   messages: ChatMessage[];
   isExpanded: boolean;
   onClose?: () => void;
+  /** @deprecated Use message.searchResults instead */
   searchResults?: PhotoCardProps[];
   onPhotoClick?: (photoId: string, photoData: PhotoCardProps) => void;
 }
@@ -22,7 +23,6 @@ export function SearchChat({
   messages,
   isExpanded,
   onClose,
-  searchResults,
   onPhotoClick,
 }: SearchChatProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -114,198 +114,201 @@ export function SearchChat({
             className="flex-1 space-y-4 overflow-y-auto p-4"
           >
             {messages.map((message, index) => (
-              <motion.div
-                key={index}
-                data-index={index}
-                data-role={message.role}
-                initial={{ y: 20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: index * 0.1 }}
-                className={`flex gap-3 ${
-                  message.role === "user" ? "justify-end" : "justify-start"
-                }`}
-              >
-                {message.role === "assistant" && (
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary">
-                    <Bot className="h-5 w-5 text-primary-foreground" />
-                  </div>
-                )}
-                <div
-                  className={`prose prose-sm max-w-[80%] max-w-none rounded-2xl px-4 py-3 ${
-                    message.role === "user"
-                      ? "prose-invert bg-primary text-primary-foreground"
-                      : "bg-muted text-foreground"
-                  } [&>*:first-child]:mt-0 [&>*:last-child]:mb-0`}
+              <div key={index} data-index={index} data-role={message.role}>
+                <motion.div
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: index * 0.1 }}
+                  className={`flex gap-3 ${
+                    message.role === "user" ? "justify-end" : "justify-start"
+                  }`}
                 >
-                  {message.role === "assistant" && !message.content ? (
-                    // ローディングドットアニメーション
-                    <div className="flex gap-1">
-                      <motion.span
-                        className="text-lg"
-                        animate={{ y: [0, -8, 0] }}
-                        transition={{
-                          duration: 0.6,
-                          repeat: Infinity,
-                          ease: "easeInOut",
-                        }}
-                      >
-                        •
-                      </motion.span>
-                      <motion.span
-                        className="text-lg"
-                        animate={{ y: [0, -8, 0] }}
-                        transition={{
-                          duration: 0.6,
-                          repeat: Infinity,
-                          ease: "easeInOut",
-                          delay: 0.2,
-                        }}
-                      >
-                        •
-                      </motion.span>
-                      <motion.span
-                        className="text-lg"
-                        animate={{ y: [0, -8, 0] }}
-                        transition={{
-                          duration: 0.6,
-                          repeat: Infinity,
-                          ease: "easeInOut",
-                          delay: 0.4,
-                        }}
-                      >
-                        •
-                      </motion.span>
+                  {message.role === "assistant" && (
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary">
+                      <Bot className="h-5 w-5 text-primary-foreground" />
                     </div>
-                  ) : message.role === "assistant" ? (
-                    // AI回答の場合、構造化して表示
-                    (() => {
-                      const parsed = parseAIResponse(message.content);
-
-                      return (
-                        <div className="space-y-0">
-                          {/* カメラ設定カード */}
-                          {parsed.cameraSettings && (
-                            <CameraSettingsCard
-                              settings={parsed.cameraSettings}
-                            />
-                          )}
-
-                          {/* 撮影のポイント & コツ */}
-                          <TipsCard
-                            shootingPoint={parsed.shootingPoint}
-                            tips={parsed.tips}
-                          />
-
-                          {/* その他のコンテンツ */}
-                          {parsed.otherContent && (
-                            <ReactMarkdown
-                              components={{
-                                p: ({ children }) => (
-                                  <p className="text-sm leading-relaxed">
-                                    {children}
-                                  </p>
-                                ),
-                                strong: ({ children }) => (
-                                  <strong className="font-bold">
-                                    {children}
-                                  </strong>
-                                ),
-                                ul: ({ children }) => (
-                                  <ul className="my-2 list-inside list-disc space-y-1">
-                                    {children}
-                                  </ul>
-                                ),
-                                ol: ({ children }) => (
-                                  <ol className="my-2 list-inside list-decimal space-y-1">
-                                    {children}
-                                  </ol>
-                                ),
-                                li: ({ children }) => (
-                                  <li className="text-sm">{children}</li>
-                                ),
-                              }}
-                            >
-                              {parsed.otherContent}
-                            </ReactMarkdown>
-                          )}
-                        </div>
-                      );
-                    })()
-                  ) : (
-                    // ユーザーメッセージの場合は通常表示
-                    <ReactMarkdown
-                      components={{
-                        p: ({ children }) => (
-                          <p className="text-sm leading-relaxed">{children}</p>
-                        ),
-                        strong: ({ children }) => (
-                          <strong className="font-bold">{children}</strong>
-                        ),
-                        ul: ({ children }) => (
-                          <ul className="my-2 list-inside list-disc space-y-1">
-                            {children}
-                          </ul>
-                        ),
-                        ol: ({ children }) => (
-                          <ol className="my-2 list-inside list-decimal space-y-1">
-                            {children}
-                          </ol>
-                        ),
-                        li: ({ children }) => (
-                          <li className="text-sm">{children}</li>
-                        ),
-                      }}
-                    >
-                      {message.content}
-                    </ReactMarkdown>
                   )}
-                </div>
-              </motion.div>
-            ))}
+                  <div
+                    className={`prose prose-sm max-w-[80%] max-w-none rounded-2xl px-4 py-3 ${
+                      message.role === "user"
+                        ? "prose-invert bg-primary text-primary-foreground"
+                        : "bg-muted text-foreground"
+                    } [&>*:first-child]:mt-0 [&>*:last-child]:mb-0`}
+                  >
+                    {message.role === "assistant" && !message.content ? (
+                      // ローディングドットアニメーション
+                      <div className="flex gap-1">
+                        <motion.span
+                          className="text-lg"
+                          animate={{ y: [0, -8, 0] }}
+                          transition={{
+                            duration: 0.6,
+                            repeat: Infinity,
+                            ease: "easeInOut",
+                          }}
+                        >
+                          •
+                        </motion.span>
+                        <motion.span
+                          className="text-lg"
+                          animate={{ y: [0, -8, 0] }}
+                          transition={{
+                            duration: 0.6,
+                            repeat: Infinity,
+                            ease: "easeInOut",
+                            delay: 0.2,
+                          }}
+                        >
+                          •
+                        </motion.span>
+                        <motion.span
+                          className="text-lg"
+                          animate={{ y: [0, -8, 0] }}
+                          transition={{
+                            duration: 0.6,
+                            repeat: Infinity,
+                            ease: "easeInOut",
+                            delay: 0.4,
+                          }}
+                        >
+                          •
+                        </motion.span>
+                      </div>
+                    ) : message.role === "assistant" ? (
+                      // AI回答の場合、構造化して表示
+                      (() => {
+                        const parsed = parseAIResponse(message.content);
 
-            {/* 検索結果の画像グリッド */}
-            {searchResults && searchResults.length > 0 && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3 }}
-                className="mt-8"
-              >
-                <h3 className="mb-4 text-base font-semibold">
-                  検索結果 ({searchResults.length}件)
-                </h3>
-                <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-                  {searchResults.map((photo) => (
-                    <div
-                      key={photo.id}
-                      onClick={() => onPhotoClick?.(photo.id, photo)}
-                      className="group relative cursor-pointer overflow-hidden rounded-lg bg-muted transition-transform hover:scale-[1.02]"
-                    >
-                      <img
-                        src={photo.imageUrl}
-                        alt=""
-                        className="aspect-square w-full object-cover"
-                      />
-                      {photo.exifData && (
-                        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-2 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100">
-                          <div className="flex gap-2">
-                            {photo.exifData.iso && (
-                              <span>ISO {photo.exifData.iso}</span>
+                        return (
+                          <div className="space-y-0">
+                            {/* カメラ設定カード */}
+                            {parsed.cameraSettings && (
+                              <CameraSettingsCard
+                                settings={parsed.cameraSettings}
+                              />
                             )}
-                            {photo.exifData.fValue && (
-                              <span>f/{photo.exifData.fValue}</span>
-                            )}
-                            {photo.exifData.shutterSpeed && (
-                              <span>{photo.exifData.shutterSpeed}</span>
+
+                            {/* 撮影のポイント & コツ */}
+                            <TipsCard
+                              shootingPoint={parsed.shootingPoint}
+                              tips={parsed.tips}
+                            />
+
+                            {/* その他のコンテンツ */}
+                            {parsed.otherContent && (
+                              <ReactMarkdown
+                                components={{
+                                  p: ({ children }) => (
+                                    <p className="text-sm leading-relaxed">
+                                      {children}
+                                    </p>
+                                  ),
+                                  strong: ({ children }) => (
+                                    <strong className="font-bold">
+                                      {children}
+                                    </strong>
+                                  ),
+                                  ul: ({ children }) => (
+                                    <ul className="my-2 list-inside list-disc space-y-1">
+                                      {children}
+                                    </ul>
+                                  ),
+                                  ol: ({ children }) => (
+                                    <ol className="my-2 list-inside list-decimal space-y-1">
+                                      {children}
+                                    </ol>
+                                  ),
+                                  li: ({ children }) => (
+                                    <li className="text-sm">{children}</li>
+                                  ),
+                                }}
+                              >
+                                {parsed.otherContent}
+                              </ReactMarkdown>
                             )}
                           </div>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </motion.div>
-            )}
+                        );
+                      })()
+                    ) : (
+                      // ユーザーメッセージの場合は通常表示
+                      <ReactMarkdown
+                        components={{
+                          p: ({ children }) => (
+                            <p className="text-sm leading-relaxed">
+                              {children}
+                            </p>
+                          ),
+                          strong: ({ children }) => (
+                            <strong className="font-bold">{children}</strong>
+                          ),
+                          ul: ({ children }) => (
+                            <ul className="my-2 list-inside list-disc space-y-1">
+                              {children}
+                            </ul>
+                          ),
+                          ol: ({ children }) => (
+                            <ol className="my-2 list-inside list-decimal space-y-1">
+                              {children}
+                            </ol>
+                          ),
+                          li: ({ children }) => (
+                            <li className="text-sm">{children}</li>
+                          ),
+                        }}
+                      >
+                        {message.content}
+                      </ReactMarkdown>
+                    )}
+                  </div>
+                </motion.div>
+
+                {/* アシスタントメッセージに紐付く検索結果 */}
+                {message.role === "assistant" &&
+                  message.searchResults &&
+                  message.searchResults.length > 0 && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.2 }}
+                      className="ml-11 mt-4"
+                    >
+                      <h4 className="mb-3 text-sm font-semibold text-muted-foreground">
+                        関連する作例 ({message.searchResults.length}件)
+                      </h4>
+                      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                        {message.searchResults.map((photo) => (
+                          <div
+                            key={photo.id}
+                            onClick={() => onPhotoClick?.(photo.id, photo)}
+                            className="group relative cursor-pointer overflow-hidden rounded-lg bg-muted transition-transform hover:scale-[1.02]"
+                          >
+                            <img
+                              src={photo.imageUrl}
+                              alt=""
+                              className="aspect-square w-full object-cover"
+                            />
+                            {photo.exifData && (
+                              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-2 text-xs text-white">
+                                <div className="flex gap-2">
+                                  {photo.exifData.iso && (
+                                    <span>ISO {photo.exifData.iso}</span>
+                                  )}
+                                  {photo.exifData.fValue && (
+                                    <span>f/{photo.exifData.fValue}</span>
+                                  )}
+                                  {photo.exifData.shutterSpeed && (
+                                    <span>{photo.exifData.shutterSpeed}</span>
+                                  )}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </motion.div>
+                  )}
+              </div>
+            ))}
 
             {/* 自動スクロール用のダミー要素 */}
             <div ref={messagesEndRef} />

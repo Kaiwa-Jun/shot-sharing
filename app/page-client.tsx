@@ -43,6 +43,7 @@ export function PageClient({ initialPhotos, initialUser }: PageClientProps) {
 
   // /me画面ではSearchFABを非表示
   const showSearchFAB = pathname === "/";
+  // 最新の検索結果（後方互換性のため残す）
   const [searchResults, setSearchResults] = useState<PhotoCardProps[]>([]);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [conversationHistory, setConversationHistory] = useState<
@@ -352,6 +353,20 @@ export function PageClient({ initialPhotos, initialUser }: PageClientProps) {
             })
           );
 
+          // 検索結果を最後のアシスタントメッセージに紐付け
+          setChatMessages((prev) => {
+            const newMessages = [...prev];
+            const lastIndex = newMessages.length - 1;
+            if (lastIndex >= 0 && newMessages[lastIndex].role === "assistant") {
+              newMessages[lastIndex] = {
+                ...newMessages[lastIndex],
+                searchResults: searchResultPhotos,
+              };
+            }
+            return newMessages;
+          });
+
+          // 後方互換性のためsetSearchResultsも更新
           setSearchResults(searchResultPhotos);
         }
       }

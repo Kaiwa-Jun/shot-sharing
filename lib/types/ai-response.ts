@@ -1,4 +1,12 @@
 /**
+ * 設定値と説明のペア
+ */
+export interface SettingWithExplanation {
+  value: string;
+  explanation?: string;
+}
+
+/**
  * カメラ設定の型定義
  */
 export interface CameraSettings {
@@ -8,6 +16,13 @@ export interface CameraSettings {
   focalLength?: string;
   camera?: string;
   lens?: string;
+  /** 設定の説明（初心者向け） */
+  explanations?: {
+    aperture?: string;
+    shutterSpeed?: string;
+    focalLength?: string;
+    iso?: string;
+  };
 }
 
 /**

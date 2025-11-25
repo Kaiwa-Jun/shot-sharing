@@ -1,4 +1,5 @@
 import { Post } from "@/app/actions/posts";
+import { PhotoCardProps } from "@/components/gallery/photo-card";
 
 /**
  * チャットメッセージの型
@@ -7,6 +8,8 @@ export interface ChatMessage {
   role: "user" | "assistant";
   content: string;
   timestamp: Date;
+  /** アシスタントメッセージに紐付く検索結果 */
+  searchResults?: PhotoCardProps[];
 }
 
 /**

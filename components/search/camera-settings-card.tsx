@@ -6,18 +6,48 @@ interface CameraSettingsCardProps {
 
 /**
  * カメラ設定を表示するカードコンポーネント
+ * 設定値と説明を分けて初心者にもわかりやすく表示
  */
 export function CameraSettingsCard({ settings }: CameraSettingsCardProps) {
-  const settingsItems = [
-    { label: "ISO", value: settings.iso, icon: "📊" },
-    { label: "F値", value: settings.aperture, icon: "🔍" },
-    { label: "SS", value: settings.shutterSpeed, icon: "⚡" },
-    { label: "焦点距離", value: settings.focalLength, icon: "📏" },
-    { label: "カメラ", value: settings.camera, icon: "📷", fullWidth: true },
-    { label: "レンズ", value: settings.lens, icon: "🔭", fullWidth: true },
-  ].filter((item) => item.value && item.value !== "-");
+  // メイン設定値（シンプルに表示）
+  const mainSettings = [
+    settings.aperture,
+    settings.shutterSpeed,
+    settings.focalLength,
+    settings.iso ? `ISO${settings.iso}` : null,
+  ].filter((v) => v && v !== "-");
 
-  if (settingsItems.length === 0) {
+  // 説明付き設定
+  const explanationItems = [
+    {
+      label: settings.aperture,
+      explanation: settings.explanations?.aperture,
+      icon: "🔍",
+    },
+    {
+      label: settings.shutterSpeed,
+      explanation: settings.explanations?.shutterSpeed,
+      icon: "⚡",
+    },
+    {
+      label: settings.focalLength,
+      explanation: settings.explanations?.focalLength,
+      icon: "📏",
+    },
+    {
+      label: settings.iso ? `ISO${settings.iso}` : null,
+      explanation: settings.explanations?.iso,
+      icon: "📊",
+    },
+  ].filter((item) => item.label && item.label !== "-" && item.explanation);
+
+  // 機材情報
+  const equipmentInfo = [
+    settings.camera ? `カメラ: ${settings.camera}` : null,
+    settings.lens ? `レンズ: ${settings.lens}` : null,
+  ].filter(Boolean);
+
+  if (mainSettings.length === 0) {
     return null;
   }
 
@@ -27,26 +57,47 @@ export function CameraSettingsCard({ settings }: CameraSettingsCardProps) {
         <div className="flex items-center gap-2">
           <span className="text-lg">📸</span>
           <span className="font-semibold text-blue-900 dark:text-blue-100">
-            カメラ設定
+            おすすめのカメラ設定
           </span>
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-2 p-4">
-        {settingsItems.map((item, index) => (
-          <div
-            key={index}
-            className={`flex items-center gap-2 ${
-              item.fullWidth ? "col-span-2" : ""
-            }`}
-          >
-            <span className="text-base">{item.icon}</span>
-            <div className="flex-1">
-              <div className="text-xs text-muted-foreground">{item.label}</div>
-              <div className="font-mono text-sm font-medium">{item.value}</div>
-            </div>
+      <div className="p-4">
+        {/* メイン設定値（シンプルに1行で表示） */}
+        <div className="mb-3 text-center font-mono text-lg font-bold text-blue-900 dark:text-blue-100">
+          {mainSettings.join(" / ")}
+        </div>
+
+        {/* 機材情報 */}
+        {equipmentInfo.length > 0 && (
+          <div className="mb-3 text-center text-xs text-muted-foreground">
+            {equipmentInfo.join(" | ")}
           </div>
-        ))}
+        )}
+
+        {/* 説明セクション */}
+        {explanationItems.length > 0 && (
+          <div className="mt-4 border-t border-blue-200 pt-3 dark:border-blue-800">
+            <div className="mb-2 text-xs font-semibold text-blue-800 dark:text-blue-200">
+              なぜこの設定？
+            </div>
+            <ul className="space-y-2">
+              {explanationItems.map((item, index) => (
+                <li key={index} className="flex items-start gap-2 text-sm">
+                  <span className="mt-0.5 text-base">{item.icon}</span>
+                  <div>
+                    <span className="font-semibold text-blue-900 dark:text-blue-100">
+                      {item.label}:
+                    </span>{" "}
+                    <span className="text-foreground/80">
+                      {item.explanation}
+                    </span>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
       </div>
     </div>
   );
