@@ -13,8 +13,6 @@ export function CameraSettingsCard({ settings }: CameraSettingsCardProps) {
     { label: "F値", value: settings.aperture, icon: "🔍" },
     { label: "SS", value: settings.shutterSpeed, icon: "⚡" },
     { label: "焦点距離", value: settings.focalLength, icon: "📏" },
-    { label: "カメラ", value: settings.camera, icon: "📷", fullWidth: true },
-    { label: "レンズ", value: settings.lens, icon: "🔭", fullWidth: true },
   ].filter((item) => item.value && item.value !== "-");
 
   if (settingsItems.length === 0) {
@@ -27,19 +25,14 @@ export function CameraSettingsCard({ settings }: CameraSettingsCardProps) {
         <div className="flex items-center gap-2">
           <span className="text-lg">📸</span>
           <span className="font-semibold text-blue-900 dark:text-blue-100">
-            カメラ設定
+            おすすめのカメラ設定
           </span>
         </div>
       </div>
 
       <div className="grid grid-cols-2 gap-2 p-4">
         {settingsItems.map((item, index) => (
-          <div
-            key={index}
-            className={`flex items-center gap-2 ${
-              item.fullWidth ? "col-span-2" : ""
-            }`}
-          >
+          <div key={index} className="flex items-center gap-2">
             <span className="text-base">{item.icon}</span>
             <div className="flex-1">
               <div className="text-xs text-muted-foreground">{item.label}</div>
