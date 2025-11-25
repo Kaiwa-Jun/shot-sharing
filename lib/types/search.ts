@@ -10,8 +10,6 @@ export interface ChatMessage {
   timestamp: Date;
   /** アシスタントメッセージに紐付く検索結果 */
   searchResults?: PhotoCardProps[];
-  /** ストリーミング中かどうか */
-  isStreaming?: boolean;
 }
 
 /**
