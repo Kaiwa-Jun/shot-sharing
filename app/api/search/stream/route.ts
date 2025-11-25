@@ -79,11 +79,18 @@ export async function POST(request: NextRequest) {
     }
 
     // 現在のクエリを追加
-    // 会話履歴がない場合（初回検索）のみシステムプロンプトを含める
+    // 会話履歴がある場合も出力形式を維持するよう指示
+    const FOLLOW_UP_PROMPT = `引き続き、以下の形式で回答してください：
+## 📸 おすすめのカメラ設定
+## 💡 撮影のポイント
+検索結果の写真のEXIF情報を分析して回答してください。
+
+ユーザーの質問: `;
+
     const userQuery =
       !conversationHistory || conversationHistory.length === 0
         ? `${SEARCH_SYSTEM_PROMPT}\n\n---\n\nユーザーの検索: ${query}`
-        : query;
+        : `${FOLLOW_UP_PROMPT}${query}`;
 
     contents.push({
       role: "user" as const,
