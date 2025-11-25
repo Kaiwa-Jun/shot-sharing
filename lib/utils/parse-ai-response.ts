@@ -73,10 +73,13 @@ export function parseAIResponse(content: string): ParsedAIResponse {
     const trimmedSection = section.trim();
     if (!trimmedSection) continue;
 
-    // カメラ設定セクション
-    if (trimmedSection.startsWith("📸 カメラ設定")) {
+    // カメラ設定セクション（「おすすめのカメラ設定」または「カメラ設定」）
+    if (
+      trimmedSection.startsWith("📸 おすすめのカメラ設定") ||
+      trimmedSection.startsWith("📸 カメラ設定")
+    ) {
       const settingsContent = trimmedSection
-        .replace("📸 カメラ設定", "")
+        .replace(/📸\s*(おすすめの)?カメラ設定/, "")
         .trim();
       const lines = settingsContent.split("\n").filter((line) => line.trim());
 
