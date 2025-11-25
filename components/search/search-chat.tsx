@@ -136,7 +136,7 @@ export function SearchChat({
                     } [&>*:first-child]:mt-0 [&>*:last-child]:mb-0`}
                   >
                     {message.role === "assistant" && !message.content ? (
-                      // ローディングドットアニメーション
+                      // ローディングドットアニメーション（コンテンツがまだない場合）
                       <div className="flex gap-1">
                         <motion.span
                           className="text-lg"
@@ -174,8 +174,22 @@ export function SearchChat({
                           •
                         </motion.span>
                       </div>
+                    ) : message.role === "assistant" && message.isStreaming ? (
+                      // ストリーミング中は生テキストをそのまま表示（ChatGPT風）
+                      <div className="whitespace-pre-wrap text-sm leading-relaxed">
+                        {message.content}
+                        <motion.span
+                          className="ml-0.5 inline-block h-4 w-0.5 bg-current"
+                          animate={{ opacity: [1, 0] }}
+                          transition={{
+                            duration: 0.5,
+                            repeat: Infinity,
+                            ease: "easeInOut",
+                          }}
+                        />
+                      </div>
                     ) : message.role === "assistant" ? (
-                      // AI回答の場合、構造化して表示
+                      // ストリーミング完了後は構造化して表示
                       (() => {
                         const parsed = parseAIResponse(message.content);
 

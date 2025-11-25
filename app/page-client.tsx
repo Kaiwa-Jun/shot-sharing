@@ -236,6 +236,7 @@ export function PageClient({ initialPhotos, initialUser }: PageClientProps) {
         role: "assistant",
         content: "",
         timestamp: new Date(),
+        isStreaming: true, // ストリーミング中フラグ
       };
       setChatMessages((prev) => [...prev, initialAssistantMessage]);
 
@@ -285,7 +286,7 @@ export function PageClient({ initialPhotos, initialUser }: PageClientProps) {
               // テキストチャンクを受信
               accumulatedText += data.content;
 
-              // 最後のアシスタントメッセージを更新
+              // 最後のアシスタントメッセージを更新（ストリーミング中）
               setChatMessages((prev) => {
                 const newMessages = [...prev];
                 const lastIndex = newMessages.length - 1;
@@ -296,6 +297,7 @@ export function PageClient({ initialPhotos, initialUser }: PageClientProps) {
                   newMessages[lastIndex] = {
                     ...newMessages[lastIndex],
                     content: accumulatedText,
+                    isStreaming: true, // ストリーミング中を維持
                   };
                 }
                 return newMessages;
@@ -304,6 +306,22 @@ export function PageClient({ initialPhotos, initialUser }: PageClientProps) {
               // 完了メッセージを受信
               postIds = data.postIds;
               conversationId = data.conversationId;
+
+              // ストリーミング完了フラグを設定
+              setChatMessages((prev) => {
+                const newMessages = [...prev];
+                const lastIndex = newMessages.length - 1;
+                if (
+                  lastIndex >= 0 &&
+                  newMessages[lastIndex].role === "assistant"
+                ) {
+                  newMessages[lastIndex] = {
+                    ...newMessages[lastIndex],
+                    isStreaming: false, // ストリーミング完了
+                  };
+                }
+                return newMessages;
+              });
 
               console.log("✅ [DEBUG] ストリーミング完了:", {
                 postIds: postIds.length,
