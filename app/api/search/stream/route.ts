@@ -33,6 +33,27 @@ ISO: [値] | F値: f/[値] | シャッタースピード: [値] | 焦点距離: 
 EXIF情報が利用可能な場合は、実際の数値を必ず使用してください。
 値が不明な場合は「-」と表示してください。`;
 
+/**
+ * フォローアップ質問用のプロンプト
+ * 会話の文脈を踏まえつつ、統一フォーマットで回答するための指示
+ */
+const FOLLOW_UP_PROMPT = `新しい質問について、検索結果から関連する写真を探し、以下の形式で回答してください。
+前の会話の文脈があれば参考にしても構いませんが、必ずこのフォーマットで回答してください：
+
+## 📸 カメラ設定
+ISO: [値] | F値: f/[値] | シャッタースピード: [値] | 焦点距離: [値]mm
+カメラ: [機種] | レンズ: [レンズ名]
+
+## 💡 撮影のポイント
+[1-2文で簡潔に説明]
+
+## ✨ この設定で撮影するコツ
+• [アドバイス1]
+• [アドバイス2]
+• [アドバイス3]
+
+合計200文字以内を目安に、簡潔にまとめてください。`;
+
 export async function POST(request: NextRequest) {
   try {
     const { query, conversationHistory }: SearchStreamRequest =
@@ -68,11 +89,12 @@ export async function POST(request: NextRequest) {
     }
 
     // 現在のクエリを追加
-    // 会話履歴がない場合（初回検索）のみシステムプロンプトを含める
+    // 初回: システムプロンプト + クエリ
+    // 2回目以降: フォローアッププロンプト + クエリ（統一フォーマットを維持）
     const userQuery =
       !conversationHistory || conversationHistory.length === 0
         ? `${SEARCH_SYSTEM_PROMPT}\n\n---\n\nユーザーの検索: ${query}`
-        : query;
+        : `${FOLLOW_UP_PROMPT}\n\n---\n\nユーザーの質問: ${query}`;
 
     contents.push({
       role: "user" as const,
