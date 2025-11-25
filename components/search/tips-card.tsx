@@ -14,21 +14,34 @@ interface TipsCardProps {
  */
 function parseShootingPoint(content: string): TipsSection[] {
   const sections: TipsSection[] = [];
-  const sectionRegex =
-    /###\s*([📸💡⚙️🎯📷✨🔍]+)\s*([^\n]+)\n([\s\S]*?)(?=###|$)/g;
 
-  let match;
-  while ((match = sectionRegex.exec(content)) !== null) {
-    const icon = match[1].trim();
-    const title = match[2].trim();
-    const itemsContent = match[3].trim();
+  // ### で始まるセクションを分割
+  const sectionBlocks = content.split(/(?=###\s)/);
+
+  for (const block of sectionBlocks) {
+    const trimmedBlock = block.trim();
+    if (!trimmedBlock.startsWith("###")) continue;
+
+    // セクションヘッダーを解析（絵文字の有無に対応）
+    const headerMatch = trimmedBlock.match(
+      /^###\s*([📸💡⚙️🎯📷✨🔍]*)\s*(.+?)(?:\n|$)/
+    );
+    if (!headerMatch) continue;
+
+    const icon = headerMatch[1]?.trim() || "📌";
+    const title = headerMatch[2]?.trim() || "";
+
+    // ヘッダー以降のコンテンツを取得
+    const itemsContent = trimmedBlock
+      .replace(/^###\s*[📸💡⚙️🎯📷✨🔍]*\s*.+?\n?/, "")
+      .trim();
 
     const items = itemsContent
       .split("\n")
       .map((line) => line.replace(/^[•\-*]\s*/, "").trim())
-      .filter((line) => line.length > 0);
+      .filter((line) => line.length > 0 && !line.startsWith("#"));
 
-    if (items.length > 0) {
+    if (items.length > 0 && title) {
       sections.push({ icon, title, items });
     }
   }
@@ -50,6 +63,22 @@ export function TipsCard({ shootingPoint, tips }: TipsCardProps) {
   const sections = hasStructuredContent
     ? parseShootingPoint(shootingPoint || "")
     : [];
+
+  // 構造化されていない部分を抽出（### の前のテキスト）
+  const plainTextContent = shootingPoint
+    ?.split(/###/)[0]
+    ?.trim()
+    ?.replace(/^#\s*/, "") // 先頭の # を除去
+    ?.trim();
+
+  // 表示するかどうかの判定
+  const showStructured = hasStructuredContent && sections.length > 0;
+  const showPlainText =
+    (!hasStructuredContent && shootingPoint) ||
+    (hasStructuredContent &&
+      sections.length === 0 &&
+      plainTextContent &&
+      plainTextContent.length > 0);
 
   // セクションカラーのマッピング
   const getSectionStyle = (icon: string) => {
@@ -92,7 +121,7 @@ export function TipsCard({ shootingPoint, tips }: TipsCardProps) {
   return (
     <div className="my-3 space-y-3">
       {/* 構造化された撮影ポイント（新形式） */}
-      {hasStructuredContent && sections.length > 0 && (
+      {showStructured && (
         <div className="rounded-lg border border-amber-200 bg-gradient-to-br from-amber-50/50 to-orange-50/50 p-4 dark:border-amber-800 dark:from-amber-950/30 dark:to-orange-950/30">
           <div className="mb-3 flex items-center gap-2">
             <span className="text-lg">💡</span>
@@ -132,8 +161,8 @@ export function TipsCard({ shootingPoint, tips }: TipsCardProps) {
         </div>
       )}
 
-      {/* 旧形式（プレーンテキスト） */}
-      {!hasStructuredContent && shootingPoint && (
+      {/* 旧形式（プレーンテキスト）またはパース失敗時 */}
+      {showPlainText && (
         <div className="rounded-lg border border-amber-200 bg-gradient-to-br from-amber-50/50 to-orange-50/50 p-4 dark:border-amber-800 dark:from-amber-950/30 dark:to-orange-950/30">
           <div className="mb-2 flex items-center gap-2">
             <span className="text-lg">💡</span>
@@ -142,7 +171,7 @@ export function TipsCard({ shootingPoint, tips }: TipsCardProps) {
             </span>
           </div>
           <p className="text-sm leading-relaxed text-foreground">
-            {shootingPoint}
+            {plainTextContent || shootingPoint}
           </p>
         </div>
       )}
