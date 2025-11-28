@@ -26,7 +26,7 @@ const stages = [
     id: "processing" as const,
     label: "画像を処理中",
     icon: ImageIcon,
-    description: "Exif情報を抽出しています",
+    description: "カメラ設定を抽出しています",
   },
   {
     id: "uploading" as const,

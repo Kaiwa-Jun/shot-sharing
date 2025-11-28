@@ -1,6 +1,16 @@
+import type { Metadata } from "next";
 import { getPosts } from "@/app/actions/posts";
 import { PhotoCardProps } from "@/components/gallery/photo-card";
 import { LoginPageClient } from "./page-client";
+
+export const metadata: Metadata = {
+  title: "ログイン",
+  description: "Shot Sharingにログインして、写真作例を共有・検索しましょう",
+  robots: {
+    index: false,
+    follow: true,
+  },
+};
 
 // 動的レンダリングを強制（ビルド時のプリレンダリングをスキップ）
 export const dynamic = "force-dynamic";
