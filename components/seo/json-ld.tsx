@@ -1,6 +1,18 @@
 import { siteConfig } from "@/lib/constants/site";
 import { ExifData } from "@/lib/types/exif";
 
+/**
+ * 文字列をJSON-LD用にサニタイズ
+ * JSON.stringifyでエスケープされるが、追加の安全対策として特殊文字を処理
+ */
+function sanitizeString(str: string | null | undefined): string {
+  if (!str) return "";
+  return str
+    .replace(/</g, "\\u003c")
+    .replace(/>/g, "\\u003e")
+    .replace(/&/g, "\\u0026");
+}
+
 interface WebSiteJsonLdProps {
   url?: string;
 }
@@ -60,7 +72,8 @@ export function ImageObjectJsonLd({
     url: imageUrl,
     contentUrl: imageUrl,
     thumbnailUrl: thumbnailUrl || imageUrl,
-    description: description || "Shot Sharingで共有された写真作例",
+    description:
+      sanitizeString(description) || "Shot Sharingで共有された写真作例",
     width: width ? { "@type": "QuantitativeValue", value: width } : undefined,
     height: height
       ? { "@type": "QuantitativeValue", value: height }
@@ -69,22 +82,24 @@ export function ImageObjectJsonLd({
     author: authorName
       ? {
           "@type": "Person",
-          name: authorName,
+          name: sanitizeString(authorName),
         }
       : undefined,
   };
 
   // EXIF情報を追加
   if (exifData) {
-    const exifProperties: Record<string, unknown> = {};
+    // EXIFデータに有効な値があるかチェック
+    const hasExifData =
+      exifData.iso ||
+      exifData.fValue ||
+      exifData.shutterSpeed ||
+      exifData.focalLength ||
+      exifData.cameraMake ||
+      exifData.cameraModel ||
+      exifData.lens;
 
-    if (exifData.cameraMake || exifData.cameraModel) {
-      exifProperties.caption =
-        `${exifData.cameraMake || ""} ${exifData.cameraModel || ""}`.trim();
-    }
-
-    // exifDataをextensionsとして追加
-    if (Object.keys(exifProperties).length > 0) {
+    if (hasExifData) {
       jsonLd.exifData = {
         "@type": "PropertyValue",
         name: "EXIF Data",
@@ -93,9 +108,9 @@ export function ImageObjectJsonLd({
           fValue: exifData.fValue,
           shutterSpeed: exifData.shutterSpeed,
           focalLength: exifData.focalLength,
-          cameraMake: exifData.cameraMake,
-          cameraModel: exifData.cameraModel,
-          lens: exifData.lens,
+          cameraMake: sanitizeString(exifData.cameraMake),
+          cameraModel: sanitizeString(exifData.cameraModel),
+          lens: sanitizeString(exifData.lens),
         }),
       };
     }
@@ -137,15 +152,16 @@ export function ArticleJsonLd({
     "@context": "https://schema.org",
     "@type": "Article",
     "@id": `${siteConfig.url}/posts/${id}`,
-    headline: title,
-    description: description || "Shot Sharingで共有された写真作例",
+    headline: sanitizeString(title),
+    description:
+      sanitizeString(description) || "Shot Sharingで共有された写真作例",
     image: imageUrl,
     datePublished: createdAt,
     dateModified: updatedAt || createdAt,
     author: authorName
       ? {
           "@type": "Person",
-          name: authorName,
+          name: sanitizeString(authorName),
         }
       : {
           "@type": "Organization",

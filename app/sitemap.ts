@@ -4,10 +4,17 @@ import { siteConfig } from "@/lib/constants/site";
 
 // sitemap用のanonymous client（cookiesを使用しない）
 function createAnonClient() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (!supabaseUrl || !supabaseAnonKey) {
+    console.warn(
+      "Supabase環境変数が設定されていません。動的なsitemapは生成されません。"
+    );
+    return null;
+  }
+
+  return createClient(supabaseUrl, supabaseAnonKey);
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
@@ -38,6 +45,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // 動的ページ（投稿詳細）
   try {
     const supabase = createAnonClient();
+
+    // Supabaseクライアントが作成できない場合は静的ページのみ返す
+    if (!supabase) {
+      return staticPages;
+    }
+
     const { data: posts } = await supabase
       .from("posts")
       .select("id, updated_at")
