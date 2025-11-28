@@ -19,10 +19,30 @@ interface PostFormProps {
   onCancel?: () => void;
 }
 
+/**
+ * HEICファイルかどうかを判定
+ */
+function isHeicFile(file: File): boolean {
+  // MIMEタイプでの判定
+  if (
+    file.type === "image/heic" ||
+    file.type === "image/heif" ||
+    file.type === "image/heic-sequence" ||
+    file.type === "image/heif-sequence"
+  ) {
+    return true;
+  }
+
+  // 拡張子での判定（MIMEタイプが空の場合がある）
+  const extension = file.name.toLowerCase().split(".").pop();
+  return extension === "heic" || extension === "heif";
+}
+
 export function PostForm({ onSuccess, onCancel }: PostFormProps = {}) {
   const router = useRouter();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [exifData, setExifData] = useState<ExifData | null>(null);
+  const [isHeic, setIsHeic] = useState(false);
   const [description, setDescription] = useState("");
   const [isLoadingExif, setIsLoadingExif] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -31,6 +51,16 @@ export function PostForm({ onSuccess, onCancel }: PostFormProps = {}) {
 
   const handleImageSelect = async (file: File) => {
     setSelectedFile(file);
+    const isHeicImage = isHeicFile(file);
+    setIsHeic(isHeicImage);
+
+    // HEICファイルの場合はクライアントサイドでのEXIF抽出をスキップ
+    // （サーバーサイドで処理される）
+    if (isHeicImage) {
+      setExifData(null);
+      return;
+    }
+
     setIsLoadingExif(true);
 
     try {
@@ -46,6 +76,7 @@ export function PostForm({ onSuccess, onCancel }: PostFormProps = {}) {
   const handleImageClear = () => {
     setSelectedFile(null);
     setExifData(null);
+    setIsHeic(false);
   };
 
   // タイマーベースの進捗管理
@@ -101,7 +132,6 @@ export function PostForm({ onSuccess, onCancel }: PostFormProps = {}) {
       return;
     }
 
-    console.log("📝 [DEBUG] handleSubmit開始:", new Date().toISOString());
     setIsSubmitting(true);
 
     try {
@@ -109,20 +139,9 @@ export function PostForm({ onSuccess, onCancel }: PostFormProps = {}) {
       formData.append("image", selectedFile);
       formData.append("description", description);
 
-      console.log("📤 [DEBUG] createPost呼び出し前:", new Date().toISOString());
       const result = await createPost(formData);
-      console.log(
-        "📥 [DEBUG] createPost完了:",
-        new Date().toISOString(),
-        result
-      );
 
       if (result.success) {
-        console.log(
-          "✅ [DEBUG] 投稿成功 - onSuccess呼び出し前:",
-          new Date().toISOString()
-        );
-
         // 完了状態に更新
         setUploadStage("completed");
         setUploadProgress(100);
@@ -139,16 +158,8 @@ export function PostForm({ onSuccess, onCancel }: PostFormProps = {}) {
         if (onSuccess) {
           onSuccess();
         } else {
-          console.log(
-            "🔄 [DEBUG] router.push+refresh開始:",
-            new Date().toISOString()
-          );
           router.push("/");
           router.refresh();
-          console.log(
-            "🔄 [DEBUG] router.push+refresh完了:",
-            new Date().toISOString()
-          );
         }
       }
     } catch (error) {
@@ -159,7 +170,6 @@ export function PostForm({ onSuccess, onCancel }: PostFormProps = {}) {
           : "投稿に失敗しました。もう一度お試しください。"
       );
     } finally {
-      console.log("🏁 [DEBUG] handleSubmit終了:", new Date().toISOString());
       setIsSubmitting(false);
     }
   };
@@ -190,8 +200,17 @@ export function PostForm({ onSuccess, onCancel }: PostFormProps = {}) {
         />
 
         {/* Exif情報表示 */}
-        {selectedFile && (
+        {selectedFile && !isHeic && (
           <ExifDisplay exif={exifData} isLoading={isLoadingExif} />
+        )}
+        {/* HEICファイルの場合のメッセージ */}
+        {selectedFile && isHeic && (
+          <div className="rounded-lg bg-blue-50 p-4 text-sm text-blue-700">
+            <p className="font-medium">HEIC形式の画像です</p>
+            <p className="mt-1 text-blue-600">
+              カメラ設定は投稿時に自動抽出されます
+            </p>
+          </div>
         )}
 
         {/* 説明文入力 */}

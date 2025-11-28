@@ -75,7 +75,7 @@ export function SimilarPostsCarousel({
                 {/* 焦点距離 */}
                 {post.exifData.focalLength && (
                   <div className="line-clamp-1">
-                    {post.exifData.focalLength}mm
+                    {Math.round(post.exifData.focalLength)}mm
                   </div>
                 )}
               </div>
