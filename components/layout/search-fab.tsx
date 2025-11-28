@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { ImageIcon, Search, Send } from "lucide-react";
+import { Search, Send } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 
@@ -199,17 +199,6 @@ export function SearchFAB({
                 className="flex-1 bg-transparent outline-none placeholder:text-muted-foreground"
                 autoFocus
               />
-
-              {/* 画像添付ボタン */}
-              <Button
-                type="button"
-                size="icon"
-                variant="ghost"
-                className="h-10 w-10 shrink-0"
-                onMouseDown={(e) => e.preventDefault()}
-              >
-                <ImageIcon className="h-5 w-5" />
-              </Button>
 
               {/* 送信ボタン */}
               <Button
