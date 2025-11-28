@@ -1,12 +1,17 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { SignupPageClient } from "./page-client";
 import { getPosts } from "@/app/actions/posts";
 import { PhotoCardProps } from "@/components/gallery/photo-card";
 
-export const metadata = {
-  title: "新規登録 - Shot Sharing",
+export const metadata: Metadata = {
+  title: "新規登録",
   description: "Shot Sharingに新規登録して、写真作例を共有しましょう",
+  robots: {
+    index: false,
+    follow: true,
+  },
 };
 
 // 動的レンダリングを強制（ビルド時のプリレンダリングをスキップ）

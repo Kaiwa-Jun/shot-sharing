@@ -2,6 +2,7 @@ import { getPosts } from "@/app/actions/posts";
 import { PhotoCardProps } from "@/components/gallery/photo-card";
 import { PageClient } from "./page-client";
 import { createClient } from "@/lib/supabase/server";
+import { WebSiteJsonLd } from "@/components/seo/json-ld";
 
 // 動的レンダリングを強制（ビルド時のプリレンダリングをスキップ）
 export const dynamic = "force-dynamic";
@@ -43,5 +44,10 @@ export default async function Home() {
     })) || [];
 
   console.log("📤 [DEBUG] PageClientに渡すphotos:", photos.length, "件");
-  return <PageClient initialPhotos={photos} initialUser={user} />;
+  return (
+    <>
+      <WebSiteJsonLd />
+      <PageClient initialPhotos={photos} initialUser={user} />
+    </>
+  );
 }
