@@ -11,8 +11,8 @@ import { PostActionsMenu } from "./post-actions-menu";
 import { SimilarPostsCarousel } from "./similar-posts-carousel";
 import { SimilarPostsSkeleton } from "./similar-posts-skeleton";
 import { LoginPromptModal } from "@/components/auth/login-prompt-modal";
-import { ShareTextPreviewModal } from "./share-text-preview-modal";
 import { createClient } from "@/lib/supabase/client";
+import { siteConfig } from "@/lib/constants/site";
 import { X } from "lucide-react";
 import {
   AlertDialog,
@@ -70,7 +70,7 @@ function formatCameraModel(model: string): string {
 }
 
 /**
- * ExifデータからX投稿用テキストを生成（ラベル付きフォーマット）
+ * ExifデータからX投稿用テキストを生成（フォーマルな形式）
  */
 function generateExifTextForX(
   exifData: ExifData | null,
@@ -80,31 +80,33 @@ function generateExifTextForX(
 
   // Exifデータがある場合
   if (exifData) {
-    // カメラ
+    // カメラ・レンズ行
+    const equipmentParts: string[] = [];
     if (exifData.cameraModel) {
-      const formattedModel = formatCameraModel(exifData.cameraModel);
-      lines.push(`カメラ：${formattedModel}`);
+      equipmentParts.push(formatCameraModel(exifData.cameraModel));
     } else if (exifData.cameraMake) {
-      lines.push(`カメラ：${exifData.cameraMake}`);
+      equipmentParts.push(exifData.cameraMake);
     }
-
-    // レンズ
     if (exifData.lens) {
-      lines.push(`レンズ：${exifData.lens}`);
+      equipmentParts.push(exifData.lens);
+    }
+    if (equipmentParts.length > 0) {
+      lines.push(equipmentParts.join(" / "));
     }
 
-    // 空行を追加
-    if (lines.length > 0) lines.push("");
-
-    // 撮影設定
+    // 撮影設定行
+    const settingsParts: string[] = [];
     if (exifData.iso) {
-      lines.push(`ISO:${exifData.iso}`);
+      settingsParts.push(`ISO${exifData.iso}`);
     }
     if (exifData.fValue) {
-      lines.push(`F値：${exifData.fValue}`);
+      settingsParts.push(`F${exifData.fValue}`);
     }
     if (exifData.shutterSpeed) {
-      lines.push(`SS:${exifData.shutterSpeed}`);
+      settingsParts.push(exifData.shutterSpeed);
+    }
+    if (settingsParts.length > 0) {
+      lines.push(settingsParts.join(" / "));
     }
   }
 
@@ -114,11 +116,9 @@ function generateExifTextForX(
     lines.push(description);
   }
 
-  // ハッシュタグを追加
+  // ハッシュタグを追加（1行にまとめる）
   if (lines.length > 0) lines.push("");
-  lines.push("#カメラ初心者");
-  lines.push("#写真初心者");
-  lines.push("#カメラ好きと繋がりたい");
+  lines.push("#カメラ初心者 #写真初心者 #カメラ好きと繋がりたい #ShotSharing");
 
   return lines.join("\n");
 }
@@ -149,8 +149,6 @@ export function PostDetailModal({
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
   const [showDeleteAlert, setShowDeleteAlert] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [showShareTextModal, setShowShareTextModal] = useState(false);
-  const [shareText, setShareText] = useState("");
   const router = useRouter();
 
   // initialIsSavedの変更を監視
@@ -221,43 +219,22 @@ export function PostDetailModal({
     }
   };
 
-  // Xで共有する処理
-  const handleShareToX = async () => {
-    try {
-      // Exifテキスト生成
-      const exifText = generateExifTextForX(
-        post.exifData,
-        post.description || undefined
-      );
+  // Xで共有する処理（OGP付きリンク共有方式）
+  const handleShareToX = () => {
+    // Exifテキスト生成
+    const exifText = generateExifTextForX(
+      post.exifData,
+      post.description || undefined
+    );
 
-      // 画像をダウンロード
-      const response = await fetch(post.imageUrl);
-      const blob = await response.blob();
-      const blobUrl = URL.createObjectURL(blob);
+    // 投稿詳細ページのURL
+    const postUrl = `${siteConfig.url}/posts/${post.id}`;
 
-      const link = document.createElement("a");
-      link.href = blobUrl;
-      link.download = `shot-${post.id}.jpg`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+    // X Web Intent URL
+    const shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(exifText)}&url=${encodeURIComponent(postUrl)}`;
 
-      // Blob URLをクリーンアップ
-      setTimeout(() => URL.revokeObjectURL(blobUrl), 100);
-
-      // テキストプレビューモーダルを表示
-      setShareText(exifText);
-      setShowShareTextModal(true);
-    } catch (error) {
-      console.error("画像のダウンロードに失敗しました:", error);
-      // エラーが発生してもモーダルは表示する
-      const exifText = generateExifTextForX(
-        post.exifData,
-        post.description || undefined
-      );
-      setShareText(exifText);
-      setShowShareTextModal(true);
-    }
+    // 新しいウィンドウでX投稿フォームを開く
+    window.open(shareUrl, "_blank", "noopener,noreferrer");
   };
 
   // 削除処理
@@ -451,13 +428,6 @@ export function PostDetailModal({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-
-      {/* X共有テキストプレビューモーダル */}
-      <ShareTextPreviewModal
-        open={showShareTextModal}
-        onOpenChange={setShowShareTextModal}
-        initialText={shareText}
-      />
     </motion.div>
   );
 }
