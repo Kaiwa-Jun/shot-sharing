@@ -123,12 +123,10 @@ export function ImageUpload({ onImageSelect, onImageClear }: ImageUploadProps) {
           <p className="mt-1 text-xs text-gray-400">またはドラッグ&ドロップ</p>
         </div>
       ) : isConverting ? (
-        // HEIC変換中: ローディング表示
+        // HEIC変換中: ローディングアイコンのみ表示
         <div className="relative w-full">
-          <div className="relative flex h-96 w-full flex-col items-center justify-center rounded-lg bg-gray-100">
-            <Loader2 className="mb-4 h-12 w-12 animate-spin text-gray-400" />
-            <p className="font-medium text-gray-600">画像を変換中...</p>
-            <p className="mt-1 text-sm text-gray-500">{selectedFileName}</p>
+          <div className="relative flex h-96 w-full items-center justify-center rounded-lg bg-gray-100">
+            <Loader2 className="h-12 w-12 animate-spin text-gray-400" />
           </div>
           <Button
             type="button"
