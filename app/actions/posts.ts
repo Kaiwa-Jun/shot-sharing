@@ -5,6 +5,8 @@ import { createClient } from "@/lib/supabase/server";
 import { ExifData } from "@/lib/types/exif";
 import { extractExifData } from "@/lib/image/exif";
 import { createThumbnail, resizeForDisplay } from "@/lib/image/resize";
+import { isHeic } from "@/lib/image/detect-format";
+import { convertHeicToJpeg } from "@/lib/image/heic-converter";
 import {
   uploadImageToStorage,
   getPublicUrl,
@@ -224,33 +226,39 @@ export async function createPost(formData: FormData) {
       throw new Error("画像ファイルが選択されていません");
     }
 
-    console.log("📸 投稿処理を開始します...");
-
     // 2. 画像をBufferに変換
-    const imageBuffer = Buffer.from(await imageFile.arrayBuffer());
+    const arrayBuffer = await imageFile.arrayBuffer();
+    const originalBuffer = Buffer.from(arrayBuffer);
 
-    // 3. Exif情報を抽出（Bufferを渡してサーバーサイドで処理）
-    console.log("📊 Exif情報を抽出中...");
-    const exifData = await extractExifData(imageBuffer);
+    // 3. HEIC判定と変換
+    let processableBuffer = originalBuffer;
+    const isHeicImage = isHeic(arrayBuffer);
+    if (isHeicImage) {
+      processableBuffer = await convertHeicToJpeg(originalBuffer);
+    }
+
+    // 4. Exif情報を抽出（元のバッファから - ExifReaderはHEIC対応）
+    const exifData = await extractExifData(originalBuffer);
 
     // 4. 投稿IDを生成
     const postId = crypto.randomUUID();
 
-    // 5. サムネイルと表示用画像を生成
-    console.log("🖼️ サムネイルと表示用画像を生成中...");
+    // 5. サムネイルと表示用画像を生成（HEIC変換後のバッファを使用）
     const [thumbnailBuffer, displayBuffer] = await Promise.all([
-      createThumbnail(imageBuffer),
-      resizeForDisplay(imageBuffer),
+      createThumbnail(processableBuffer),
+      resizeForDisplay(processableBuffer),
     ]);
 
     // 6. Supabase Storageにアップロード
-    console.log("☁️ Supabase Storageにアップロード中...");
     const imagePath = generateStoragePath(user.id, postId, "original.jpg");
     const thumbnailPath = generateStoragePath(user.id, postId, "thumbnail.jpg");
 
+    // HEIC変換した場合はMIMEタイプをimage/jpegに変更
+    const uploadMimeType = isHeicImage ? "image/jpeg" : imageFile.type;
+
     try {
       await Promise.all([
-        uploadImageToStorage(displayBuffer, imagePath, imageFile.type),
+        uploadImageToStorage(displayBuffer, imagePath, uploadMimeType),
         uploadImageToStorage(thumbnailBuffer, thumbnailPath, "image/jpeg"),
       ]);
     } catch (error) {
@@ -265,22 +273,21 @@ export async function createPost(formData: FormData) {
     ]);
 
     // 8. File Search Store登録 + Embedding生成（並列実行）
-    console.log("🔍 File Search StoreとEmbedding生成を並列実行中...");
     let fileSearchSuccess = false;
     let fileSearchStoreId: string | null = null;
     let embeddingVector: number[] | null = null;
 
     const [fileSearchResult, embeddingResult] = await Promise.allSettled([
-      // File Search Storeへの登録
+      // File Search Storeへの登録（HEIC変換後のバッファを使用）
       uploadPhotoToFileSearch(
-        imageBuffer,
+        processableBuffer,
         postId,
         exifData,
         description,
         imageUrl
       ),
-      // Embedding生成
-      generateImageEmbedding(imageBuffer, imageFile.type),
+      // Embedding生成（HEIC変換後のバッファとMIMEタイプを使用）
+      generateImageEmbedding(processableBuffer, uploadMimeType),
     ]);
 
     // File Search Storeの結果を処理
@@ -300,14 +307,12 @@ export async function createPost(formData: FormData) {
     // Embeddingの結果を処理
     if (embeddingResult.status === "fulfilled") {
       embeddingVector = embeddingResult.value;
-      console.log("✅ Embedding生成成功");
     } else {
       console.error("Embedding生成に失敗しました:", embeddingResult.reason);
       // Embedding失敗時でも投稿は続行（後で再生成可能）
     }
 
     // 9. DBに投稿情報を保存
-    console.log("💾 DBに投稿情報を保存中...");
     const { error: dbError } = await supabase.from("posts").insert({
       id: postId,
       user_id: user.id,
@@ -337,7 +342,6 @@ export async function createPost(formData: FormData) {
 
     // 10. Embeddingをpost_embeddingsテーブルに保存
     if (embeddingVector) {
-      console.log("💾 Embeddingを保存中...");
       try {
         const { error: embeddingError } = await supabase
           .from("post_embeddings")
@@ -349,8 +353,6 @@ export async function createPost(formData: FormData) {
         if (embeddingError) {
           console.error("Embedding保存に失敗しました:", embeddingError);
           // Embedding保存失敗時でも投稿は続行（後で再生成可能）
-        } else {
-          console.log("✅ Embedding保存成功");
         }
       } catch (error) {
         console.error("Embedding保存でエラーが発生しました:", error);
@@ -358,22 +360,15 @@ export async function createPost(formData: FormData) {
       }
     }
 
-    console.log("✅ 投稿が完了しました!");
-
     // キャッシュを再検証
-    console.log("🔄 [DEBUG] revalidatePath開始:", new Date().toISOString());
     revalidatePath("/");
     revalidatePath("/me");
-    console.log("🔄 [DEBUG] revalidatePath完了:", new Date().toISOString());
 
-    const result = {
+    return {
       success: true,
       postId,
       fileSearchSuccess,
     };
-
-    console.log("📤 [DEBUG] Server Action戻り値:", result);
-    return result;
   } catch (error) {
     console.error("投稿処理でエラーが発生しました:", error);
     throw error;
@@ -590,8 +585,6 @@ export async function deletePost(postId: string) {
       throw new Error("この投稿を削除する権限がありません");
     }
 
-    console.log(`🗑️ 投稿削除処理を開始します: ${postId}`);
-
     // 3. Supabase Storageから画像を削除
     const imagePath = generateStoragePath(user.id, postId, "original.jpg");
     const thumbnailPath = generateStoragePath(user.id, postId, "thumbnail.jpg");
@@ -601,7 +594,6 @@ export async function deletePost(postId: string) {
         deleteFromStorage(imagePath),
         deleteFromStorage(thumbnailPath),
       ]);
-      console.log("✅ Storageから画像を削除しました");
     } catch (storageError) {
       console.error("Storageからの削除に失敗（処理は続行）:", storageError);
     }
@@ -630,8 +622,6 @@ export async function deletePost(postId: string) {
     if (deleteError) {
       throw new Error(`DBからの削除に失敗: ${deleteError.message}`);
     }
-
-    console.log("✅ DBから投稿を削除しました");
 
     // 6. キャッシュの再検証
     revalidatePath("/");

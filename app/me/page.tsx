@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentUserProfile } from "@/app/actions/profiles";
@@ -9,6 +10,15 @@ import {
 } from "@/app/actions/posts";
 import { PhotoCardProps } from "@/components/gallery/photo-card";
 import { ProfileClient } from "./page-client";
+
+export const metadata: Metadata = {
+  title: "マイページ",
+  description: "あなたの投稿と保存した作例を管理できます",
+  robots: {
+    index: false,
+    follow: false,
+  },
+};
 
 // 動的レンダリングを強制
 export const dynamic = "force-dynamic";

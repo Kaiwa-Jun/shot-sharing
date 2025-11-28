@@ -1,7 +1,17 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentUserProfile } from "@/app/actions/profiles";
 import { ProfileEditClient } from "./page-client";
+
+export const metadata: Metadata = {
+  title: "プロフィール編集",
+  description: "プロフィール情報を編集できます",
+  robots: {
+    index: false,
+    follow: false,
+  },
+};
 
 // 動的レンダリングを強制
 export const dynamic = "force-dynamic";
