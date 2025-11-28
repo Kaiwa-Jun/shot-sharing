@@ -55,7 +55,7 @@ export function ExifDisplay({ exif, isLoading }: ExifDisplayProps) {
             {exif.focalLength && (
               <div>
                 <span className="text-gray-500">焦点距離:</span>{" "}
-                {exif.focalLength}mm
+                {Math.round(exif.focalLength)}mm
               </div>
             )}
             {exif.whiteBalance && (

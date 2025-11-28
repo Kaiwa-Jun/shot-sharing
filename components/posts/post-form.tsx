@@ -208,7 +208,7 @@ export function PostForm({ onSuccess, onCancel }: PostFormProps = {}) {
           <div className="rounded-lg bg-blue-50 p-4 text-sm text-blue-700">
             <p className="font-medium">HEIC形式の画像です</p>
             <p className="mt-1 text-blue-600">
-              EXIF情報は投稿時にサーバーで自動抽出されます
+              カメラ設定は投稿時に自動抽出されます
             </p>
           </div>
         )}
