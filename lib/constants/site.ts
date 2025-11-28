@@ -2,11 +2,7 @@ export const siteConfig = {
   name: "Shot Sharing",
   description:
     "写真の作例を共有し、撮影設定から類似写真を検索できるAIフォトシェアリングプラットフォーム",
-  url:
-    process.env.NEXT_PUBLIC_SITE_URL ||
-    (process.env.VERCEL_URL
-      ? `https://${process.env.VERCEL_URL}`
-      : "http://localhost:3000"),
+  url: process.env.NEXT_PUBLIC_SITE_URL || "https://shotsharing.me",
   ogImage: "/og-image.png",
   creator: "Shot Sharing Team",
   keywords: [
