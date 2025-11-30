@@ -3,24 +3,8 @@
 import { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion, PanInfo, AnimatePresence } from "framer-motion";
-import {
-  ArrowLeft,
-  Settings,
-  User,
-  UserPen,
-  HelpCircle,
-  FileText,
-  Shield,
-  LogOut,
-} from "lucide-react";
+import { ArrowLeft, User, UserPen } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { PhotoCardProps } from "@/components/gallery/photo-card";
 import { Post } from "@/app/actions/posts";
 import { getSimilarPostsWithEmbedding } from "@/app/actions/similar-posts-embedding";
@@ -402,47 +386,14 @@ export function ProfileClient({
 
           {/* プロフィール情報 */}
           <div className="relative border-b px-4 py-6">
-            {/* 設定メニュー */}
+            {/* プロフィール編集アイコン */}
             <div className="absolute right-4 top-4">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <button className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-accent">
-                    <Settings className="h-4 w-4" />
-                  </button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={handleEditProfile}>
-                    <UserPen className="mr-2 h-4 w-4" />
-                    プロフィール編集
-                  </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <HelpCircle className="mr-2 h-4 w-4" />
-                    ヘルプ/お問い合わせ
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setView("terms")}>
-                    <FileText className="mr-2 h-4 w-4" />
-                    利用規約
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setView("privacy")}>
-                    <Shield className="mr-2 h-4 w-4" />
-                    プライバシーポリシー
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    onClick={(e) => {
-                      console.log(
-                        "🔴 ログアウトメニューがクリックされました",
-                        e
-                      );
-                      handleLogout();
-                    }}
-                    className="text-red-600 focus:text-red-600"
-                  >
-                    <LogOut className="mr-2 h-4 w-4" />
-                    ログアウト
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <button
+                onClick={handleEditProfile}
+                className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-accent"
+              >
+                <UserPen className="h-4 w-4" />
+              </button>
             </div>
 
             <div className="flex items-center gap-4">
