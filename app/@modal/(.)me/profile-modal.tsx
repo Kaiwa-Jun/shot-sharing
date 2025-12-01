@@ -114,67 +114,9 @@ export function ProfileModal({
   const [initialIsOwner, setInitialIsOwner] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
 
-  // 画像プリロード完了状態（スライドイン開始のトリガー）
-  const [isImagesPreloaded, setIsImagesPreloaded] = useState(false);
-
   // ビュー状態 ('profile' | 'terms' | 'privacy')
   const [view, setView] = useState<"profile" | "terms" | "privacy">("profile");
   const [isExiting, setIsExiting] = useState(false);
-
-  // 初回マウント時に画像をプリロード（Progressive Rendering）
-  useEffect(() => {
-    const imagesToPreload = initialUserPhotos.slice(0, 10); // 最初の10枚をプリロード
-    const MINIMUM_IMAGES_TO_START = 3; // 最初の3枚でスライドイン開始
-    const FAST_TIMEOUT = 100; // 100msに短縮
-
-    if (imagesToPreload.length === 0) {
-      setIsImagesPreloaded(true);
-      return;
-    }
-
-    let loadedCount = 0;
-    let hasStarted = false;
-
-    const handleImageLoaded = (url: string) => {
-      if (hasStarted) return; // 既に開始済みなら何もしない
-
-      markImageAsLoaded(url);
-      loadedCount++;
-
-      // 最初の3枚が読み込まれたら、または全て読み込まれたらスライドイン開始
-      if (
-        loadedCount >= MINIMUM_IMAGES_TO_START ||
-        loadedCount >= imagesToPreload.length
-      ) {
-        hasStarted = true;
-        setIsImagesPreloaded(true);
-      }
-    };
-
-    // 各画像をプリロード
-    imagesToPreload.forEach((photo) => {
-      // 既にキャッシュにある場合はスキップ
-      if (isImageLoaded(photo.imageUrl)) {
-        handleImageLoaded(photo.imageUrl);
-        return;
-      }
-
-      const img = new window.Image();
-      img.onload = () => handleImageLoaded(photo.imageUrl);
-      img.onerror = () => handleImageLoaded(photo.imageUrl); // エラーでも続行
-      img.src = photo.imageUrl;
-    });
-
-    // タイムアウト：100ms経っても完了しなければ強制的に開始
-    const timeout = setTimeout(() => {
-      if (!hasStarted) {
-        hasStarted = true;
-        setIsImagesPreloaded(true);
-      }
-    }, FAST_TIMEOUT);
-
-    return () => clearTimeout(timeout);
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // 投稿タブの状態
   const [userPhotos, setUserPhotos] =
@@ -428,13 +370,9 @@ export function ProfileModal({
     640: 2,
   };
 
-  // スライドインの目標位置を決定
-  // - 閉じる時：画面外（左）
-  // - プリロード完了前：画面外（左）で待機
-  // - プリロード完了後：画面内へ
+  // スライドインの目標位置を決定（即座にスライドイン開始）
   const getAnimateX = () => {
     if (isClosing) return "-100%";
-    if (!isImagesPreloaded) return "-100%";
     return 0;
   };
 
