@@ -5,47 +5,18 @@ import { SearchFAB } from "@/components/layout/search-fab";
 
 describe("SearchFAB", () => {
   describe("基本レンダリング", () => {
-    it("初期状態でFABボタンが表示される", () => {
-      render(<SearchFAB />);
-      const searchButton = screen.getByRole("button");
-      expect(searchButton).toBeInTheDocument();
-    });
-
-    it("初期状態では検索入力欄が表示されない", () => {
+    it("初期状態で検索入力欄が表示される", () => {
       render(<SearchFAB />);
       const searchInput =
-        screen.queryByPlaceholderText(/撮りたいシーンや設定で探す/);
-      expect(searchInput).not.toBeInTheDocument();
-    });
-  });
-
-  describe("FAB展開", () => {
-    it("FABクリック後に検索入力欄が表示される", async () => {
-      const user = userEvent.setup();
-      render(<SearchFAB />);
-
-      const fabButton = screen.getByRole("button");
-      await user.click(fabButton);
-
-      await waitFor(() => {
-        const searchInput =
-          screen.getByPlaceholderText(/撮りたいシーンや設定で探す/);
-        expect(searchInput).toBeInTheDocument();
-      });
+        screen.getByPlaceholderText(/撮りたいシーンや設定で探す/);
+      expect(searchInput).toBeInTheDocument();
     });
 
-    it("FABクリック後に質問例バッジが表示される", async () => {
-      const user = userEvent.setup();
+    it("初期状態で質問例バッジが表示される", () => {
       render(<SearchFAB />);
-
-      const fabButton = screen.getByRole("button");
-      await user.click(fabButton);
-
-      await waitFor(() => {
-        expect(screen.getByText(/夕焼けを綺麗に撮るには/)).toBeInTheDocument();
-        expect(screen.getByText(/夜景で手ブレしない設定/)).toBeInTheDocument();
-        expect(screen.getByText(/室内でポートレート/)).toBeInTheDocument();
-      });
+      expect(screen.getByText(/夕焼けを綺麗に撮るには/)).toBeInTheDocument();
+      expect(screen.getByText(/夜景で手ブレしない設定/)).toBeInTheDocument();
+      expect(screen.getByText(/室内でポートレート/)).toBeInTheDocument();
     });
   });
 
@@ -53,10 +24,6 @@ describe("SearchFAB", () => {
     it("質問例クリック時に入力欄に値が設定される", async () => {
       const user = userEvent.setup();
       render(<SearchFAB />);
-
-      // FABを展開
-      const fabButton = screen.getByRole("button");
-      await user.click(fabButton);
 
       await waitFor(() => {
         expect(screen.getByText(/夕焼けを綺麗に撮るには/)).toBeInTheDocument();
@@ -81,16 +48,6 @@ describe("SearchFAB", () => {
       const user = userEvent.setup();
       render(<SearchFAB />);
 
-      // FABを展開
-      const fabButton = screen.getByRole("button");
-      await user.click(fabButton);
-
-      await waitFor(() => {
-        const searchInput =
-          screen.getByPlaceholderText(/撮りたいシーンや設定で探す/);
-        expect(searchInput).toBeInTheDocument();
-      });
-
       const searchInput = screen.getByPlaceholderText(
         /撮りたいシーンや設定で探す/
       ) as HTMLInputElement;
@@ -99,19 +56,8 @@ describe("SearchFAB", () => {
       expect(searchInput.value).toBe("星空撮影のコツ");
     });
 
-    it("入力欄が空の場合、送信ボタンが無効化される", async () => {
-      const user = userEvent.setup();
+    it("入力欄が空の場合、送信ボタンが無効化される", () => {
       render(<SearchFAB />);
-
-      // FABを展開
-      const fabButton = screen.getByRole("button");
-      await user.click(fabButton);
-
-      await waitFor(() => {
-        const searchInput =
-          screen.getByPlaceholderText(/撮りたいシーンや設定で探す/);
-        expect(searchInput).toBeInTheDocument();
-      });
 
       // 送信ボタンを取得（最後のボタン）
       const buttons = screen.getAllByRole("button");
@@ -123,16 +69,6 @@ describe("SearchFAB", () => {
     it("入力欄に値がある場合、送信ボタンが有効化される", async () => {
       const user = userEvent.setup();
       render(<SearchFAB />);
-
-      // FABを展開
-      const fabButton = screen.getByRole("button");
-      await user.click(fabButton);
-
-      await waitFor(() => {
-        const searchInput =
-          screen.getByPlaceholderText(/撮りたいシーンや設定で探す/);
-        expect(searchInput).toBeInTheDocument();
-      });
 
       const searchInput =
         screen.getByPlaceholderText(/撮りたいシーンや設定で探す/);
@@ -151,16 +87,6 @@ describe("SearchFAB", () => {
       const user = userEvent.setup();
       const onSearch = vi.fn();
       render(<SearchFAB onSearch={onSearch} />);
-
-      // FABを展開
-      const fabButton = screen.getByRole("button");
-      await user.click(fabButton);
-
-      await waitFor(() => {
-        const searchInput =
-          screen.getByPlaceholderText(/撮りたいシーンや設定で探す/);
-        expect(searchInput).toBeInTheDocument();
-      });
 
       const searchInput = screen.getByPlaceholderText(
         /撮りたいシーンや設定で探す/
@@ -188,18 +114,7 @@ describe("SearchFAB", () => {
 
     it("空白のみの入力では送信されない", async () => {
       const user = userEvent.setup();
-      const consoleSpy = vi.spyOn(console, "log");
       render(<SearchFAB />);
-
-      // FABを展開
-      const fabButton = screen.getByRole("button");
-      await user.click(fabButton);
-
-      await waitFor(() => {
-        const searchInput =
-          screen.getByPlaceholderText(/撮りたいシーンや設定で探す/);
-        expect(searchInput).toBeInTheDocument();
-      });
 
       const searchInput =
         screen.getByPlaceholderText(/撮りたいシーンや設定で探す/);
@@ -209,31 +124,6 @@ describe("SearchFAB", () => {
       const buttons = screen.getAllByRole("button");
       const submitButton = buttons[buttons.length - 1];
       expect(submitButton).toBeDisabled();
-
-      consoleSpy.mockRestore();
-    });
-  });
-
-  describe("ボタンの状態", () => {
-    it("画像添付ボタンが表示される", async () => {
-      const user = userEvent.setup();
-      render(<SearchFAB />);
-
-      // FABを展開
-      const fabButton = screen.getByRole("button");
-      await user.click(fabButton);
-
-      await waitFor(() => {
-        const searchInput =
-          screen.getByPlaceholderText(/撮りたいシーンや設定で探す/);
-        expect(searchInput).toBeInTheDocument();
-      });
-
-      // 画像添付ボタンを取得（後ろから2番目のボタン）
-      const buttons = screen.getAllByRole("button");
-      const imageButton = buttons[buttons.length - 2];
-
-      expect(imageButton).toBeInTheDocument();
     });
   });
 });
