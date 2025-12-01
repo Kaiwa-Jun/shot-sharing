@@ -3,7 +3,6 @@ import { createClient } from "@/lib/supabase/server";
 import { getCurrentUserProfile } from "@/app/actions/profiles";
 import {
   getUserPosts,
-  getUserSavedPosts,
   getUserPostsCount,
   getUserSavedPostsCount,
 } from "@/app/actions/posts";
@@ -25,14 +24,12 @@ export default async function InterceptedProfilePage() {
   // プロフィール情報を取得
   const { profile } = await getCurrentUserProfile();
 
-  // ユーザーの投稿と保存した投稿を並行取得（初期表示10枚）
-  const [postsResult, savedPostsResult, postsCountResult, savedCountResult] =
-    await Promise.all([
-      getUserPosts(user.id, 10, 0),
-      getUserSavedPosts(user.id, 10, 0),
-      getUserPostsCount(user.id),
-      getUserSavedPostsCount(user.id),
-    ]);
+  // ユーザーの投稿とカウントを並行取得（保存データは遅延読み込み）
+  const [postsResult, postsCountResult, savedCountResult] = await Promise.all([
+    getUserPosts(user.id, 10, 0),
+    getUserPostsCount(user.id),
+    getUserSavedPostsCount(user.id),
+  ]);
 
   // Postデータ型をPhotoCardProps型に変換
   const userPhotos: PhotoCardProps[] =
@@ -43,13 +40,8 @@ export default async function InterceptedProfilePage() {
       exifData: post.exifData || undefined,
     })) || [];
 
-  const savedPhotos: PhotoCardProps[] =
-    savedPostsResult.data?.map((post) => ({
-      id: post.id,
-      imageUrl: post.imageUrl,
-      userId: post.userId,
-      exifData: post.exifData || undefined,
-    })) || [];
+  // 保存データは空配列（タブ切り替え時に遅延読み込み）
+  const savedPhotos: PhotoCardProps[] = [];
 
   return (
     <ProfileModal
