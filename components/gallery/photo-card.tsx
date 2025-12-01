@@ -2,7 +2,9 @@
 
 import { motion } from "framer-motion";
 import Image from "next/image";
+import { useState } from "react";
 import { ExifData } from "@/lib/types/exif";
+import { markImageAsLoaded, isImageLoaded } from "@/lib/image-cache";
 
 export interface PhotoCardProps {
   id: string;
@@ -24,6 +26,14 @@ export function PhotoCard({
   priority = false,
   layoutIdDisabled = false,
 }: PhotoCardProps) {
+  // グローバルキャッシュを確認し、既に読み込み済みなら初期状態をtrueに
+  const [isLoaded, setIsLoaded] = useState(() => isImageLoaded(imageUrl));
+
+  const handleImageLoad = () => {
+    markImageAsLoaded(imageUrl);
+    setIsLoaded(true);
+  };
+
   return (
     <motion.div
       className="group relative cursor-pointer overflow-hidden rounded-lg"
@@ -42,15 +52,22 @@ export function PhotoCard({
           ease: [0.25, 0.1, 0.25, 1],
         }}
       >
+        {/* スケルトンローダー */}
+        {!isLoaded && (
+          <div className="absolute inset-0 animate-pulse bg-muted" />
+        )}
         <Image
           src={imageUrl}
           alt="Photo"
           width={400}
           height={600}
-          className="h-auto w-full object-cover"
+          className={`h-auto w-full object-cover transition-opacity duration-300 ${
+            isLoaded ? "opacity-100" : "opacity-0"
+          }`}
           priority={priority}
           loading={priority ? "eager" : "lazy"}
           unoptimized
+          onLoad={handleImageLoad}
         />
 
         {/* Exif情報オーバーレイ */}
