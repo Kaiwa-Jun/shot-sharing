@@ -3,6 +3,57 @@ import { createClient } from "@/lib/supabase/server";
 import { getUserPosts } from "@/app/actions/posts";
 
 /**
+ * 自分の投稿一覧取得API（初期データ用）
+ * GET /api/users/me/posts?limit=10&offset=0
+ */
+export async function GET(request: NextRequest) {
+  try {
+    // 認証チェック
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return NextResponse.json(
+        { data: null, error: "認証が必要です" },
+        { status: 401 }
+      );
+    }
+
+    const { searchParams } = new URL(request.url);
+    const limit = Math.min(
+      Math.max(parseInt(searchParams.get("limit") || "10", 10), 1),
+      100
+    );
+    const offset = Math.max(parseInt(searchParams.get("offset") || "0", 10), 0);
+
+    // Server Action を呼び出し
+    const { data: posts, error } = await getUserPosts(user.id, limit, offset);
+
+    if (error) {
+      return NextResponse.json({ data: null, error }, { status: 500 });
+    }
+
+    // PhotoCardProps形式のデータを作成
+    const photos = posts?.map((post) => ({
+      id: post.id,
+      imageUrl: post.imageUrl,
+      userId: post.userId,
+      exifData: post.exifData || undefined,
+    }));
+
+    return NextResponse.json({ data: photos, error: null });
+  } catch (err) {
+    console.error("API Error:", err);
+    return NextResponse.json(
+      { data: null, error: "予期しないエラーが発生しました" },
+      { status: 500 }
+    );
+  }
+}
+
+/**
  * 自分の投稿一覧取得API（無限スクロール用）
  * POST /api/users/me/posts
  * Request Body: { limit: number, offset: number }

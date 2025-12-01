@@ -13,6 +13,7 @@ import { PostDetailModal } from "@/components/post-detail/post-detail-modal";
 import { createClient } from "@/lib/supabase/client";
 import { PullToRefresh } from "@/components/ui/pull-to-refresh";
 import { ContentView } from "@/app/@modal/(.)me/content-view";
+import useSWR from "swr";
 
 interface Profile {
   id: string;
@@ -23,6 +24,16 @@ interface Profile {
   created_at: string | null;
   updated_at: string | null;
 }
+
+// SWR fetcher
+const fetcher = async (url: string) => {
+  const res = await fetch(url);
+  if (!res.ok) {
+    throw new Error("データの取得に失敗しました");
+  }
+  const json = await res.json();
+  return json.data;
+};
 
 interface ProfileClientProps {
   profile: Profile | null;
@@ -53,17 +64,49 @@ export function ProfileClient({
   const [view, setView] = useState<"profile" | "terms" | "privacy">("profile");
   const [isExiting, setIsExiting] = useState(false);
 
-  // 投稿タブの状態
-  const [userPhotos, setUserPhotos] =
-    useState<PhotoCardProps[]>(initialUserPhotos);
+  // SWRで投稿データを取得（30秒間キャッシュ）
+  const {
+    data: swrUserPhotos,
+    mutate: mutateUserPhotos,
+    isValidating: isValidatingPosts,
+  } = useSWR<PhotoCardProps[]>(
+    "/api/users/me/posts?limit=10&offset=0",
+    fetcher,
+    {
+      fallbackData: initialUserPhotos,
+      revalidateOnFocus: false,
+      dedupingInterval: 30000, // 30秒間キャッシュ
+    }
+  );
+
+  // SWRで保存データを取得（30秒間キャッシュ）
+  const {
+    data: swrSavedPhotos,
+    mutate: mutateSavedPhotos,
+    isValidating: isValidatingSaves,
+  } = useSWR<PhotoCardProps[]>(
+    "/api/users/me/saves?limit=10&offset=0",
+    fetcher,
+    {
+      fallbackData: initialSavedPhotos,
+      revalidateOnFocus: false,
+      dedupingInterval: 30000, // 30秒間キャッシュ
+    }
+  );
+
+  // 投稿タブの状態（SWRデータ + 追加読み込みデータ）
+  const [additionalUserPhotos, setAdditionalUserPhotos] = useState<
+    PhotoCardProps[]
+  >([]);
   const [isLoadingPosts, setIsLoadingPosts] = useState(false);
   const [hasMorePosts, setHasMorePosts] = useState(
     initialUserPhotos.length < postsCount
   );
 
-  // 保存タブの状態
-  const [savedPhotos, setSavedPhotos] =
-    useState<PhotoCardProps[]>(initialSavedPhotos);
+  // 保存タブの状態（SWRデータ + 追加読み込みデータ）
+  const [additionalSavedPhotos, setAdditionalSavedPhotos] = useState<
+    PhotoCardProps[]
+  >([]);
   const [isLoadingSaved, setIsLoadingSaved] = useState(false);
   const [hasMoreSaved, setHasMoreSaved] = useState(
     initialSavedPhotos.length < savedCount
@@ -72,22 +115,28 @@ export function ProfileClient({
   // 現在のタブ
   const [activeTab, setActiveTab] = useState("posts");
 
+  // 表示用データ（SWRデータ + 追加読み込みデータ）
+  const userPhotos = [...(swrUserPhotos || []), ...additionalUserPhotos];
+  const savedPhotos = [...(swrSavedPhotos || []), ...additionalSavedPhotos];
+
   // 投稿の追加読み込み
   const loadMorePosts = useCallback(async () => {
     if (isLoadingPosts || !hasMorePosts) return;
 
     setIsLoadingPosts(true);
     try {
+      const baseCount = swrUserPhotos?.length || 0;
+      const offset = baseCount + additionalUserPhotos.length;
       const response = await fetch("/api/users/me/posts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ limit: 10, offset: userPhotos.length }),
+        body: JSON.stringify({ limit: 10, offset }),
       });
 
       if (response.ok) {
         const { data } = await response.json();
         if (data && data.length > 0) {
-          setUserPhotos((prev) => [...prev, ...data]);
+          setAdditionalUserPhotos((prev) => [...prev, ...data]);
           if (data.length < 10) setHasMorePosts(false);
         } else {
           setHasMorePosts(false);
@@ -98,7 +147,12 @@ export function ProfileClient({
     } finally {
       setIsLoadingPosts(false);
     }
-  }, [userPhotos.length, isLoadingPosts, hasMorePosts]);
+  }, [
+    swrUserPhotos?.length,
+    additionalUserPhotos.length,
+    isLoadingPosts,
+    hasMorePosts,
+  ]);
 
   // 保存の追加読み込み
   const loadMoreSaved = useCallback(async () => {
@@ -106,16 +160,18 @@ export function ProfileClient({
 
     setIsLoadingSaved(true);
     try {
+      const baseCount = swrSavedPhotos?.length || 0;
+      const offset = baseCount + additionalSavedPhotos.length;
       const response = await fetch("/api/users/me/saves", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ limit: 10, offset: savedPhotos.length }),
+        body: JSON.stringify({ limit: 10, offset }),
       });
 
       if (response.ok) {
         const { data } = await response.json();
         if (data && data.length > 0) {
-          setSavedPhotos((prev) => [...prev, ...data]);
+          setAdditionalSavedPhotos((prev) => [...prev, ...data]);
           if (data.length < 10) setHasMoreSaved(false);
         } else {
           setHasMoreSaved(false);
@@ -126,7 +182,12 @@ export function ProfileClient({
     } finally {
       setIsLoadingSaved(false);
     }
-  }, [savedPhotos.length, isLoadingSaved, hasMoreSaved]);
+  }, [
+    swrSavedPhotos?.length,
+    additionalSavedPhotos.length,
+    isLoadingSaved,
+    hasMoreSaved,
+  ]);
 
   // スクロール検出
   useEffect(() => {
@@ -293,44 +354,42 @@ export function ProfileClient({
   // 削除成功時のハンドラー
   const handleDeleteSuccess = () => {
     if (selectedPostId) {
-      // 投稿一覧から削除
-      setUserPhotos((prev) => prev.filter((p) => p.id !== selectedPostId));
-      // 保存一覧からも削除（自分の投稿を保存していた場合）
-      setSavedPhotos((prev) => prev.filter((p) => p.id !== selectedPostId));
+      // SWRのキャッシュを楽観的に更新（削除した投稿を除外）
+      mutateUserPhotos(
+        (current) => current?.filter((p) => p.id !== selectedPostId),
+        false
+      );
+      mutateSavedPhotos(
+        (current) => current?.filter((p) => p.id !== selectedPostId),
+        false
+      );
+      // 追加読み込みデータからも削除
+      setAdditionalUserPhotos((prev) =>
+        prev.filter((p) => p.id !== selectedPostId)
+      );
+      setAdditionalSavedPhotos((prev) =>
+        prev.filter((p) => p.id !== selectedPostId)
+      );
     }
     handleCloseModal();
     router.refresh();
   };
 
-  // Pull-to-Refreshのリロード処理
+  // Pull-to-Refreshのリロード処理（SWRを使用）
   const handleRefresh = async () => {
     try {
       if (activeTab === "posts") {
-        // 投稿タブのリロード
-        const response = await fetch("/api/users/me/posts", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ limit: 10, offset: 0 }),
-        });
-
-        if (response.ok) {
-          const { data } = await response.json();
-          setUserPhotos(data || []);
-          setHasMorePosts((data?.length || 0) >= 10);
-        }
+        // 投稿タブのリロード（SWRで再検証）
+        await mutateUserPhotos();
+        // 追加読み込みデータをリセット
+        setAdditionalUserPhotos([]);
+        setHasMorePosts((swrUserPhotos?.length || 0) >= 10);
       } else {
-        // 保存タブのリロード
-        const response = await fetch("/api/users/me/saves", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ limit: 10, offset: 0 }),
-        });
-
-        if (response.ok) {
-          const { data } = await response.json();
-          setSavedPhotos(data || []);
-          setHasMoreSaved((data?.length || 0) >= 10);
-        }
+        // 保存タブのリロード（SWRで再検証）
+        await mutateSavedPhotos();
+        // 追加読み込みデータをリセット
+        setAdditionalSavedPhotos([]);
+        setHasMoreSaved((swrSavedPhotos?.length || 0) >= 10);
       }
     } catch (error) {
       console.error("Failed to refresh:", error);
