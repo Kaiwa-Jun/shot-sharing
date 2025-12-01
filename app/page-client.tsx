@@ -11,7 +11,6 @@ import { SearchLoadingSkeleton } from "@/components/gallery/search-loading-skele
 import { PostDetailModal } from "@/components/post-detail/post-detail-modal";
 import { PhotoCardProps } from "@/components/gallery/photo-card";
 import { Post, getPosts } from "@/app/actions/posts";
-import { getSimilarPostsWithEmbedding } from "@/app/actions/similar-posts-embedding";
 import { searchPosts } from "@/app/actions/search";
 import { ChatMessage, ConversationMessage } from "@/lib/types/search";
 import type { User } from "@supabase/supabase-js";
@@ -116,12 +115,16 @@ export function PageClient({ initialPhotos, initialUser }: PageClientProps) {
     try {
       console.log(`🔍 [DEBUG] 投稿詳細データを取得中: ${photoId}`);
 
-      const [postResponse, saveResponse, similarPostsResult] =
+      const [postResponse, saveResponse, similarPostsResponse] =
         await Promise.all([
           fetch(`/api/posts/${photoId}`),
           fetch(`/api/saves/check?postId=${photoId}`),
-          getSimilarPostsWithEmbedding(photoId, 10),
+          fetch(`/api/posts/${photoId}/similar?limit=10`),
         ]);
+
+      const similarPostsResult = similarPostsResponse.ok
+        ? await similarPostsResponse.json()
+        : { data: null, error: "類似作例の取得に失敗しました" };
 
       console.log(`📊 [DEBUG] 類似作例の取得結果:`, {
         count: similarPostsResult.data?.length || 0,

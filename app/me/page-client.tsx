@@ -7,7 +7,6 @@ import { ArrowLeft, User, UserPen } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PhotoCardProps } from "@/components/gallery/photo-card";
 import { Post } from "@/app/actions/posts";
-import { getSimilarPostsWithEmbedding } from "@/app/actions/similar-posts-embedding";
 import Masonry from "react-masonry-css";
 import Image from "next/image";
 import { PostDetailModal } from "@/components/post-detail/post-detail-modal";
@@ -221,12 +220,16 @@ export function ProfileClient({
     try {
       console.log(`🔍 [DEBUG] 投稿詳細データを取得中: ${photo.id}`);
 
-      const [postResponse, saveResponse, similarPostsResult] =
+      const [postResponse, saveResponse, similarPostsResponse] =
         await Promise.all([
           fetch(`/api/posts/${photo.id}`),
           fetch(`/api/saves/check?postId=${photo.id}`),
-          getSimilarPostsWithEmbedding(photo.id, 10),
+          fetch(`/api/posts/${photo.id}/similar?limit=10`),
         ]);
+
+      const similarPostsResult = similarPostsResponse.ok
+        ? await similarPostsResponse.json()
+        : { data: null, error: "類似作例の取得に失敗しました" };
 
       console.log(`📊 [DEBUG] 類似作例の取得結果:`, {
         count: similarPostsResult.data?.length || 0,
