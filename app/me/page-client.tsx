@@ -74,9 +74,9 @@ function PhotoWithSkeleton({
         <Image
           src={photo.imageUrl}
           alt=""
-          width={300}
-          height={400}
-          className={`w-full object-cover transition-opacity duration-300 ${
+          width={400}
+          height={600}
+          className={`h-auto w-full object-cover transition-opacity duration-300 ${
             isLoaded ? "opacity-100" : "opacity-0"
           }`}
           unoptimized
