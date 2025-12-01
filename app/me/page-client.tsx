@@ -44,6 +44,49 @@ interface ProfileClientProps {
   userId: string;
 }
 
+// スケルトン付き画像コンポーネント（ホーム画面のPhotoCardと同じ表示）
+function PhotoWithSkeleton({
+  photo,
+  onClick,
+}: {
+  photo: PhotoCardProps;
+  onClick: () => void;
+}) {
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  return (
+    <div
+      className="cursor-pointer overflow-hidden rounded-lg"
+      onClick={onClick}
+    >
+      <motion.div
+        layoutId={`photo-${photo.id}`}
+        transition={{
+          duration: 0.55,
+          ease: [0.25, 0.1, 0.25, 1],
+        }}
+        className="relative"
+      >
+        {/* スケルトンローダー */}
+        {!isLoaded && (
+          <div className="absolute inset-0 animate-pulse bg-muted" />
+        )}
+        <Image
+          src={photo.imageUrl}
+          alt=""
+          width={300}
+          height={400}
+          className={`w-full object-cover transition-opacity duration-300 ${
+            isLoaded ? "opacity-100" : "opacity-0"
+          }`}
+          unoptimized
+          onLoad={() => setIsLoaded(true)}
+        />
+      </motion.div>
+    </div>
+  );
+}
+
 export function ProfileClient({
   profile,
   initialUserPhotos,
@@ -528,28 +571,11 @@ export function ProfileClient({
                         columnClassName="flex flex-col gap-2"
                       >
                         {userPhotos.map((photo) => (
-                          <div
+                          <PhotoWithSkeleton
                             key={photo.id}
-                            className="cursor-pointer overflow-hidden rounded-lg"
+                            photo={photo}
                             onClick={() => handlePhotoClick(photo)}
-                          >
-                            <motion.div
-                              layoutId={`photo-${photo.id}`}
-                              transition={{
-                                duration: 0.55,
-                                ease: [0.25, 0.1, 0.25, 1],
-                              }}
-                            >
-                              <Image
-                                src={photo.imageUrl}
-                                alt=""
-                                width={300}
-                                height={400}
-                                className="w-full object-cover"
-                                unoptimized
-                              />
-                            </motion.div>
-                          </div>
+                          />
                         ))}
                       </Masonry>
                       {isLoadingPosts && (
@@ -586,28 +612,11 @@ export function ProfileClient({
                         columnClassName="flex flex-col gap-2"
                       >
                         {savedPhotos.map((photo) => (
-                          <div
+                          <PhotoWithSkeleton
                             key={photo.id}
-                            className="cursor-pointer overflow-hidden rounded-lg"
+                            photo={photo}
                             onClick={() => handlePhotoClick(photo)}
-                          >
-                            <motion.div
-                              layoutId={`photo-${photo.id}`}
-                              transition={{
-                                duration: 0.55,
-                                ease: [0.25, 0.1, 0.25, 1],
-                              }}
-                            >
-                              <Image
-                                src={photo.imageUrl}
-                                alt=""
-                                width={300}
-                                height={400}
-                                className="w-full object-cover"
-                                unoptimized
-                              />
-                            </motion.div>
-                          </div>
+                          />
                         ))}
                       </Masonry>
                       {isLoadingSaved && (
