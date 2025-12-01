@@ -1,13 +1,14 @@
 import { redirect } from "next/navigation";
 import { unstable_cache } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createCacheableClient } from "@/lib/supabase/server";
 import { PhotoCardProps } from "@/components/gallery/photo-card";
 import { ProfileModal } from "./profile-modal";
 
 // プロフィール取得（キャッシュ付き）
+// unstable_cache内ではcookies()を使用できないため、createCacheableClientを使用
 const getCachedProfile = unstable_cache(
   async (userId: string) => {
-    const supabase = await createClient();
+    const supabase = createCacheableClient();
     const { data, error } = await supabase
       .from("profiles")
       .select("*")
@@ -27,7 +28,7 @@ const getCachedProfile = unstable_cache(
 // ユーザー投稿取得（キャッシュ付き）
 const getCachedUserPosts = unstable_cache(
   async (userId: string, limit: number, offset: number) => {
-    const supabase = await createClient();
+    const supabase = createCacheableClient();
     const { data, error } = await supabase
       .from("posts")
       .select("id, user_id, image_url, thumbnail_url, exif_data")
@@ -56,7 +57,7 @@ const getCachedUserPosts = unstable_cache(
 // ユーザー投稿数取得（キャッシュ付き）
 const getCachedUserPostsCount = unstable_cache(
   async (userId: string) => {
-    const supabase = await createClient();
+    const supabase = createCacheableClient();
     const { count, error } = await supabase
       .from("posts")
       .select("*", { count: "exact", head: true })
@@ -75,7 +76,7 @@ const getCachedUserPostsCount = unstable_cache(
 // ユーザー保存数取得（キャッシュ付き）
 const getCachedUserSavedCount = unstable_cache(
   async (userId: string) => {
-    const supabase = await createClient();
+    const supabase = createCacheableClient();
     const { count, error } = await supabase
       .from("saves")
       .select("*", { count: "exact", head: true })
