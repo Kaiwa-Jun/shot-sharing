@@ -121,9 +121,11 @@ export function ProfileModal({
   const [view, setView] = useState<"profile" | "terms" | "privacy">("profile");
   const [isExiting, setIsExiting] = useState(false);
 
-  // 初回マウント時に画像をプリロード
+  // 初回マウント時に画像をプリロード（Progressive Rendering）
   useEffect(() => {
     const imagesToPreload = initialUserPhotos.slice(0, 10); // 最初の10枚をプリロード
+    const MINIMUM_IMAGES_TO_START = 3; // 最初の3枚でスライドイン開始
+    const FAST_TIMEOUT = 100; // 100msに短縮
 
     if (imagesToPreload.length === 0) {
       setIsImagesPreloaded(true);
@@ -131,12 +133,20 @@ export function ProfileModal({
     }
 
     let loadedCount = 0;
-    const totalImages = imagesToPreload.length;
+    let hasStarted = false;
 
     const handleImageLoaded = (url: string) => {
+      if (hasStarted) return; // 既に開始済みなら何もしない
+
       markImageAsLoaded(url);
       loadedCount++;
-      if (loadedCount >= totalImages) {
+
+      // 最初の3枚が読み込まれたら、または全て読み込まれたらスライドイン開始
+      if (
+        loadedCount >= MINIMUM_IMAGES_TO_START ||
+        loadedCount >= imagesToPreload.length
+      ) {
+        hasStarted = true;
         setIsImagesPreloaded(true);
       }
     };
@@ -155,12 +165,13 @@ export function ProfileModal({
       img.src = photo.imageUrl;
     });
 
-    // タイムアウト：500ms経っても完了しなければ強制的に開始
+    // タイムアウト：100ms経っても完了しなければ強制的に開始
     const timeout = setTimeout(() => {
-      if (!isImagesPreloaded) {
+      if (!hasStarted) {
+        hasStarted = true;
         setIsImagesPreloaded(true);
       }
-    }, 500);
+    }, FAST_TIMEOUT);
 
     return () => clearTimeout(timeout);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -177,12 +188,46 @@ export function ProfileModal({
   const [savedPhotos, setSavedPhotos] =
     useState<PhotoCardProps[]>(initialSavedPhotos);
   const [isLoadingSaved, setIsLoadingSaved] = useState(false);
-  const [hasMoreSaved, setHasMoreSaved] = useState(
-    initialSavedPhotos.length < savedCount
-  );
+  const [hasMoreSaved, setHasMoreSaved] = useState(savedCount > 0);
+  const [savedPhotosLoaded, setSavedPhotosLoaded] = useState(
+    initialSavedPhotos.length > 0
+  ); // 遅延読み込み済みフラグ
 
   // 現在のタブ
   const [activeTab, setActiveTab] = useState("posts");
+
+  // 保存タブの初期データを遅延読み込み
+  const loadInitialSavedPhotos = useCallback(async () => {
+    if (savedPhotosLoaded || isLoadingSaved) return;
+
+    setIsLoadingSaved(true);
+    try {
+      const response = await fetch("/api/users/me/saves?limit=10&offset=0");
+      if (response.ok) {
+        const { data } = await response.json();
+        if (data && data.length > 0) {
+          setSavedPhotos(data);
+          setHasMoreSaved(data.length < savedCount);
+        } else {
+          setHasMoreSaved(false);
+        }
+        setSavedPhotosLoaded(true);
+      }
+    } catch (error) {
+      console.error("Error loading saved photos:", error);
+    } finally {
+      setIsLoadingSaved(false);
+    }
+  }, [savedPhotosLoaded, isLoadingSaved, savedCount]);
+
+  // タブ切り替え時のハンドラー
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    // 保存タブに切り替え時、まだ読み込んでいなければフェッチ
+    if (value === "saved" && !savedPhotosLoaded) {
+      loadInitialSavedPhotos();
+    }
+  };
 
   // 投稿の追加読み込み
   const loadMorePosts = useCallback(async () => {
@@ -504,7 +549,7 @@ export function ProfileModal({
         <Tabs
           defaultValue="posts"
           className="w-full"
-          onValueChange={setActiveTab}
+          onValueChange={handleTabChange}
         >
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="posts">投稿（{postsCount}）</TabsTrigger>
@@ -559,7 +604,12 @@ export function ProfileModal({
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.4, ease: "easeOut" }}
             >
-              {savedPhotos.length === 0 ? (
+              {/* 初期ローディング中 */}
+              {!savedPhotosLoaded && isLoadingSaved ? (
+                <div className="flex justify-center py-8">
+                  <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                </div>
+              ) : savedPhotos.length === 0 ? (
                 <div className="py-8 text-center text-muted-foreground">
                   保存した投稿がありません
                 </div>
