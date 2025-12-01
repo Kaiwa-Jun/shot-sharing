@@ -27,7 +27,7 @@ export function SearchFAB({
   showExamples = true,
   isSearchMode = false,
 }: SearchFABProps) {
-  const [isExpandedInternal, setIsExpandedInternal] = useState(false);
+  const [isExpandedInternal, setIsExpandedInternal] = useState(true);
   const [query, setQuery] = useState("");
   const lastScrollY = useRef(0);
   const ticking = useRef(false);
@@ -69,12 +69,15 @@ export function SearchFAB({
         window.requestAnimationFrame(() => {
           const currentScrollY = window.scrollY;
 
-          // 下スクロール（scrollY が増加）→ 展開
-          if (currentScrollY > lastScrollY.current && currentScrollY > 50) {
+          // 上スクロール（scrollY が減少）→ 展開
+          if (currentScrollY < lastScrollY.current) {
             setIsExpandedInternal(true);
           }
-          // 上スクロール（scrollY が減少）→ 閉じる
-          else if (currentScrollY < lastScrollY.current) {
+          // 下スクロール（scrollY が増加）→ 閉じる
+          else if (
+            currentScrollY > lastScrollY.current &&
+            currentScrollY > 50
+          ) {
             setIsExpandedInternal(false);
           }
 
@@ -94,11 +97,14 @@ export function SearchFAB({
   }, [isSearchMode]);
 
   // 検索モードが解除されたらFABの内部状態をリセット
+  const prevIsSearchMode = useRef(isSearchMode);
   useEffect(() => {
-    if (!isSearchMode) {
-      setIsExpandedInternal(false);
+    // 検索モードがtrueからfalseに変わった時のみリセット
+    if (prevIsSearchMode.current && !isSearchMode) {
+      setIsExpandedInternal(true); // 展開状態に戻す
       setQuery("");
     }
+    prevIsSearchMode.current = isSearchMode;
   }, [isSearchMode]);
 
   // 展開時に入力欄に自動フォーカス
@@ -148,17 +154,17 @@ export function SearchFAB({
         className="relative overflow-hidden rounded-full bg-gradient-to-br from-primary to-primary/80 shadow-2xl"
         initial={false}
         animate={{
-          width: isExpanded ? "100%" : 56,
-          maxWidth: isExpanded ? 672 : 56, // max-w-2xl = 672px
-          height: isExpanded ? 56 : 56,
+          width: isExpanded ? "100%" : 120,
+          maxWidth: isExpanded ? 672 : 120, // max-w-2xl = 672px
+          height: isExpanded ? 56 : 48,
         }}
         transition={{
           type: "spring",
-          stiffness: 300,
-          damping: 30,
+          stiffness: 400,
+          damping: 35,
         }}
       >
-        <AnimatePresence mode="wait">
+        <AnimatePresence mode="popLayout" initial={false}>
           {!isExpanded ? (
             // FAB (初期状態)
             <motion.button
@@ -166,13 +172,16 @@ export function SearchFAB({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.15 }}
+              transition={{ duration: 0.1 }}
               onClick={handleExpand}
-              className="flex h-14 w-14 items-center justify-center"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
+              className="flex h-12 w-full items-center justify-center gap-2 px-4"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
             >
-              <Search className="h-5 w-5 text-primary-foreground" />
+              <span className="whitespace-nowrap text-sm font-medium text-primary-foreground">
+                AIで検索
+              </span>
+              <Search className="h-4 w-4 shrink-0 text-primary-foreground" />
             </motion.button>
           ) : (
             // 展開状態（入力欄）
@@ -181,7 +190,7 @@ export function SearchFAB({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.15 }}
+              transition={{ duration: 0.1 }}
               onSubmit={handleSubmit}
               className="flex h-14 items-center gap-2 bg-card px-4"
               style={{ borderRadius: "9999px" }}
