@@ -363,7 +363,7 @@ export async function createPost(formData: FormData) {
     // キャッシュを再検証
     revalidatePath("/");
     revalidatePath("/me");
-    revalidateTag("posts", "max"); // 投稿一覧のキャッシュを無効化
+    revalidateTag("posts", "default"); // 投稿一覧のキャッシュを無効化
 
     return {
       success: true,
@@ -628,7 +628,7 @@ export async function deletePost(postId: string) {
     revalidatePath("/");
     revalidatePath("/me");
     revalidatePath(`/users/${user.id}`);
-    revalidateTag("posts", "max"); // 投稿一覧のキャッシュを無効化
+    revalidateTag("posts", "default"); // 投稿一覧のキャッシュを無効化
 
     return { success: true };
   } catch (error) {
