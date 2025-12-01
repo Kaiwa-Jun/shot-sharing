@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import Image from "next/image";
 import { useState } from "react";
 import { ExifData } from "@/lib/types/exif";
+import { markImageAsLoaded, isImageLoaded } from "@/lib/image-cache";
 
 export interface PhotoCardProps {
   id: string;
@@ -25,7 +26,13 @@ export function PhotoCard({
   priority = false,
   layoutIdDisabled = false,
 }: PhotoCardProps) {
-  const [isLoaded, setIsLoaded] = useState(false);
+  // グローバルキャッシュを確認し、既に読み込み済みなら初期状態をtrueに
+  const [isLoaded, setIsLoaded] = useState(() => isImageLoaded(imageUrl));
+
+  const handleImageLoad = () => {
+    markImageAsLoaded(imageUrl);
+    setIsLoaded(true);
+  };
 
   return (
     <motion.div
@@ -60,7 +67,7 @@ export function PhotoCard({
           priority={priority}
           loading={priority ? "eager" : "lazy"}
           unoptimized
-          onLoad={() => setIsLoaded(true)}
+          onLoad={handleImageLoad}
         />
 
         {/* Exif情報オーバーレイ */}

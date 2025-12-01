@@ -28,6 +28,7 @@ import Image from "next/image";
 import { PostDetailModal } from "@/components/post-detail/post-detail-modal";
 import { createClient } from "@/lib/supabase/client";
 import { ContentView } from "./content-view";
+import { markImageAsLoaded, isImageLoaded } from "@/lib/image-cache";
 
 interface Profile {
   id: string;
@@ -48,6 +49,55 @@ interface ProfileModalProps {
   userId: string;
 }
 
+// スケルトン付き画像コンポーネント（グローバルキャッシュを使用）
+function PhotoWithSkeleton({
+  photo,
+  onClick,
+}: {
+  photo: PhotoCardProps;
+  onClick: () => void;
+}) {
+  // グローバルキャッシュを確認し、既に読み込み済みなら初期状態をtrueに
+  const [isLoaded, setIsLoaded] = useState(() => isImageLoaded(photo.imageUrl));
+
+  const handleLoad = () => {
+    markImageAsLoaded(photo.imageUrl);
+    setIsLoaded(true);
+  };
+
+  return (
+    <div
+      className="cursor-pointer overflow-hidden rounded-lg"
+      onClick={onClick}
+    >
+      <motion.div
+        layoutId={`photo-${photo.id}`}
+        transition={{
+          duration: 0.55,
+          ease: [0.25, 0.1, 0.25, 1],
+        }}
+        className="relative"
+      >
+        {/* スケルトンローダー */}
+        {!isLoaded && (
+          <div className="absolute inset-0 animate-pulse bg-muted" />
+        )}
+        <Image
+          src={photo.imageUrl}
+          alt=""
+          width={400}
+          height={600}
+          className={`h-auto w-full object-cover transition-opacity duration-300 ${
+            isLoaded ? "opacity-100" : "opacity-0"
+          }`}
+          unoptimized
+          onLoad={handleLoad}
+        />
+      </motion.div>
+    </div>
+  );
+}
+
 export function ProfileModal({
   profile,
   initialUserPhotos,
@@ -64,9 +114,56 @@ export function ProfileModal({
   const [initialIsOwner, setInitialIsOwner] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
 
+  // 画像プリロード完了状態（スライドイン開始のトリガー）
+  const [isImagesPreloaded, setIsImagesPreloaded] = useState(false);
+
   // ビュー状態 ('profile' | 'terms' | 'privacy')
   const [view, setView] = useState<"profile" | "terms" | "privacy">("profile");
   const [isExiting, setIsExiting] = useState(false);
+
+  // 初回マウント時に画像をプリロード
+  useEffect(() => {
+    const imagesToPreload = initialUserPhotos.slice(0, 10); // 最初の10枚をプリロード
+
+    if (imagesToPreload.length === 0) {
+      setIsImagesPreloaded(true);
+      return;
+    }
+
+    let loadedCount = 0;
+    const totalImages = imagesToPreload.length;
+
+    const handleImageLoaded = (url: string) => {
+      markImageAsLoaded(url);
+      loadedCount++;
+      if (loadedCount >= totalImages) {
+        setIsImagesPreloaded(true);
+      }
+    };
+
+    // 各画像をプリロード
+    imagesToPreload.forEach((photo) => {
+      // 既にキャッシュにある場合はスキップ
+      if (isImageLoaded(photo.imageUrl)) {
+        handleImageLoaded(photo.imageUrl);
+        return;
+      }
+
+      const img = new window.Image();
+      img.onload = () => handleImageLoaded(photo.imageUrl);
+      img.onerror = () => handleImageLoaded(photo.imageUrl); // エラーでも続行
+      img.src = photo.imageUrl;
+    });
+
+    // タイムアウト：500ms経っても完了しなければ強制的に開始
+    const timeout = setTimeout(() => {
+      if (!isImagesPreloaded) {
+        setIsImagesPreloaded(true);
+      }
+    }, 500);
+
+    return () => clearTimeout(timeout);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // 投稿タブの状態
   const [userPhotos, setUserPhotos] =
@@ -286,13 +383,23 @@ export function ProfileModal({
     640: 2,
   };
 
+  // スライドインの目標位置を決定
+  // - 閉じる時：画面外（左）
+  // - プリロード完了前：画面外（左）で待機
+  // - プリロード完了後：画面内へ
+  const getAnimateX = () => {
+    if (isClosing) return "-100%";
+    if (!isImagesPreloaded) return "-100%";
+    return 0;
+  };
+
   // プロフィールビュー
   return (
     <>
       <motion.div
         ref={scrollContainerRef}
         initial={{ x: "-100%" }}
-        animate={{ x: isClosing ? "-100%" : 0 }}
+        animate={{ x: getAnimateX() }}
         transition={{ type: "tween", duration: 0.3, ease: "easeOut" }}
         onAnimationComplete={handleAnimationComplete}
         drag="x"
@@ -423,28 +530,11 @@ export function ProfileModal({
                     columnClassName="flex flex-col gap-2"
                   >
                     {userPhotos.map((photo) => (
-                      <div
+                      <PhotoWithSkeleton
                         key={photo.id}
-                        className="cursor-pointer overflow-hidden rounded-lg"
+                        photo={photo}
                         onClick={() => handlePhotoClick(photo)}
-                      >
-                        <motion.div
-                          layoutId={`photo-${photo.id}`}
-                          transition={{
-                            duration: 0.55,
-                            ease: [0.25, 0.1, 0.25, 1],
-                          }}
-                        >
-                          <Image
-                            src={photo.imageUrl}
-                            alt=""
-                            width={300}
-                            height={400}
-                            className="w-full object-cover"
-                            unoptimized
-                          />
-                        </motion.div>
-                      </div>
+                      />
                     ))}
                   </Masonry>
                   {isLoadingPosts && (
@@ -481,28 +571,11 @@ export function ProfileModal({
                     columnClassName="flex flex-col gap-2"
                   >
                     {savedPhotos.map((photo) => (
-                      <div
+                      <PhotoWithSkeleton
                         key={photo.id}
-                        className="cursor-pointer overflow-hidden rounded-lg"
+                        photo={photo}
                         onClick={() => handlePhotoClick(photo)}
-                      >
-                        <motion.div
-                          layoutId={`photo-${photo.id}`}
-                          transition={{
-                            duration: 0.55,
-                            ease: [0.25, 0.1, 0.25, 1],
-                          }}
-                        >
-                          <Image
-                            src={photo.imageUrl}
-                            alt=""
-                            width={300}
-                            height={400}
-                            className="w-full object-cover"
-                            unoptimized
-                          />
-                        </motion.div>
-                      </div>
+                      />
                     ))}
                   </Masonry>
                   {isLoadingSaved && (

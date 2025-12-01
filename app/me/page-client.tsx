@@ -14,6 +14,7 @@ import { createClient } from "@/lib/supabase/client";
 import { PullToRefresh } from "@/components/ui/pull-to-refresh";
 import { ContentView } from "@/app/@modal/(.)me/content-view";
 import useSWR from "swr";
+import { markImageAsLoaded, isImageLoaded } from "@/lib/image-cache";
 
 interface Profile {
   id: string;
@@ -44,7 +45,7 @@ interface ProfileClientProps {
   userId: string;
 }
 
-// スケルトン付き画像コンポーネント（ホーム画面のPhotoCardと同じ表示）
+// スケルトン付き画像コンポーネント（グローバルキャッシュを使用）
 function PhotoWithSkeleton({
   photo,
   onClick,
@@ -52,7 +53,13 @@ function PhotoWithSkeleton({
   photo: PhotoCardProps;
   onClick: () => void;
 }) {
-  const [isLoaded, setIsLoaded] = useState(false);
+  // グローバルキャッシュを確認し、既に読み込み済みなら初期状態をtrueに
+  const [isLoaded, setIsLoaded] = useState(() => isImageLoaded(photo.imageUrl));
+
+  const handleLoad = () => {
+    markImageAsLoaded(photo.imageUrl);
+    setIsLoaded(true);
+  };
 
   return (
     <div
@@ -80,7 +87,7 @@ function PhotoWithSkeleton({
             isLoaded ? "opacity-100" : "opacity-0"
           }`}
           unoptimized
-          onLoad={() => setIsLoaded(true)}
+          onLoad={handleLoad}
         />
       </motion.div>
     </div>
