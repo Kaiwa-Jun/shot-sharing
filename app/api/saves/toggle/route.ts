@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
+import { revalidateTag } from "next/cache";
 
 export async function POST(request: Request) {
   try {
@@ -53,6 +54,8 @@ export async function POST(request: Request) {
         );
       }
 
+      // キャッシュを無効化
+      revalidateTag("saves", "default");
       return NextResponse.json({ saved: false });
     } else {
       // 保存されていない場合は追加
@@ -69,6 +72,8 @@ export async function POST(request: Request) {
         );
       }
 
+      // キャッシュを無効化
+      revalidateTag("saves", "default");
       return NextResponse.json({ saved: true });
     }
   } catch (err) {
