@@ -64,7 +64,7 @@ export function GlobalBottomNav() {
 
   return (
     <>
-      <nav className="fixed bottom-0 left-0 right-0 z-[80] border-t border-border/40 bg-background/95 backdrop-blur-lg xl:hidden">
+      <nav className="fixed bottom-0 left-0 right-0 z-[80] border-t border-border/40 bg-background/95 backdrop-blur-lg">
         <div className="mx-auto flex h-14 max-w-lg items-center justify-around px-4">
           {/* ホーム */}
           <motion.button
