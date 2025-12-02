@@ -37,8 +37,12 @@ export function GlobalBottomNav() {
     };
   }, [supabase.auth]);
 
+  const isHome = pathname === "/";
+  const isMe = pathname === "/me" || pathname === "/me/edit";
+
   const handleHomeClick = () => {
-    // 常にフルリロードでホームに遷移（モーダル等をクリアするため）
+    // 既にホームにいる場合は何もしない
+    if (isHome) return;
     window.location.href = "/";
   };
 
@@ -52,15 +56,13 @@ export function GlobalBottomNav() {
 
   const handleRightClick = () => {
     if (user) {
-      // 常にフルリロードで遷移（モーダル等をクリアするため）
+      // 既にマイページにいる場合は何もしない
+      if (isMe) return;
       window.location.href = "/me";
     } else {
       setShowLoginModal(true);
     }
   };
-
-  const isHome = pathname === "/";
-  const isMe = pathname === "/me" || pathname === "/me/edit";
 
   return (
     <>
