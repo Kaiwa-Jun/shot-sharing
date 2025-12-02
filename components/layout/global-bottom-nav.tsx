@@ -9,18 +9,147 @@ import type { User as SupabaseUser } from "@supabase/supabase-js";
 import { LoginPromptModal } from "@/components/auth/login-prompt-modal";
 import { PostModal } from "@/components/posts/post-modal";
 
+// カスタムユーザーアイコン（横回転でアウトライン→塗りつぶしに変化）
+function UserIcon({
+  filled,
+  className,
+  forceReverse,
+  forceForward,
+}: {
+  filled: boolean;
+  className?: string;
+  forceReverse?: boolean; // 強制的に逆回転をトリガー（黒→白）
+  forceForward?: boolean; // 強制的に正回転をトリガー（白→黒）
+}) {
+  // 初回マウント時にfilledならアニメーションなしで即座に表示
+  const [isAnimated, setIsAnimated] = useState(filled);
+  const [skipTransition, setSkipTransition] = useState(true);
+
+  // 初回レンダリング後にトランジションを有効化
+  useEffect(() => {
+    const timer = requestAnimationFrame(() => {
+      setSkipTransition(false);
+    });
+    return () => cancelAnimationFrame(timer);
+  }, []);
+
+  useEffect(() => {
+    // 初回マウント時はスキップ（skipTransitionがtrueの間）
+    if (skipTransition) return;
+
+    if (forceForward) {
+      // 強制正回転: filled状態にする
+      const timer = setTimeout(() => {
+        setIsAnimated(true);
+      }, 50);
+      return () => clearTimeout(timer);
+    }
+
+    if (forceReverse) {
+      // 強制逆回転: 現在アニメーション中なら戻す
+      setIsAnimated(false);
+      return;
+    }
+
+    if (filled) {
+      const timer = setTimeout(() => {
+        setIsAnimated(true);
+      }, 50);
+      return () => clearTimeout(timer);
+    } else {
+      setIsAnimated(false);
+    }
+  }, [filled, forceReverse, forceForward, skipTransition]);
+
+  return (
+    <div
+      className="relative h-6 w-6"
+      style={{
+        perspective: "1000px",
+      }}
+    >
+      <div
+        style={{
+          position: "relative",
+          width: "100%",
+          height: "100%",
+          transformStyle: "preserve-3d",
+          transform: isAnimated ? "rotateY(180deg)" : "rotateY(0deg)",
+          transition: skipTransition ? "none" : "transform 0.5s ease-out",
+        }}
+      >
+        {/* 前面: アウトラインアイコン */}
+        <div
+          style={{
+            position: "absolute",
+            width: "100%",
+            height: "100%",
+            backfaceVisibility: "hidden",
+            WebkitBackfaceVisibility: "hidden",
+          }}
+        >
+          <User className={className} fill="none" strokeWidth={2} />
+        </div>
+        {/* 背面: 塗りつぶしアイコン */}
+        <div
+          style={{
+            position: "absolute",
+            width: "100%",
+            height: "100%",
+            backfaceVisibility: "hidden",
+            WebkitBackfaceVisibility: "hidden",
+            transform: "rotateY(180deg)",
+          }}
+        >
+          <User className={className} fill="currentColor" strokeWidth={2} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // カスタムホームアイコン（塗りつぶしが右下から左上に同心円状に変化）
 function HomeIcon({
   filled,
   className,
+  forceReverse,
+  forceForward,
 }: {
   filled: boolean;
   className?: string;
+  forceReverse?: boolean; // 強制的に逆アニメーションをトリガー（黒→白）
+  forceForward?: boolean; // 強制的に正アニメーションをトリガー（白→黒）
 }) {
-  // ページロード時にアニメーションするための状態
-  const [isAnimated, setIsAnimated] = useState(false);
+  // 初回マウント時にfilledならアニメーションなしで即座に表示
+  const [isAnimated, setIsAnimated] = useState(filled);
+  const [skipTransition, setSkipTransition] = useState(true);
+
+  // 初回レンダリング後にトランジションを有効化
+  useEffect(() => {
+    const timer = requestAnimationFrame(() => {
+      setSkipTransition(false);
+    });
+    return () => cancelAnimationFrame(timer);
+  }, []);
 
   useEffect(() => {
+    // 初回マウント時はスキップ（skipTransitionがtrueの間）
+    if (skipTransition) return;
+
+    if (forceForward) {
+      // 強制正アニメーション: filled状態にする
+      const timer = setTimeout(() => {
+        setIsAnimated(true);
+      }, 50);
+      return () => clearTimeout(timer);
+    }
+
+    if (forceReverse) {
+      // 強制逆アニメーション: 現在アニメーション中なら戻す
+      setIsAnimated(false);
+      return;
+    }
+
     if (filled) {
       // 少し遅延させてからアニメーション開始（マウント後にトランジションが効くように）
       const timer = setTimeout(() => {
@@ -30,7 +159,7 @@ function HomeIcon({
     } else {
       setIsAnimated(false);
     }
-  }, [filled]);
+  }, [filled, forceReverse, forceForward, skipTransition]);
 
   // 線画アイコン
   const OutlineIcon = () => (
@@ -101,8 +230,9 @@ function HomeIcon({
         style={{
           clipPath: clipPathValue,
           WebkitClipPath: clipPathValue,
-          transition:
-            "clip-path 0.5s ease-out, -webkit-clip-path 0.5s ease-out",
+          transition: skipTransition
+            ? "none"
+            : "clip-path 0.5s ease-out, -webkit-clip-path 0.5s ease-out",
         }}
       >
         <FilledIcon />
@@ -116,6 +246,10 @@ export function GlobalBottomNav() {
   const [user, setUser] = useState<SupabaseUser | null>(null);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showPostModal, setShowPostModal] = useState(false);
+  const [isNavigatingFromMe, setIsNavigatingFromMe] = useState(false); // /meから離れる際のアニメーション用（プロフィール黒→白）
+  const [isNavigatingFromHome, setIsNavigatingFromHome] = useState(false); // ホームから離れる際のアニメーション用（ホーム黒→白）
+  const [isNavigatingToHome, setIsNavigatingToHome] = useState(false); // ホームへ向かう際のアニメーション用（ホーム白→黒）
+  const [isNavigatingToMe, setIsNavigatingToMe] = useState(false); // /meへ向かう際のアニメーション用（プロフィール白→黒）
   const supabase = createClient();
 
   // 認証状態の監視
@@ -145,7 +279,18 @@ export function GlobalBottomNav() {
   const handleHomeClick = () => {
     // 既にホームにいる場合は何もしない
     if (isHome) return;
-    window.location.href = "/";
+
+    // /meページから離れる場合、両方のアイコンを同時にアニメーション
+    if (isMe) {
+      setIsNavigatingFromMe(true); // プロフィールアイコン: 黒→白
+      setIsNavigatingToHome(true); // ホームアイコン: 白→黒
+      // アニメーション開始直後に遷移開始（ページ読み込み中もアニメーションが続く）
+      setTimeout(() => {
+        window.location.href = "/";
+      }, 50);
+    } else {
+      window.location.href = "/";
+    }
   };
 
   const handlePostClick = () => {
@@ -160,7 +305,18 @@ export function GlobalBottomNav() {
     if (user) {
       // 既にマイページにいる場合は何もしない
       if (isMe) return;
-      window.location.href = "/me";
+
+      // ホームから離れる場合、両方のアイコンを同時にアニメーション
+      if (isHome) {
+        setIsNavigatingFromHome(true); // ホームアイコン: 黒→白
+        setIsNavigatingToMe(true); // プロフィールアイコン: 白→黒
+        // アニメーション開始直後に遷移開始（ページ読み込み中もアニメーションが続く）
+        setTimeout(() => {
+          window.location.href = "/me";
+        }, 50);
+      } else {
+        window.location.href = "/me";
+      }
     } else {
       setShowLoginModal(true);
     }
@@ -174,21 +330,27 @@ export function GlobalBottomNav() {
           <motion.button
             onClick={handleHomeClick}
             className={`flex h-10 w-10 items-center justify-center rounded-full transition-colors ${
-              isHome
+              isHome || isNavigatingToHome
                 ? "text-primary"
                 : "text-muted-foreground hover:text-foreground"
             }`}
           >
             <motion.div
-              key={isHome ? "home-active" : "home-inactive"}
               initial={{ scale: 1 }}
-              animate={isHome ? { scale: [1, 1.3, 1] } : { scale: 1 }}
+              animate={
+                isNavigatingToHome ? { scale: [1, 1.3, 1] } : { scale: 1 }
+              }
               transition={{
                 duration: 0.3,
                 ease: "easeOut",
               }}
             >
-              <HomeIcon filled={isHome} className="h-6 w-6" />
+              <HomeIcon
+                filled={isHome}
+                className="h-6 w-6"
+                forceReverse={isNavigatingFromHome}
+                forceForward={isNavigatingToHome}
+              />
             </motion.div>
           </motion.button>
 
@@ -206,24 +368,24 @@ export function GlobalBottomNav() {
           <motion.button
             onClick={handleRightClick}
             className={`flex h-10 w-10 items-center justify-center rounded-full transition-colors ${
-              isMe
+              isMe || isNavigatingToMe
                 ? "text-primary"
                 : "text-muted-foreground hover:text-foreground"
             }`}
           >
             <motion.div
-              key={isMe ? "user-active" : "user-inactive"}
               initial={{ scale: 1 }}
-              animate={isMe ? { scale: [1, 1.3, 1] } : { scale: 1 }}
+              animate={isNavigatingToMe ? { scale: [1, 1.3, 1] } : { scale: 1 }}
               transition={{
                 duration: 0.3,
                 ease: "easeOut",
               }}
             >
-              <User
+              <UserIcon
+                filled={isMe}
                 className="h-6 w-6"
-                fill={isMe ? "currentColor" : "none"}
-                strokeWidth={isMe ? 2 : 2}
+                forceReverse={isNavigatingFromMe}
+                forceForward={isNavigatingToMe}
               />
             </motion.div>
           </motion.button>
