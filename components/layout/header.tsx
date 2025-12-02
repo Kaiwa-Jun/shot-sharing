@@ -1,8 +1,7 @@
 "use client";
 
 import { motion, useMotionValueEvent, useScroll } from "framer-motion";
-import { User, PlusCircle, Settings } from "lucide-react";
-import Link from "next/link";
+import { User, Menu } from "lucide-react";
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
@@ -101,54 +100,40 @@ export function Header({ initialUser = null, onResetSearch }: HeaderProps) {
         className="fixed left-0 right-0 top-0 z-50 border-b border-border/40 bg-background/80 backdrop-blur-lg"
       >
         <div className="container mx-auto flex h-14 items-center justify-between px-4">
-          {/* 左: メニューアイコン（xl未満のみ表示） */}
-          <motion.button
-            onClick={() => setShowMenuSidebar(true)}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="flex h-10 w-10 items-center justify-center rounded-full transition-colors hover:bg-muted xl:hidden"
-          >
-            <Settings className="h-6 w-6" />
-          </motion.button>
-          {/* xl以上では左スペースを確保 */}
-          <div className="hidden h-10 w-10 xl:block" />
-
-          {/* 中央: 投稿ボタン（ログイン時のみ） */}
+          {/* 左: アバター（ログイン時）or ハンバーガーメニュー（未ログイン時） */}
           {user ? (
             <motion.button
-              onClick={() => setShowPostModal(true)}
+              onClick={() => setShowMenuSidebar(true)}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground transition-colors hover:bg-primary/90"
+              className="flex h-10 w-10 items-center justify-center rounded-full transition-colors hover:bg-muted"
             >
-              <PlusCircle className="h-5 w-5" />
+              {user.user_metadata?.avatar_url ? (
+                <img
+                  src={user.user_metadata.avatar_url}
+                  alt="User avatar"
+                  className="h-full w-full rounded-full object-cover"
+                />
+              ) : (
+                <User className="h-6 w-6 text-muted-foreground" />
+              )}
             </motion.button>
           ) : (
-            <div className="w-10" />
+            <motion.button
+              onClick={() => setShowMenuSidebar(true)}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="flex h-10 w-10 items-center justify-center rounded-full transition-colors hover:bg-muted"
+            >
+              <Menu className="h-6 w-6" />
+            </motion.button>
           )}
 
-          {/* 右: アバターアイコン（ログイン時のみ） */}
-          {user ? (
-            <Link href="/me">
-              <motion.div
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="flex h-10 w-10 items-center justify-center rounded-full bg-muted transition-colors hover:bg-muted/80"
-              >
-                {user.user_metadata?.avatar_url ? (
-                  <img
-                    src={user.user_metadata.avatar_url}
-                    alt="User avatar"
-                    className="h-full w-full rounded-full object-cover"
-                  />
-                ) : (
-                  <User className="h-5 w-5 text-muted-foreground" />
-                )}
-              </motion.div>
-            </Link>
-          ) : (
-            <div className="w-10" />
-          )}
+          {/* 中央: サービス名 */}
+          <h1 className="text-lg font-semibold">Shot Sharing</h1>
+
+          {/* 右: 空白（将来的に通知などを追加可能） */}
+          <div className="h-10 w-10" />
         </div>
       </motion.header>
 
