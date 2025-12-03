@@ -8,10 +8,8 @@ import type { User as SupabaseUser } from "@supabase/supabase-js";
 import { LoginPromptModal } from "@/components/auth/login-prompt-modal";
 import { PostModal } from "@/components/posts/post-modal";
 import { MenuSidebar } from "@/components/layout/menu-sidebar";
-import { ContentView } from "@/app/@modal/(.)me/content-view";
 import { signOut } from "@/app/actions/auth";
 import { useRouter } from "next/navigation";
-import { AnimatePresence } from "framer-motion";
 
 interface HeaderProps {
   initialUser?: SupabaseUser | null;
@@ -24,9 +22,6 @@ export function Header({ initialUser = null, onResetSearch }: HeaderProps) {
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showPostModal, setShowPostModal] = useState(false);
   const [showMenuSidebar, setShowMenuSidebar] = useState(false);
-  const [contentView, setContentView] = useState<"terms" | "privacy" | null>(
-    null
-  );
   const { scrollY } = useScroll();
   const supabase = createClient();
   const router = useRouter();
@@ -73,19 +68,6 @@ export function Header({ initialUser = null, onResetSearch }: HeaderProps) {
       router.push("/");
       router.refresh();
     }
-  };
-
-  // 利用規約・プライバシーポリシー表示
-  const handleShowTerms = () => {
-    setContentView("terms");
-  };
-
-  const handleShowPrivacy = () => {
-    setContentView("privacy");
-  };
-
-  const handleCloseContentView = () => {
-    setContentView(null);
   };
 
   return (
@@ -144,8 +126,6 @@ export function Header({ initialUser = null, onResetSearch }: HeaderProps) {
         user={user}
         onLoginClick={() => setShowLoginModal(true)}
         onLogoutClick={handleLogout}
-        onTermsClick={handleShowTerms}
-        onPrivacyClick={handleShowPrivacy}
         onResetSearch={onResetSearch}
       />
 
@@ -157,15 +137,6 @@ export function Header({ initialUser = null, onResetSearch }: HeaderProps) {
 
       {/* 投稿モーダル */}
       <PostModal open={showPostModal} onOpenChange={setShowPostModal} />
-
-      {/* 利用規約・プライバシーポリシー表示 */}
-      {contentView && (
-        <div className="fixed inset-0 z-[70]">
-          <AnimatePresence mode="wait">
-            <ContentView type={contentView} onBack={handleCloseContentView} />
-          </AnimatePresence>
-        </div>
-      )}
     </>
   );
 }

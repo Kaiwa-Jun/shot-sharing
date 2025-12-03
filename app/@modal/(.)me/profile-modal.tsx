@@ -27,7 +27,6 @@ import Masonry from "react-masonry-css";
 import Image from "next/image";
 import { PostDetailModal } from "@/components/post-detail/post-detail-modal";
 import { createClient } from "@/lib/supabase/client";
-import { ContentView } from "./content-view";
 import { markImageAsLoaded, isImageLoaded } from "@/lib/image-cache";
 
 interface Profile {
@@ -113,10 +112,6 @@ export function ProfileModal({
   const [initialIsSaved, setInitialIsSaved] = useState(false);
   const [initialIsOwner, setInitialIsOwner] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
-
-  // ビュー状態 ('profile' | 'terms' | 'privacy')
-  const [view, setView] = useState<"profile" | "terms" | "privacy">("profile");
-  const [isExiting, setIsExiting] = useState(false);
 
   // 投稿タブの状態
   const [userPhotos, setUserPhotos] =
@@ -356,9 +351,6 @@ export function ProfileModal({
     // モーダルが開いているときはスワイプ処理をスキップ
     if (selectedPostId) return;
 
-    // プロフィールビュー以外ではスワイプで閉じない
-    if (view !== "profile") return;
-
     if (info.offset.x < -100) {
       setIsClosing(true);
     }
@@ -424,11 +416,11 @@ export function ProfileModal({
                   <HelpCircle className="mr-2 h-4 w-4" />
                   ヘルプ/お問い合わせ
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setView("terms")}>
+                <DropdownMenuItem onClick={() => router.push("/terms")}>
                   <FileText className="mr-2 h-4 w-4" />
                   利用規約
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setView("privacy")}>
+                <DropdownMenuItem onClick={() => router.push("/privacy")}>
                   <Shield className="mr-2 h-4 w-4" />
                   プライバシーポリシー
                 </DropdownMenuItem>
@@ -595,27 +587,6 @@ export function ProfileModal({
           )}
         </AnimatePresence>
       </motion.div>
-
-      {/* 利用規約・プライバシーポリシーのオーバーレイ */}
-      <AnimatePresence
-        mode="wait"
-        onExitComplete={() => {
-          if (isExiting) {
-            setView("profile");
-            setIsExiting(false);
-          }
-        }}
-      >
-        {(view === "terms" || view === "privacy") && !isExiting && (
-          <div className="fixed inset-0 z-50">
-            <ContentView
-              key={view}
-              type={view}
-              onBack={() => setIsExiting(true)}
-            />
-          </div>
-        )}
-      </AnimatePresence>
     </>
   );
 }
