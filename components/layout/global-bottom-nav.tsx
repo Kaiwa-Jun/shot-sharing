@@ -302,8 +302,16 @@ export function GlobalBottomNav() {
       setTimeout(() => {
         window.location.href = "/";
       }, 50);
-    } else {
+    } else if (isTermsOrPrivacy) {
+      // terms/privacyからの場合、アイコンモーションをセットしてスライドアウト
+      setIsNavigatingToHome(true);
       navigateWithModalSlideOut("/");
+    } else {
+      // 投稿詳細画面などからの場合、アイコンモーションをセットして遷移
+      setIsNavigatingToHome(true);
+      setTimeout(() => {
+        window.location.href = "/";
+      }, 50);
     }
   };
 
@@ -328,8 +336,16 @@ export function GlobalBottomNav() {
         setTimeout(() => {
           window.location.href = "/me";
         }, 50);
-      } else {
+      } else if (isTermsOrPrivacy) {
+        // terms/privacyからの場合、アイコンモーションをセットして即座に遷移
+        setIsNavigatingToMe(true);
         navigateWithModalSlideOut("/me");
+      } else {
+        // 投稿詳細画面などからの場合、アイコンモーションをセットして遷移
+        setIsNavigatingToMe(true);
+        setTimeout(() => {
+          window.location.href = "/me";
+        }, 50);
       }
     } else {
       setShowLoginModal(true);
