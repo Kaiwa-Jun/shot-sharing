@@ -42,6 +42,34 @@ export default function InterceptedPrivacyPage() {
     fetchContent();
   }, []);
 
+  // フッターからのナビゲーションイベントをリッスン
+  useEffect(() => {
+    const handleModalNavigate = (event: CustomEvent<{ targetUrl: string }>) => {
+      const url = event.detail.targetUrl;
+      if (url === "/") {
+        // ホームへ戻る場合はスライドアウト後に背面のページをそのまま表示
+        setIsExiting(true);
+        setTimeout(() => {
+          router.back();
+        }, 300);
+      } else {
+        // /me への遷移は即座にフルページロード（スライドアウトなし）
+        window.location.href = url;
+      }
+    };
+
+    window.addEventListener(
+      "modalNavigate",
+      handleModalNavigate as EventListener
+    );
+    return () => {
+      window.removeEventListener(
+        "modalNavigate",
+        handleModalNavigate as EventListener
+      );
+    };
+  }, [router]);
+
   const handleBack = () => {
     setIsExiting(true);
     setTimeout(() => {

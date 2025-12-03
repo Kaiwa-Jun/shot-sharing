@@ -275,6 +275,20 @@ export function GlobalBottomNav() {
 
   const isHome = pathname === "/";
   const isMe = pathname === "/me" || pathname === "/me/edit";
+  const isTermsOrPrivacy = pathname === "/terms" || pathname === "/privacy";
+
+  // モーダルページ（terms/privacy）からの遷移時にスライドアウトをトリガー
+  const navigateWithModalSlideOut = (targetUrl: string) => {
+    if (isTermsOrPrivacy) {
+      // カスタムイベントを発火してスライドアウトをトリガー
+      const event = new CustomEvent("modalNavigate", {
+        detail: { targetUrl },
+      });
+      window.dispatchEvent(event);
+    } else {
+      window.location.href = targetUrl;
+    }
+  };
 
   const handleHomeClick = () => {
     // 既にホームにいる場合は何もしない
@@ -289,7 +303,7 @@ export function GlobalBottomNav() {
         window.location.href = "/";
       }, 50);
     } else {
-      window.location.href = "/";
+      navigateWithModalSlideOut("/");
     }
   };
 
@@ -315,7 +329,7 @@ export function GlobalBottomNav() {
           window.location.href = "/me";
         }, 50);
       } else {
-        window.location.href = "/me";
+        navigateWithModalSlideOut("/me");
       }
     } else {
       setShowLoginModal(true);
