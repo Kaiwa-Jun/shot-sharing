@@ -4,6 +4,7 @@ import "./globals.css";
 import { ModalProvider } from "@/components/providers/modal-provider";
 import { Toaster } from "sonner";
 import { siteConfig } from "@/lib/constants/site";
+import { GlobalBottomNav } from "@/components/layout/global-bottom-nav";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -88,6 +89,7 @@ export default function RootLayout({
       >
         {children}
         <ModalProvider>{modal}</ModalProvider>
+        <GlobalBottomNav />
         <Toaster richColors position="top-center" />
       </body>
     </html>

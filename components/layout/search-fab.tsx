@@ -120,7 +120,7 @@ export function SearchFAB({
   }, [isExpanded]);
 
   return (
-    <div className="fixed bottom-4 left-0 right-0 z-[60] flex flex-col items-center px-4 xl:left-16">
+    <div className="fixed bottom-20 left-0 right-0 z-[60] flex flex-col items-center px-4 xl:bottom-4 xl:left-16">
       {/* 質問例バッジ（展開時のみ表示、チャットがない場合のみ） */}
       <AnimatePresence>
         {isExpanded && showExamples && (

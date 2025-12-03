@@ -40,17 +40,17 @@ export function PullToRefresh({
 
   return (
     <div className="relative">
-      {/* ローディングインジケーター */}
+      {/* ローディングインジケーター（コンテンツの上に相対配置） */}
       <AnimatePresence>
         {showLoader && (
           <motion.div
-            className="fixed left-0 right-0 z-0 flex justify-center"
+            className="absolute left-0 right-0 z-20 flex justify-center"
             style={{
-              top: topOffset + 8, // ヘッダーのすぐ下に固定
+              top: 8,
             }}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: loaderOpacity }}
-            exit={{ opacity: 0 }}
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: loaderOpacity, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.2 }}
           >
             <div className="rounded-full bg-background p-2 shadow-lg ring-1 ring-border">
