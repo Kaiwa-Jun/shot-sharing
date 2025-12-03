@@ -544,27 +544,24 @@ export function ProfileClient({
           </div>
 
           {/* タブ */}
-          <PullToRefresh
-            onRefresh={handleRefresh}
-            disabled={!!selectedPostId}
-            topOffset={56}
+          <Tabs
+            defaultValue="posts"
+            className="w-full"
+            onValueChange={setActiveTab}
           >
-            <Tabs
-              defaultValue="posts"
-              className="w-full"
-              onValueChange={setActiveTab}
-            >
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="posts">投稿（{postsCount}）</TabsTrigger>
-                <TabsTrigger value="saved">保存（{savedCount}）</TabsTrigger>
-              </TabsList>
+            <TabsList className="sticky top-14 z-40 grid w-full grid-cols-2 bg-background">
+              <TabsTrigger value="posts">投稿（{postsCount}）</TabsTrigger>
+              <TabsTrigger value="saved">保存（{savedCount}）</TabsTrigger>
+            </TabsList>
 
-              {/* 投稿タブ */}
-              <TabsContent value="posts" className="p-4" asChild>
+            {/* 投稿タブ */}
+            <TabsContent value="posts" className="min-h-[50vh]">
+              <PullToRefresh onRefresh={handleRefresh} topOffset={96}>
                 <motion.div
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ duration: 0.4, ease: "easeOut" }}
+                  className="p-4"
                 >
                   {userPhotos.length === 0 ? (
                     <div className="py-8 text-center text-muted-foreground">
@@ -598,14 +595,17 @@ export function ProfileClient({
                     </>
                   )}
                 </motion.div>
-              </TabsContent>
+              </PullToRefresh>
+            </TabsContent>
 
-              {/* 保存タブ */}
-              <TabsContent value="saved" className="p-4" asChild>
+            {/* 保存タブ */}
+            <TabsContent value="saved" className="min-h-[50vh]">
+              <PullToRefresh onRefresh={handleRefresh} topOffset={96}>
                 <motion.div
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ duration: 0.4, ease: "easeOut" }}
+                  className="p-4"
                 >
                   {savedPhotos.length === 0 ? (
                     <div className="py-8 text-center text-muted-foreground">
@@ -639,9 +639,9 @@ export function ProfileClient({
                     </>
                   )}
                 </motion.div>
-              </TabsContent>
-            </Tabs>
-          </PullToRefresh>
+              </PullToRefresh>
+            </TabsContent>
+          </Tabs>
         </div>
 
         {/* 投稿詳細モーダル */}

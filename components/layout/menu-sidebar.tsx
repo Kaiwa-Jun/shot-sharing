@@ -21,8 +21,6 @@ interface MenuSidebarProps {
   user: SupabaseUser | null;
   onLoginClick: () => void;
   onLogoutClick: () => void;
-  onTermsClick: () => void;
-  onPrivacyClick: () => void;
   onResetSearch?: () => void;
 }
 
@@ -32,8 +30,6 @@ export function MenuSidebar({
   user,
   onLoginClick,
   onLogoutClick,
-  onTermsClick,
-  onPrivacyClick,
   onResetSearch,
 }: MenuSidebarProps) {
   const router = useRouter();
@@ -64,12 +60,12 @@ export function MenuSidebar({
   };
 
   const handleTerms = () => {
-    onTermsClick();
+    router.push("/terms");
     onClose();
   };
 
   const handlePrivacy = () => {
-    onPrivacyClick();
+    router.push("/privacy");
     onClose();
   };
 
