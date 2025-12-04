@@ -128,7 +128,7 @@ export function SearchFAB({
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 20, opacity: 0 }}
-            transition={{ duration: 0.2 }}
+            transition={{ duration: 0.35, ease: "easeOut" }}
             className="mb-3 flex w-full max-w-2xl gap-2 overflow-x-auto pb-2"
           >
             {EXAMPLE_QUERIES.map((example, index) => (
@@ -160,8 +160,9 @@ export function SearchFAB({
         }}
         transition={{
           type: "spring",
-          stiffness: 400,
-          damping: 35,
+          stiffness: 180,
+          damping: 25,
+          mass: 1,
         }}
       >
         <AnimatePresence mode="popLayout" initial={false}>
@@ -172,7 +173,7 @@ export function SearchFAB({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.1 }}
+              transition={{ duration: 0.2, ease: "easeOut" }}
               onClick={handleExpand}
               className="flex h-12 w-full items-center justify-center gap-2 px-4"
               whileHover={{ scale: 1.02 }}
@@ -190,7 +191,7 @@ export function SearchFAB({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.1 }}
+              transition={{ duration: 0.25, ease: "easeOut" }}
               onSubmit={handleSubmit}
               className="flex h-14 items-center gap-2 bg-card px-4"
               style={{ borderRadius: "9999px" }}
