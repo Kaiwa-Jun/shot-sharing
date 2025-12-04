@@ -47,13 +47,13 @@ export default function InterceptedTermsPage() {
     const handleModalNavigate = (event: CustomEvent<{ targetUrl: string }>) => {
       const url = event.detail.targetUrl;
       if (url === "/") {
-        // ホームへ戻る場合はスライドアウト後に背面のページをそのまま表示
+        // ホームへはスライドアウト後にrouter.back()（背景がホーム画面なので）
         setIsExiting(true);
         setTimeout(() => {
           router.back();
         }, 300);
       } else {
-        // /me への遷移は即座にフルページロード（スライドアウトなし）
+        // /me へは直接フルページナビゲーション（背景を経由しない）
         window.location.href = url;
       }
     };

@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import Image from "next/image";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ExifData } from "@/lib/types/exif";
 import { markImageAsLoaded, isImageLoaded } from "@/lib/image-cache";
 
@@ -26,8 +26,15 @@ export function PhotoCard({
   priority = false,
   layoutIdDisabled = false,
 }: PhotoCardProps) {
-  // グローバルキャッシュを確認し、既に読み込み済みなら初期状態をtrueに
-  const [isLoaded, setIsLoaded] = useState(() => isImageLoaded(imageUrl));
+  // SSR/ハイドレーション対応: 初期値は常にfalse、クライアントでキャッシュをチェック
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  // クライアントサイドでマウント後にキャッシュをチェック
+  useEffect(() => {
+    if (isImageLoaded(imageUrl)) {
+      setIsLoaded(true);
+    }
+  }, [imageUrl]);
 
   const handleImageLoad = () => {
     markImageAsLoaded(imageUrl);
