@@ -353,7 +353,7 @@ export function PostDetailModal({
 
           {/* コンテンツエリア */}
           <motion.div
-            className="space-y-6 p-6"
+            className="space-y-6 p-6 pb-24 md:pb-6"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 20 }}
