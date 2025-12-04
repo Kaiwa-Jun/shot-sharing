@@ -1,7 +1,7 @@
 export const siteConfig = {
   name: "Shot Sharing",
   description:
-    "写真の作例を共有し、撮影設定から類似写真を検索できるAIフォトシェアリングプラットフォーム",
+    "カメラ初心者向けの撮影設定検索サービス。撮りたいシーンを入力するだけで、AIが最適なカメラ設定（F値・ISO・シャッタースピード）を提案。作例からも設定を学べる、写真撮影サポートプラットフォーム。",
   url: process.env.NEXT_PUBLIC_SITE_URL || "https://shotsharing.me",
   ogImage: "/og-image.png",
   creator: "Shot Sharing Team",
