@@ -29,6 +29,7 @@ export function SearchFAB({
 }: SearchFABProps) {
   const [isExpandedInternal, setIsExpandedInternal] = useState(true);
   const [query, setQuery] = useState("");
+  const [isFocused, setIsFocused] = useState(false);
   const lastScrollY = useRef(0);
   const ticking = useRef(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -59,10 +60,10 @@ export function SearchFAB({
   };
 
   // スクロール方向を検知
-  // 検索モード中は自動開閉を無効化
+  // 検索モード中またはフォーカス中は自動開閉を無効化
   useEffect(() => {
-    // 検索モード中はスクロール検出による自動開閉を無効化
-    if (isSearchMode) return;
+    // 検索モード中またはフォーカス中はスクロール検出による自動開閉を無効化
+    if (isSearchMode || isFocused) return;
 
     const handleScroll = () => {
       if (!ticking.current) {
@@ -94,7 +95,7 @@ export function SearchFAB({
     return () => {
       window.removeEventListener("scroll", handleScroll);
     };
-  }, [isSearchMode]);
+  }, [isSearchMode, isFocused]);
 
   // 検索モードが解除されたらFABの内部状態をリセット
   const prevIsSearchMode = useRef(isSearchMode);
@@ -206,7 +207,8 @@ export function SearchFAB({
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="撮りたいシーンや設定で探す"
                 className="flex-1 bg-transparent outline-none placeholder:text-muted-foreground"
-                onTouchStart={(e) => e.stopPropagation()}
+                onFocus={() => setIsFocused(true)}
+                onBlur={() => setIsFocused(false)}
               />
 
               {/* 送信ボタン */}
