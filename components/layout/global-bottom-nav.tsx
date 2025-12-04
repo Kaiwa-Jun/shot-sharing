@@ -251,6 +251,7 @@ export function GlobalBottomNav() {
   const [isNavigatingFromHome, setIsNavigatingFromHome] = useState(false); // ホームから離れる際のアニメーション用（ホーム黒→白）
   const [isNavigatingToHome, setIsNavigatingToHome] = useState(false); // ホームへ向かう際のアニメーション用（ホーム白→黒）
   const [isNavigatingToMe, setIsNavigatingToMe] = useState(false); // /meへ向かう際のアニメーション用（プロフィール白→黒）
+  const [isSearchFocused, setIsSearchFocused] = useState(false); // 検索入力欄フォーカス中（フッター非表示用）
   const supabase = createClient();
 
   // 認証状態の監視
@@ -277,6 +278,7 @@ export function GlobalBottomNav() {
   const isHome = pathname === "/";
   const isMe = pathname === "/me" || pathname === "/me/edit";
   const isTermsOrPrivacy = pathname === "/terms" || pathname === "/privacy";
+  const isPostDetail = pathname?.startsWith("/posts/");
 
   // pathnameが変更されたらナビゲーション状態をリセット
   useEffect(() => {
@@ -285,6 +287,17 @@ export function GlobalBottomNav() {
     setIsNavigatingToHome(false);
     setIsNavigatingToMe(false);
   }, [pathname]);
+
+  // 検索入力欄のフォーカス状態を監視（スマホ/タブレットでフッターを非表示にするため）
+  useEffect(() => {
+    const handleSearchFocus = (e: Event) => {
+      const customEvent = e as CustomEvent<{ focused: boolean }>;
+      setIsSearchFocused(customEvent.detail.focused);
+    };
+    window.addEventListener("searchFabFocus", handleSearchFocus);
+    return () =>
+      window.removeEventListener("searchFabFocus", handleSearchFocus);
+  }, []);
 
   // モーダルページ（terms/privacy）からの遷移時にスライドアウトをトリガー
   const navigateWithModalSlideOut = (targetUrl: string) => {
@@ -316,8 +329,15 @@ export function GlobalBottomNav() {
       // terms/privacyからの場合、アイコンモーションをセットしてスライドアウト
       setIsNavigatingToHome(true);
       navigateWithModalSlideOut("/");
+    } else if (isPostDetail) {
+      // 投稿詳細画面からの場合、フルページナビゲーション
+      // ※ 背景にホーム画面が表示されているため、router.push()ではモーダルが閉じない
+      setIsNavigatingToHome(true);
+      setTimeout(() => {
+        window.location.href = "/";
+      }, 300);
     } else {
-      // 投稿詳細画面などからの場合、アイコンモーションをセットして遷移
+      // その他の画面からの場合
       setIsNavigatingToHome(true);
       setTimeout(() => {
         router.push("/");
@@ -365,7 +385,11 @@ export function GlobalBottomNav() {
 
   return (
     <>
-      <nav className="fixed bottom-0 left-0 right-0 z-[80] border-t border-border/40 bg-background/95 backdrop-blur-lg">
+      <nav
+        className={`fixed bottom-0 left-0 right-0 z-[80] border-t border-border/40 bg-background/95 backdrop-blur-lg transition-transform duration-200 ${
+          isSearchFocused ? "translate-y-full" : "translate-y-0"
+        }`}
+      >
         <div className="mx-auto flex h-14 max-w-lg items-center justify-around px-4">
           {/* ホーム */}
           <motion.button

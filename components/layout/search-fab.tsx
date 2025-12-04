@@ -30,6 +30,7 @@ export function SearchFAB({
   const [isExpandedInternal, setIsExpandedInternal] = useState(true);
   const [query, setQuery] = useState("");
   const [isFocused, setIsFocused] = useState(false);
+  const [isSmallScreen, setIsSmallScreen] = useState(false);
   const lastScrollY = useRef(0);
   const ticking = useRef(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -64,6 +65,10 @@ export function SearchFAB({
   useEffect(() => {
     // 検索モード中またはフォーカス中はスクロール検出による自動開閉を無効化
     if (isSearchMode || isFocused) return;
+
+    // フォーカスが解除された直後、lastScrollYを現在値にリセット
+    // （キーボード表示/非表示でビューポートが変わるため）
+    lastScrollY.current = window.scrollY;
 
     const handleScroll = () => {
       if (!ticking.current) {
@@ -120,8 +125,59 @@ export function SearchFAB({
     }
   }, [isExpanded]);
 
+  // 画面サイズを検出（xl = 1280px 未満かどうか）
+  useEffect(() => {
+    const checkScreenSize = () => {
+      setIsSmallScreen(window.innerWidth < 1280);
+    };
+    checkScreenSize();
+    window.addEventListener("resize", checkScreenSize);
+    return () => window.removeEventListener("resize", checkScreenSize);
+  }, []);
+
+  // iOS対策: visualViewportでキーボードの表示/非表示を監視
+  // スクロールでキーボードが閉じた場合、blurイベントが発火しないことがあるため
+  useEffect(() => {
+    if (!isFocused || !isSmallScreen) return;
+
+    const viewport = window.visualViewport;
+    if (!viewport) return;
+
+    const initialHeight = viewport.height;
+
+    const handleResize = () => {
+      // キーボードが閉じた（ビューポートが元のサイズに戻った）場合
+      // 少し余裕を持たせて判定（50px以内の差なら閉じたとみなす）
+      if (viewport.height >= initialHeight - 50 && isFocused) {
+        // 入力欄からフォーカスを外す
+        inputRef.current?.blur();
+      }
+    };
+
+    viewport.addEventListener("resize", handleResize);
+    return () => viewport.removeEventListener("resize", handleResize);
+  }, [isFocused, isSmallScreen]);
+
+  // フォーカス状態をグローバルに通知（フッター非表示用）
+  useEffect(() => {
+    if (isSmallScreen) {
+      window.dispatchEvent(
+        new CustomEvent("searchFabFocus", { detail: { focused: isFocused } })
+      );
+    }
+  }, [isFocused, isSmallScreen]);
+
+  // スマホ/タブレットでフォーカス中かどうか
+  const isSmallScreenFocused = isSmallScreen && isFocused;
+
   return (
-    <div className="fixed bottom-20 left-0 right-0 z-[60] flex flex-col items-center px-4 xl:bottom-4 xl:left-16">
+    <div
+      className={`fixed left-0 right-0 z-[60] flex flex-col items-center px-4 transition-all duration-200 ${
+        isSmallScreenFocused
+          ? "bottom-0 pb-2"
+          : "bottom-20 xl:bottom-4 xl:left-16"
+      }`}
+    >
       {/* 質問例バッジ（展開時のみ表示、チャットがない場合のみ） */}
       <AnimatePresence>
         {isExpanded && showExamples && (
