@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import { Plus, User } from "lucide-react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
@@ -243,6 +243,7 @@ function HomeIcon({
 
 export function GlobalBottomNav() {
   const pathname = usePathname();
+  const router = useRouter();
   const [user, setUser] = useState<SupabaseUser | null>(null);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showPostModal, setShowPostModal] = useState(false);
@@ -277,6 +278,14 @@ export function GlobalBottomNav() {
   const isMe = pathname === "/me" || pathname === "/me/edit";
   const isTermsOrPrivacy = pathname === "/terms" || pathname === "/privacy";
 
+  // pathnameが変更されたらナビゲーション状態をリセット
+  useEffect(() => {
+    setIsNavigatingFromMe(false);
+    setIsNavigatingFromHome(false);
+    setIsNavigatingToHome(false);
+    setIsNavigatingToMe(false);
+  }, [pathname]);
+
   // モーダルページ（terms/privacy）からの遷移時にスライドアウトをトリガー
   const navigateWithModalSlideOut = (targetUrl: string) => {
     if (isTermsOrPrivacy) {
@@ -286,7 +295,7 @@ export function GlobalBottomNav() {
       });
       window.dispatchEvent(event);
     } else {
-      window.location.href = targetUrl;
+      router.push(targetUrl);
     }
   };
 
@@ -298,10 +307,11 @@ export function GlobalBottomNav() {
     if (isMe) {
       setIsNavigatingFromMe(true); // プロフィールアイコン: 黒→白
       setIsNavigatingToHome(true); // ホームアイコン: 白→黒
-      // アニメーション開始直後に遷移開始（ページ読み込み中もアニメーションが続く）
+      // アニメーション完了を待ってからフルページナビゲーション
+      // ※ router.push()ではSoft Navigationの不具合でページコンテンツが更新されないため
       setTimeout(() => {
         window.location.href = "/";
-      }, 50);
+      }, 300);
     } else if (isTermsOrPrivacy) {
       // terms/privacyからの場合、アイコンモーションをセットしてスライドアウト
       setIsNavigatingToHome(true);
@@ -310,8 +320,8 @@ export function GlobalBottomNav() {
       // 投稿詳細画面などからの場合、アイコンモーションをセットして遷移
       setIsNavigatingToHome(true);
       setTimeout(() => {
-        window.location.href = "/";
-      }, 50);
+        router.push("/");
+      }, 300);
     }
   };
 
@@ -332,20 +342,21 @@ export function GlobalBottomNav() {
       if (isHome) {
         setIsNavigatingFromHome(true); // ホームアイコン: 黒→白
         setIsNavigatingToMe(true); // プロフィールアイコン: 白→黒
-        // アニメーション開始直後に遷移開始（ページ読み込み中もアニメーションが続く）
+        // アニメーション完了を待ってからフルページナビゲーション
+        // ※ router.push()ではSoft Navigationの不具合でページコンテンツが更新されないため
         setTimeout(() => {
           window.location.href = "/me";
-        }, 50);
+        }, 300);
       } else if (isTermsOrPrivacy) {
-        // terms/privacyからの場合、アイコンモーションをセットして即座に遷移
+        // terms/privacyからの場合、アイコンモーションをセットしてスライドアウト
         setIsNavigatingToMe(true);
         navigateWithModalSlideOut("/me");
       } else {
         // 投稿詳細画面などからの場合、アイコンモーションをセットして遷移
         setIsNavigatingToMe(true);
         setTimeout(() => {
-          window.location.href = "/me";
-        }, 50);
+          router.push("/me");
+        }, 300);
       }
     } else {
       setShowLoginModal(true);

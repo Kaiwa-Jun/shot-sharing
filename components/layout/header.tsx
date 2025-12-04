@@ -9,7 +9,7 @@ import { LoginPromptModal } from "@/components/auth/login-prompt-modal";
 import { PostModal } from "@/components/posts/post-modal";
 import { MenuSidebar } from "@/components/layout/menu-sidebar";
 import { signOut } from "@/app/actions/auth";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 
 interface HeaderProps {
   initialUser?: SupabaseUser | null;
@@ -25,6 +25,10 @@ export function Header({ initialUser = null, onResetSearch }: HeaderProps) {
   const { scrollY } = useScroll();
   const supabase = createClient();
   const router = useRouter();
+  const pathname = usePathname();
+
+  // デスクトップサイドバーが表示されるかどうか（/meと/me/edit以外）
+  const showDesktopSidebar = pathname !== "/me" && pathname !== "/me/edit";
 
   // 認証状態の監視
   useEffect(() => {
@@ -79,37 +83,41 @@ export function Header({ initialUser = null, onResetSearch }: HeaderProps) {
         }}
         animate={isHidden ? "hidden" : "visible"}
         transition={{ duration: 0.3, ease: "easeInOut" }}
-        className="fixed left-0 right-0 top-0 z-50 border-b border-border/40 bg-background/80 backdrop-blur-lg"
+        className={`fixed left-0 right-0 top-0 z-50 border-b border-border/40 bg-background/80 backdrop-blur-lg ${
+          showDesktopSidebar ? "xl:left-16" : ""
+        }`}
       >
         <div className="container mx-auto flex h-14 items-center justify-between px-4">
-          {/* 左: アバター（ログイン時）or ハンバーガーメニュー（未ログイン時） */}
-          {user ? (
-            <motion.button
-              onClick={() => setShowMenuSidebar(true)}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="flex h-10 w-10 items-center justify-center rounded-full transition-colors hover:bg-muted"
-            >
-              {user.user_metadata?.avatar_url ? (
-                <img
-                  src={user.user_metadata.avatar_url}
-                  alt="User avatar"
-                  className="h-full w-full rounded-full object-cover"
-                />
-              ) : (
-                <User className="h-6 w-6 text-muted-foreground" />
-              )}
-            </motion.button>
-          ) : (
-            <motion.button
-              onClick={() => setShowMenuSidebar(true)}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="flex h-10 w-10 items-center justify-center rounded-full transition-colors hover:bg-muted"
-            >
-              <Menu className="h-6 w-6" />
-            </motion.button>
-          )}
+          {/* 左: アバター（ログイン時）or ハンバーガーメニュー（未ログイン時） - デスクトップサイドバー表示時は非表示 */}
+          <div className={showDesktopSidebar ? "xl:invisible" : ""}>
+            {user ? (
+              <motion.button
+                onClick={() => setShowMenuSidebar(true)}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="flex h-10 w-10 items-center justify-center rounded-full transition-colors hover:bg-muted"
+              >
+                {user.user_metadata?.avatar_url ? (
+                  <img
+                    src={user.user_metadata.avatar_url}
+                    alt="User avatar"
+                    className="h-full w-full rounded-full object-cover"
+                  />
+                ) : (
+                  <User className="h-6 w-6 text-muted-foreground" />
+                )}
+              </motion.button>
+            ) : (
+              <motion.button
+                onClick={() => setShowMenuSidebar(true)}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="flex h-10 w-10 items-center justify-center rounded-full transition-colors hover:bg-muted"
+              >
+                <Menu className="h-6 w-6" />
+              </motion.button>
+            )}
+          </div>
 
           {/* 中央: サービス名 */}
           <h1 className="text-lg font-semibold">Shot Sharing</h1>

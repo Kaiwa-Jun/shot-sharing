@@ -53,8 +53,15 @@ function PhotoWithSkeleton({
   photo: PhotoCardProps;
   onClick: () => void;
 }) {
-  // グローバルキャッシュを確認し、既に読み込み済みなら初期状態をtrueに
-  const [isLoaded, setIsLoaded] = useState(() => isImageLoaded(photo.imageUrl));
+  // SSR/ハイドレーション対応: 初期値は常にfalse、クライアントでキャッシュをチェック
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  // クライアントサイドでマウント後にキャッシュをチェック
+  useEffect(() => {
+    if (isImageLoaded(photo.imageUrl)) {
+      setIsLoaded(true);
+    }
+  }, [photo.imageUrl]);
 
   const handleLoad = () => {
     markImageAsLoaded(photo.imageUrl);
