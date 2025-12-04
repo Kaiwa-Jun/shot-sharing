@@ -286,6 +286,7 @@ export function GlobalBottomNav() {
     setIsNavigatingFromHome(false);
     setIsNavigatingToHome(false);
     setIsNavigatingToMe(false);
+    setIsSearchFocused(false); // 検索フォーカス状態もリセット
   }, [pathname]);
 
   // 検索入力欄のフォーカス状態を監視（スマホ/タブレットでフッターを非表示にするため）
