@@ -113,8 +113,28 @@ export function SearchFAB({
     prevIsSearchMode.current = isSearchMode;
   }, [isSearchMode]);
 
-  // 展開時に入力欄に自動フォーカス
+  // 展開時に入力欄に自動フォーカス（初期マウント時はスキップ）
+  const isInitialMount = useRef(true);
+  const [mountTimestamp, setMountTimestamp] = useState(Date.now());
+
+  // マウント時にタイムスタンプを記録
   useEffect(() => {
+    setMountTimestamp(Date.now());
+  }, []);
+
+  useEffect(() => {
+    // 初期マウント時はスキップ（ページロード時の自動フォーカスを防ぐ）
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+
+    // マウント後500ms以内は自動フォーカスをスキップ（再マウント直後の誤動作を防ぐ）
+    const timeSinceMount = Date.now() - mountTimestamp;
+    if (timeSinceMount < 500) {
+      return;
+    }
+
     if (isExpanded && inputRef.current) {
       // requestAnimationFrameを使って次のフレームでフォーカス
       requestAnimationFrame(() => {
@@ -123,7 +143,7 @@ export function SearchFAB({
         });
       });
     }
-  }, [isExpanded]);
+  }, [isExpanded, mountTimestamp]);
 
   // 画面サイズを検出（xl = 1280px 未満かどうか）
   useEffect(() => {
