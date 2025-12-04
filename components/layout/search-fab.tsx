@@ -150,7 +150,6 @@ export function SearchFAB({
 
       {/* FAB / 検索入力欄 */}
       <motion.div
-        layout
         className="relative overflow-hidden rounded-full bg-gradient-to-br from-primary to-primary/80 shadow-2xl"
         initial={false}
         animate={{
@@ -165,7 +164,7 @@ export function SearchFAB({
           mass: 1,
         }}
       >
-        <AnimatePresence mode="popLayout" initial={false}>
+        <AnimatePresence mode="wait" initial={false}>
           {!isExpanded ? (
             // FAB (初期状態)
             <motion.button
@@ -207,7 +206,7 @@ export function SearchFAB({
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="撮りたいシーンや設定で探す"
                 className="flex-1 bg-transparent outline-none placeholder:text-muted-foreground"
-                autoFocus
+                onTouchStart={(e) => e.stopPropagation()}
               />
 
               {/* 送信ボタン */}
