@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath, revalidateTag } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { ExifData } from "@/lib/types/exif";
 import { extractExifData } from "@/lib/image/exif";
@@ -363,7 +363,8 @@ export async function createPost(formData: FormData) {
     // キャッシュを再検証
     revalidatePath("/");
     revalidatePath("/me");
-    revalidateTag("posts", "default"); // 投稿一覧のキャッシュを無効化
+    updateTag("posts"); // 投稿一覧のキャッシュを無効化
+    updateTag("profile"); // プロフィールページのキャッシュも無効化
 
     return {
       success: true,
@@ -628,7 +629,8 @@ export async function deletePost(postId: string) {
     revalidatePath("/");
     revalidatePath("/me");
     revalidatePath(`/users/${user.id}`);
-    revalidateTag("posts", "default"); // 投稿一覧のキャッシュを無効化
+    updateTag("posts"); // 投稿一覧のキャッシュを無効化
+    updateTag("profile"); // プロフィールページのキャッシュも無効化
 
     return { success: true };
   } catch (error) {

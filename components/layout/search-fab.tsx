@@ -193,9 +193,7 @@ export function SearchFAB({
   return (
     <div
       className={`fixed left-0 right-0 z-[60] flex flex-col items-center px-4 transition-all duration-200 ${
-        isSmallScreenFocused
-          ? "bottom-0 pb-2"
-          : "bottom-20 xl:bottom-4 xl:left-16"
+        isSmallScreenFocused ? "bottom-0 pb-2" : "bottom-20 xl:left-16"
       }`}
     >
       {/* 質問例バッジ（展開時のみ表示、チャットがない場合のみ） */}
