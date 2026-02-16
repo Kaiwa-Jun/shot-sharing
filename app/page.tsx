@@ -99,11 +99,6 @@ const getCachedPosts = unstable_cache(
 );
 
 export default async function Home() {
-  console.log(
-    "🏠 [DEBUG] Home page レンダリング開始:",
-    new Date().toISOString()
-  );
-
   // サーバー側で認証状態を取得（キャッシュしない）
   const supabase = await createClient();
   const {
@@ -111,14 +106,7 @@ export default async function Home() {
   } = await supabase.auth.getUser();
 
   // キャッシュから投稿データを取得（30秒間キャッシュ）
-  console.log("📡 [DEBUG] getCachedPosts呼び出し前:", new Date().toISOString());
   const { data: posts, error } = await getCachedPosts();
-  console.log(
-    "📡 [DEBUG] getCachedPosts完了:",
-    new Date().toISOString(),
-    "件数:",
-    posts?.length || 0
-  );
 
   // エラーハンドリング
   if (error) {
@@ -134,11 +122,10 @@ export default async function Home() {
       exifData: post.exifData || undefined,
     })) || [];
 
-  console.log("📤 [DEBUG] PageClientに渡すphotos:", photos.length, "件");
   return (
     <>
       <WebSiteJsonLd />
-      <PageClient initialPhotos={photos} initialUser={user} />
+      <PageClient key="home" initialPhotos={photos} initialUser={user} />
     </>
   );
 }

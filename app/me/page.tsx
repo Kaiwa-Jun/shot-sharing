@@ -20,8 +20,30 @@ export const metadata: Metadata = {
   },
 };
 
-// 動的レンダリングを強制
-export const dynamic = "force-dynamic";
+// プロフィールデータ取得関数
+async function getProfileData(userId: string) {
+  const [
+    profile,
+    postsResult,
+    savedPostsResult,
+    postsCountResult,
+    savedCountResult,
+  ] = await Promise.all([
+    getCurrentUserProfile(),
+    getUserPosts(userId, 10, 0),
+    getUserSavedPosts(userId, 10, 0),
+    getUserPostsCount(userId),
+    getUserSavedPostsCount(userId),
+  ]);
+
+  return {
+    profile: profile.profile,
+    userPhotos: postsResult.data || [],
+    savedPhotos: savedPostsResult.data || [],
+    postsCount: postsCountResult.data || 0,
+    savedCount: savedCountResult.data || 0,
+  };
+}
 
 export default async function ProfilePage() {
   // サーバー側で認証状態を確認
@@ -35,43 +57,38 @@ export default async function ProfilePage() {
     redirect("/login");
   }
 
-  // プロフィール情報を取得
-  const { profile } = await getCurrentUserProfile();
-
-  // ユーザーの投稿と保存した投稿を並行取得
-  const [postsResult, savedPostsResult, postsCountResult, savedCountResult] =
-    await Promise.all([
-      getUserPosts(user.id, 10, 0),
-      getUserSavedPosts(user.id, 10, 0),
-      getUserPostsCount(user.id),
-      getUserSavedPostsCount(user.id),
-    ]);
+  // プロフィールデータを取得
+  const {
+    profile,
+    userPhotos: posts,
+    savedPhotos: saves,
+    postsCount,
+    savedCount,
+  } = await getProfileData(user.id);
 
   // Postデータ型をPhotoCardProps型に変換
-  const userPhotos: PhotoCardProps[] =
-    postsResult.data?.map((post) => ({
-      id: post.id,
-      imageUrl: post.imageUrl,
-      userId: post.userId,
-      exifData: post.exifData || undefined,
-    })) || [];
+  const userPhotos: PhotoCardProps[] = posts.map((post) => ({
+    id: post.id,
+    imageUrl: post.imageUrl,
+    userId: post.userId,
+    exifData: post.exifData || undefined,
+  }));
 
-  const savedPhotos: PhotoCardProps[] =
-    savedPostsResult.data?.map((post) => ({
-      id: post.id,
-      imageUrl: post.imageUrl,
-      userId: post.userId,
-      exifData: post.exifData || undefined,
-    })) || [];
+  const savedPhotos: PhotoCardProps[] = saves.map((post) => ({
+    id: post.id,
+    imageUrl: post.imageUrl,
+    userId: post.userId,
+    exifData: post.exifData || undefined,
+  }));
 
   return (
     <ProfileClient
-      key={user.id} // ページ遷移時に強制的に再レンダリング
+      key="profile"
       profile={profile}
       initialUserPhotos={userPhotos}
       initialSavedPhotos={savedPhotos}
-      postsCount={postsCountResult.data || 0}
-      savedCount={savedCountResult.data || 0}
+      postsCount={postsCount}
+      savedCount={savedCount}
       userId={user.id}
     />
   );

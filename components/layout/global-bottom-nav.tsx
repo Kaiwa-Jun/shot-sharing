@@ -314,15 +314,11 @@ export function GlobalBottomNav() {
   };
 
   const handleHomeClick = () => {
-    // 既にホームにいる場合は何もしない
-    if (isHome) return;
-
     // /meページから離れる場合、両方のアイコンを同時にアニメーション
     if (isMe) {
       setIsNavigatingFromMe(true); // プロフィールアイコン: 黒→白
       setIsNavigatingToHome(true); // ホームアイコン: 白→黒
-      // アニメーション完了を待ってからフルページナビゲーション
-      // ※ router.push()ではSoft Navigationの不具合でページコンテンツが更新されないため
+      // アニメーション完了を待ってからハードナビゲーション（パラレルルートをリセット）
       setTimeout(() => {
         window.location.href = "/";
       }, 300);
@@ -356,15 +352,11 @@ export function GlobalBottomNav() {
 
   const handleRightClick = () => {
     if (user) {
-      // 既にマイページにいる場合は何もしない
-      if (isMe) return;
-
       // ホームから離れる場合、両方のアイコンを同時にアニメーション
       if (isHome) {
         setIsNavigatingFromHome(true); // ホームアイコン: 黒→白
         setIsNavigatingToMe(true); // プロフィールアイコン: 白→黒
-        // アニメーション完了を待ってからフルページナビゲーション
-        // ※ router.push()ではSoft Navigationの不具合でページコンテンツが更新されないため
+        // アニメーション完了を待ってからハードナビゲーション（パラレルルートをリセット）
         setTimeout(() => {
           window.location.href = "/me";
         }, 300);
